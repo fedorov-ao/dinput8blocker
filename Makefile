@@ -2,7 +2,7 @@
 
 CC = i686-w64-mingw32-g++-win32
 TARGET = dinput8.dll
-DEF = $(TARGET:.dll=.def)
+DEF = $(TARGET:%.dll=%.def)
 CFLAGS = -shared -I.
 #First stage - build dll and def, edit def
 SOURCES = *.cpp

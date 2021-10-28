@@ -16,6 +16,29 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason,LPVOID v)
 
 extern "C" {
 
-HRESULT WINAPI SampleExport() { return S_OK; }
+HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
+{
+  return E_FAIL;
+}
 
-} 
+HRESULT WINAPI DllCanUnloadNow()
+{
+  return E_FAIL;
+}
+
+HRESULT WINAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+  return E_FAIL;
+}
+
+HRESULT WINAPI DllRegisterServer()
+{
+  return E_FAIL;
+}
+
+HRESULT WINAPI DllUnregisterServer()
+{
+  return E_FAIL;
+}
+
+} // extern "C"
