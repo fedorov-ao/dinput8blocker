@@ -9,6 +9,9 @@
 
 #define DLLEXPORT __declspec(dllexport)
 
+namespace di8b
+{
+
 std::ofstream & logger()
 {
   static std::ofstream of ("dinput8_blocker.log");
@@ -69,25 +72,27 @@ void Imports::fill()
   return;
 }
 
+} // namespace di8b
+
 
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason,LPVOID v)
 try {
   if (reason == DLL_PROCESS_ATTACH)
   {
-    log_info("Dll attached");
-    g_imports.fill();
+    di8b::log_info("Dll attached");
+    di8b::g_imports.fill();
   }
   
   if (reason == DLL_PROCESS_DETACH)
   {
-    log_info("Dll detached");
+    di8b::log_info("Dll detached");
   }
 
-  log_debug("DllMain success");
+  di8b::log_debug("DllMain success");
   return TRUE;
 } catch (std::exception const & e) 
 {
-  log_error(e.what());
+  di8b::log_error(e.what());
   return FALSE;
 }
 
@@ -95,32 +100,32 @@ extern "C" {
 
 DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
 {
-  log_debug("DirectInput8Create");
-  return g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
+  di8b::log_debug("DirectInput8Create");
+  return di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
 }
 
 DLLEXPORT HRESULT WINAPI DllCanUnloadNow()
 {
-  log_debug("DllCanUnloadNow");
-  return g_imports.dinput8.DllCanUnloadNow();
+  di8b::log_debug("DllCanUnloadNow");
+  return di8b::g_imports.dinput8.DllCanUnloadNow();
 }
 
 DLLEXPORT HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-  log_debug("DllGetClassObject");
-  return g_imports.dinput8.DllGetClassObject(rclsid, riid, ppv);
+  di8b::log_debug("DllGetClassObject");
+  return di8b::g_imports.dinput8.DllGetClassObject(rclsid, riid, ppv);
 }
 
 DLLEXPORT HRESULT WINAPI DllRegisterServer()
 {
-  log_debug("DllRegisterServer");
-  return g_imports.dinput8.DllRegisterServer();
+  di8b::log_debug("DllRegisterServer");
+  return di8b::g_imports.dinput8.DllRegisterServer();
 }
 
 DLLEXPORT HRESULT WINAPI DllUnregisterServer()
 {
-  log_debug("DllUnregisterServer");
-  return g_imports.dinput8.DllUnregisterServer();
+  di8b::log_debug("DllUnregisterServer");
+  return di8b::g_imports.dinput8.DllUnregisterServer();
 }
 
 } // extern "C"
