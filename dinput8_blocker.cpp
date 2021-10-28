@@ -1,10 +1,32 @@
 #include <cstring>
 #include <stdexcept>
+#include <fstream>
 #include <windows.h>
 #include <dinput.h>
 #pragma pack(1)
 
 #define DLLEXPORT __declspec(dllexport)
+
+std::ofstream & logger()
+{
+  static std::ofstream of ("dinput8_blocker.log");
+  return of;
+}
+
+void log_debug(char const * msg)
+{
+  logger() << "[DEBUG] " << msg << std::endl;
+}
+
+void log_info(char const * msg)
+{
+  logger() << "[INFO] " << msg << std::endl;
+}
+
+void log_error(char const * msg)
+{
+  logger() << "[ERROR] " << msg << std::endl;
+}
 
 struct Imports
 {
@@ -32,6 +54,7 @@ struct Imports
 
 void Imports::fill()
 {
+  log_debug("Filling imports");
   char szPath[MAX_PATH];
 
   if (!GetSystemDirectory(szPath, sizeof(szPath)))
@@ -48,6 +71,9 @@ void Imports::fill()
   dinput8.DllGetClassObject = reinterpret_cast<Dinput8::DllGetClassObject_t *>(GetProcAddress(hNativeDinput8Dll,"DllGetClassObject"));
   dinput8.DllRegisterServer = reinterpret_cast<Dinput8::DllRegisterServer_t *>(GetProcAddress(hNativeDinput8Dll,"DllRegisterServer"));
   dinput8.DllUnregisterServer = reinterpret_cast<Dinput8::DllUnregisterServer_t *>(GetProcAddress(hNativeDinput8Dll,"DllUnregisterServer"));
+
+  log_debug("Filled imports");
+  return;
 }
 
 
@@ -55,16 +81,20 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason,LPVOID v)
 try {
 	if (reason == DLL_PROCESS_ATTACH)
 	{
+    log_info("Dll attached");
     g_imports.fill();
 	}
-  else if (reason == DLL_PROCESS_DETACH)
+  
+  if (reason == DLL_PROCESS_DETACH)
 	{
+    log_info("Dll detached");
 	}
 
+  log_debug("DllMain success");
 	return TRUE;
 } catch (std::exception const & e) 
 {
-  //TODO Log exception info here
+  log_error(e.what());
   return FALSE;
 }
 
@@ -72,26 +102,31 @@ extern "C" {
 
 DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
 {
+  log_debug("DirectInput8Create");
   return g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
 }
 
 DLLEXPORT HRESULT WINAPI DllCanUnloadNow()
 {
+  log_debug("DllCanUnloadNow");
   return g_imports.dinput8.DllCanUnloadNow();
 }
 
 DLLEXPORT HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
+  log_debug("DllGetClassObject");
   return g_imports.dinput8.DllGetClassObject(rclsid, riid, ppv);
 }
 
 DLLEXPORT HRESULT WINAPI DllRegisterServer()
 {
+  log_debug("DllRegisterServer");
   return g_imports.dinput8.DllRegisterServer();
 }
 
 DLLEXPORT HRESULT WINAPI DllUnregisterServer()
 {
+  log_debug("DllUnregisterServer");
   return g_imports.dinput8.DllUnregisterServer();
 }
 
