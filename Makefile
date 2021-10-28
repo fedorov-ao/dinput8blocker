@@ -4,18 +4,15 @@ CC = i686-w64-mingw32-g++-win32
 TARGET = dinput8.dll
 DEF = $(TARGET:%.dll=%.def)
 CFLAGS = -shared -I.
-#First stage - build dll and def, edit def
 SOURCES = *.cpp
-LDFLAGS = -Wl,--output-def,$(DEF)
-#Second stage - build dll using edited def
-SOURCES_DEF = $(SOURCES) $(DEF)
-LDFLAGS_DEF = 
+LDFLAGS = -Wl,--output-def,$(DEF),--exclude-all-symbols
+INSTALL_PATH = ~/.wine/drive_c/1946
 
-build_def: $(SOURCES)
+build: $(SOURCES)
 	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES) $(LDFLAGS)
 
-build: $(SOURCES) $(DEF)
-	$(CC) $(CFLAGS) -o $(TARGET) $(SOURCES_DEF) $(LDFLAGS_DEF) 
+install: build
+	cp $(TARGET) $(INSTALL_PATH)
 
 clean:
 	rm  *.o *.def *.lib *.dll

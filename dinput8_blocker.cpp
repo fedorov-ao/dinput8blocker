@@ -70,27 +70,27 @@ try {
 
 extern "C" {
 
-HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
+DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
 {
   return g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
 }
 
-HRESULT WINAPI DllCanUnloadNow()
+DLLEXPORT HRESULT WINAPI DllCanUnloadNow()
 {
   return g_imports.dinput8.DllCanUnloadNow();
 }
 
-HRESULT WINAPI DllGetClassObject (REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+DLLEXPORT HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
   return g_imports.dinput8.DllGetClassObject(rclsid, riid, ppv);
 }
 
-HRESULT WINAPI DllRegisterServer()
+DLLEXPORT HRESULT WINAPI DllRegisterServer()
 {
   return g_imports.dinput8.DllRegisterServer();
 }
 
-HRESULT WINAPI DllUnregisterServer()
+DLLEXPORT HRESULT WINAPI DllUnregisterServer()
 {
   return g_imports.dinput8.DllUnregisterServer();
 }
