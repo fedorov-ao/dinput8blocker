@@ -3,9 +3,9 @@
 CC = i686-w64-mingw32-g++-win32
 TARGET = dinput8.dll
 DEF = $(TARGET:%.dll=%.def)
-CFLAGS = -shared -I.
+CFLAGS = -shared -I. -static-libstdc++ -static-libgcc
 SOURCES = *.cpp
-LDFLAGS = -Wl,--output-def,$(DEF),--exclude-all-symbols
+LDFLAGS = -Wl,--exclude-all-symbols,--enable-auto-import,--kill-at
 INSTALL_PATH = ~/.wine/drive_c/1946
 
 build: $(SOURCES)
