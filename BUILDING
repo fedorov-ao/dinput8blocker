@@ -1,3 +1,5 @@
+BUILDING
+
 Building process (based on Library_Wrappers)
 
 cd to working dir
@@ -27,5 +29,9 @@ $ i686-w64-mingw32-gcc-win32 -o dinput8.dll *.c dinput8.def -shared -I ../includ
 TODO
 
 Update building process to current project.
+Use make to build.
 Use mingw32's DirectX headers.
 Eliminate the need to link to dxguid.
+Add config.
+Add logging. 
+Implement for all DirectInput versions. 

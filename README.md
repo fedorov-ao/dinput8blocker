@@ -14,6 +14,6 @@ Written in C++. Compiled with mingw32-w64.
 
 ## Sources
 
-* <https://github.com/SeanPesce/Library_Wrappers/>
-* <https://github.com/elishacloud/dxwrapper/>
-* <https://stackoverflow.com/questions/2720246/how-to-create-dll-using-gcc-compiler-mingw-for-visual-basic>
+* [Library_Wrappers](https://github.com/SeanPesce/Library_Wrappers/). Written in C. DirectInput wrapper implemented only for first version of API.
+* [dxwrapper](https://github.com/elishacloud/dxwrapper/). Written in modern C++.
+* [How to build dll with mingw](https://stackoverflow.com/questions/2720246/how-to-create-dll-using-gcc-compiler-mingw-for-visual-basic)
