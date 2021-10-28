@@ -1,0 +1,31 @@
+Building process (based on Library_Wrappers)
+
+cd to working dir
+$ cd /media/veracrypt1/axf/devel/Library_Wrappers-master/Windows/dinput8/src
+
+generate dll and def
+$ i686-w64-mingw32-gcc-win32 -o dinput8.dll *.c -shared -I ../include -I /media/veracrypt1/axf/devel/dx9-sdk/c-sdk-directx9/Include -ldxguid -Wl,--out-implib,dinput8.lib,--output-def,dinput8.def
+
+edit def to include only needed exports and set aliases for them
+dinput8.def:
+EXPORTS
+    __E__0__@20 @1090
+    __E__1__@0 @1091
+    __E__2__@12 @1092
+    __E__3__@0 @1093
+    __E__4__@0 @1094
+    DirectInput8Create=__E__0__@20
+    DllCanUnloadNow=__E__1__@0
+    DllGetClassObject=__E__2__@12
+    DllRegisterServer=__E__3__@0
+    DllUnregisterServer=__E__4__@0
+
+rebuild dll using def and install it
+$ i686-w64-mingw32-gcc-win32 -o dinput8.dll *.c dinput8.def -shared -I ../include -I /media/veracrypt1/axf/devel/dx9-sdk/c-sdk-directx9/Include -ldxguid -luser32 && cp dinput8.dll ~/.wine/drive_c/1946/ && echo "done"
+
+
+TODO
+
+Update building process to current project.
+Use mingw32's DirectX headers.
+Eliminate the need to link to dxguid.
