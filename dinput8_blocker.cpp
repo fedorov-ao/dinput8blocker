@@ -131,7 +131,22 @@ HRESULT WINAPI WIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8* This,
 HRESULT WINAPI WIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
 {
   auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
-  return That->pimpl->lpVtbl->GetDeviceData(That->pimpl, cbObjectData, rgdod, pdwInOut, dwFlags);
+  auto result = That->pimpl->lpVtbl->GetDeviceData(That->pimpl, cbObjectData, rgdod, pdwInOut, dwFlags);
+
+  static auto state = false;
+  static auto wasPressed = false;
+  auto isPressed = GetAsyncKeyState(VK_SCROLL) & 0x8000;
+  if (isPressed && !wasPressed)
+  {
+    state = !state;
+  }
+  wasPressed = isPressed;
+  if (result == DI_OK && That->deviceKind == DeviceKind::mouse && state == true)
+  {
+    *pdwInOut = 0;
+  }
+
+  return result;
 }
 
 HRESULT WINAPI WIDirectInputDevice8::SetDataFormat(::IDirectInputDevice8* This, LPCDIDATAFORMAT lpdf)
