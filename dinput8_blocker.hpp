@@ -94,9 +94,9 @@ struct WIDirectInputDevice8
   static HRESULT WINAPI SetActionMap(::IDirectInputDevice8* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags);
   static HRESULT WINAPI GetImageInfo(::IDirectInputDevice8* This, LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader);
 
-  static VIDirectInputDevice8 vIDirectInputDevice8;
+  static VIDirectInputDevice8 const vIDirectInputDevice8;
 
-  VIDirectInputDevice8* pvtbl;
+  VIDirectInputDevice8 const * const pvtbl;
   ::IDirectInputDevice8* pimpl;
 
   WIDirectInputDevice8(::IDirectInputDevice8* pimpl);
@@ -136,9 +136,9 @@ struct WIDirectInput8
   static HRESULT WINAPI EnumDevicesBySemantics(::IDirectInput8* This, LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags);
   static HRESULT WINAPI ConfigureDevices(::IDirectInput8* This, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData);
 
-  static VIDirectInput8 vIDirectInput8;
+  static VIDirectInput8 const vIDirectInput8;
 
-  VIDirectInput8* pvtbl;
+  VIDirectInput8 const * const pvtbl;
   ::IDirectInput8* pimpl;
 
   WIDirectInput8(::IDirectInput8* pimpl);
