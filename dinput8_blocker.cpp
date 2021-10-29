@@ -125,46 +125,8 @@ struct WIDirectInputDevice8
   WIDirectInputDevice8(::IDirectInputDevice8* pimpl);
 };
 
-WIDirectInputDevice8::VIDirectInputDevice8::VIDirectInputDevice8()
-{
-  /*** IUnknown methods ***/
-  this->QueryInterface = WIDirectInputDevice8::QueryInterface;
-  this->AddRef = WIDirectInputDevice8::AddRef;
-  this->Release = WIDirectInputDevice8::Release;
-  /*** IDirectInputDeviceA methods ***/
-  this->GetCapabilities = WIDirectInputDevice8::GetCapabilities;
-  this->EnumObjects = WIDirectInputDevice8::EnumObjects;
-  this->GetProperty = WIDirectInputDevice8::GetProperty;
-  this->SetProperty = WIDirectInputDevice8::SetProperty;
-  this->Acquire = WIDirectInputDevice8::Acquire;
-  this->Unacquire = WIDirectInputDevice8::Unacquire;
-  this->GetDeviceState = WIDirectInputDevice8::GetDeviceState;
-  this->GetDeviceData = WIDirectInputDevice8::GetDeviceData;
-  this->SetDataFormat = WIDirectInputDevice8::SetDataFormat;
-  this->SetEventNotification = WIDirectInputDevice8::SetEventNotification;
-  this->SetCooperativeLevel = WIDirectInputDevice8::SetCooperativeLevel;
-  this->GetObjectInfo = WIDirectInputDevice8::GetObjectInfo;
-  this->GetDeviceInfo = WIDirectInputDevice8::GetDeviceInfo;
-  this->RunControlPanel = WIDirectInputDevice8::RunControlPanel;
-  this->Initialize = WIDirectInputDevice8::Initialize;
-  /*** IDirectInputDevice2A methods ***/
-  this->CreateEffect = WIDirectInputDevice8::CreateEffect;
-  this->EnumEffects = WIDirectInputDevice8::EnumEffects;
-  this->GetEffectInfo = WIDirectInputDevice8::GetEffectInfo;
-  this->GetForceFeedbackState = WIDirectInputDevice8::GetForceFeedbackState;
-  this->SendForceFeedbackCommand = WIDirectInputDevice8::SendForceFeedbackCommand;
-  this->EnumCreatedEffectObjects = WIDirectInputDevice8::EnumCreatedEffectObjects;
-  this->Escape = WIDirectInputDevice8::Escape;
-  this->Poll = WIDirectInputDevice8::Poll;
-  this->SendDeviceData = WIDirectInputDevice8::SendDeviceData;
-  /*** IDirectInputDevice7A methods ***/
-  this->EnumEffectsInFile = WIDirectInputDevice8::EnumEffectsInFile;
-  this->WriteEffectToFile = WIDirectInputDevice8::WriteEffectToFile;
-  /*** IDirectInputDevice8A methods ***/
-  this->BuildActionMap = WIDirectInputDevice8::BuildActionMap;
-  this->SetActionMap = WIDirectInputDevice8::SetActionMap;
-  this->GetImageInfo = WIDirectInputDevice8::GetImageInfo;
-}
+WIDirectInputDevice8::VIDirectInputDevice8::VIDirectInputDevice8() : QueryInterface(WIDirectInputDevice8::QueryInterface), AddRef(WIDirectInputDevice8::AddRef), Release(WIDirectInputDevice8::Release), GetCapabilities(WIDirectInputDevice8::GetCapabilities), EnumObjects(WIDirectInputDevice8::EnumObjects), GetProperty(WIDirectInputDevice8::GetProperty), SetProperty(WIDirectInputDevice8::SetProperty), Acquire(WIDirectInputDevice8::Acquire), Unacquire(WIDirectInputDevice8::Unacquire), GetDeviceState(WIDirectInputDevice8::GetDeviceState), GetDeviceData(WIDirectInputDevice8::GetDeviceData), SetDataFormat(WIDirectInputDevice8::SetDataFormat), SetEventNotification(WIDirectInputDevice8::SetEventNotification), SetCooperativeLevel(WIDirectInputDevice8::SetCooperativeLevel), GetObjectInfo(WIDirectInputDevice8::GetObjectInfo), GetDeviceInfo(WIDirectInputDevice8::GetDeviceInfo), RunControlPanel(WIDirectInputDevice8::RunControlPanel), Initialize(WIDirectInputDevice8::Initialize), CreateEffect(WIDirectInputDevice8::CreateEffect), EnumEffects(WIDirectInputDevice8::EnumEffects), GetEffectInfo(WIDirectInputDevice8::GetEffectInfo), GetForceFeedbackState(WIDirectInputDevice8::GetForceFeedbackState), SendForceFeedbackCommand(WIDirectInputDevice8::SendForceFeedbackCommand), EnumCreatedEffectObjects(WIDirectInputDevice8::EnumCreatedEffectObjects), Escape(WIDirectInputDevice8::Escape), Poll(WIDirectInputDevice8::Poll), SendDeviceData(WIDirectInputDevice8::SendDeviceData), EnumEffectsInFile(WIDirectInputDevice8::EnumEffectsInFile), WriteEffectToFile(WIDirectInputDevice8::WriteEffectToFile), BuildActionMap(WIDirectInputDevice8::BuildActionMap), SetActionMap(WIDirectInputDevice8::SetActionMap), GetImageInfo(WIDirectInputDevice8::GetImageInfo)
+{}
 
 WIDirectInputDevice8::VIDirectInputDevice8 WIDirectInputDevice8::vIDirectInputDevice8;
 
@@ -415,20 +377,8 @@ struct WIDirectInput8
 
 WIDirectInput8::VIDirectInput8 WIDirectInput8::vIDirectInput8;
 
-WIDirectInput8::VIDirectInput8::VIDirectInput8()
-{
-  this->QueryInterface = WIDirectInput8::QueryInterface;
-  this->AddRef = WIDirectInput8::AddRef;
-  this->Release = WIDirectInput8::Release;
-  this->CreateDevice = WIDirectInput8::CreateDevice;
-  this->EnumDevices = WIDirectInput8::EnumDevices;
-  this->GetDeviceStatus = WIDirectInput8::GetDeviceStatus;
-  this->RunControlPanel = WIDirectInput8::RunControlPanel;
-  this->Initialize = WIDirectInput8::Initialize;
-  this->FindDevice = WIDirectInput8::FindDevice;
-  this->EnumDevicesBySemantics = WIDirectInput8::EnumDevicesBySemantics;
-  this->ConfigureDevices = WIDirectInput8::ConfigureDevices;
-}
+WIDirectInput8::VIDirectInput8::VIDirectInput8() : QueryInterface(WIDirectInput8::QueryInterface), AddRef(WIDirectInput8::AddRef), Release(WIDirectInput8::Release), CreateDevice(WIDirectInput8::CreateDevice), EnumDevices(WIDirectInput8::EnumDevices), GetDeviceStatus(WIDirectInput8::GetDeviceStatus), RunControlPanel(WIDirectInput8::RunControlPanel), Initialize(WIDirectInput8::Initialize), FindDevice(WIDirectInput8::FindDevice), EnumDevicesBySemantics(WIDirectInput8::EnumDevicesBySemantics), ConfigureDevices(WIDirectInput8::ConfigureDevices)
+{}
 
 WIDirectInput8::WIDirectInput8(::IDirectInput8* pimpl_) : pvtbl(&vIDirectInput8), pimpl(pimpl_) {}
 
