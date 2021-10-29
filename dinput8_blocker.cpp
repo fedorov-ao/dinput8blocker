@@ -36,6 +36,335 @@ void log_error(char const * msg)
 }
 
 
+struct WIDirectInputDevice8
+{
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(::IDirectInputDevice8* This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(::IDirectInputDevice8* This);
+  static ULONG WINAPI Release(::IDirectInputDevice8* This);
+  /*** IDirectInputDeviceA methods ***/
+  static HRESULT WINAPI GetCapabilities(::IDirectInputDevice8* This, LPDIDEVCAPS lpDIDevCaps);
+  static HRESULT WINAPI EnumObjects(::IDirectInputDevice8* This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetProperty(::IDirectInputDevice8* This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  static HRESULT WINAPI SetProperty(::IDirectInputDevice8* This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  static HRESULT WINAPI Acquire(::IDirectInputDevice8* This);
+  static HRESULT WINAPI Unacquire(::IDirectInputDevice8* This);
+  static HRESULT WINAPI GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData);
+  static HRESULT WINAPI GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  static HRESULT WINAPI SetDataFormat(::IDirectInputDevice8* This, LPCDIDATAFORMAT lpdf);
+  static HRESULT WINAPI SetEventNotification(::IDirectInputDevice8* This, HANDLE hEvent);
+  static HRESULT WINAPI SetCooperativeLevel(::IDirectInputDevice8* This, HWND hwnd, DWORD dwFlags);
+  static HRESULT WINAPI GetObjectInfo(::IDirectInputDevice8* This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+  static HRESULT WINAPI GetDeviceInfo(::IDirectInputDevice8* This, LPDIDEVICEINSTANCEA pdidi);
+  static HRESULT WINAPI RunControlPanel(::IDirectInputDevice8* This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(::IDirectInputDevice8* This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2A methods ***/
+  static HRESULT WINAPI CreateEffect(::IDirectInputDevice8* This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  static HRESULT WINAPI EnumEffects(::IDirectInputDevice8* This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType);
+  static HRESULT WINAPI GetEffectInfo(::IDirectInputDevice8* This, LPDIEFFECTINFOA pdei, REFGUID rguid);
+  static HRESULT WINAPI GetForceFeedbackState(::IDirectInputDevice8* This, LPDWORD pdwOut);
+  static HRESULT WINAPI SendForceFeedbackCommand(::IDirectInputDevice8* This, DWORD dwFlags);
+  static HRESULT WINAPI EnumCreatedEffectObjects(::IDirectInputDevice8* This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  static HRESULT WINAPI Escape(::IDirectInputDevice8* This, LPDIEFFESCAPE pesc);
+  static HRESULT WINAPI Poll(::IDirectInputDevice8* This);
+  static HRESULT WINAPI SendDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+  /*** IDirectInputDevice7A methods ***/
+  static HRESULT WINAPI EnumEffectsInFile(::IDirectInputDevice8* This, LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags);
+  static HRESULT WINAPI WriteEffectToFile(::IDirectInputDevice8* This, LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags);
+  /*** IDirectInputDevice8A methods ***/
+  static HRESULT WINAPI BuildActionMap(::IDirectInputDevice8* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags);
+  static HRESULT WINAPI SetActionMap(::IDirectInputDevice8* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags);
+  static HRESULT WINAPI GetImageInfo(::IDirectInputDevice8* This, LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader);
+
+  static struct VIDirectInputDevice8
+  {
+    /*** IUnknown methods ***/
+    HRESULT (WINAPI *QueryInterface)(::IDirectInputDevice8* This, REFIID riid, void** ppvObject);
+    ULONG (WINAPI *AddRef)(::IDirectInputDevice8* This);
+    ULONG (WINAPI *Release)(::IDirectInputDevice8* This);
+    /*** IDirectInputDeviceA methods ***/
+    HRESULT (WINAPI *GetCapabilities)(::IDirectInputDevice8* This, LPDIDEVCAPS lpDIDevCaps);
+    HRESULT (WINAPI *EnumObjects)(::IDirectInputDevice8* This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+    HRESULT (WINAPI *GetProperty)(::IDirectInputDevice8* This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+    HRESULT (WINAPI *SetProperty)(::IDirectInputDevice8* This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+    HRESULT (WINAPI *Acquire)(::IDirectInputDevice8* This);
+    HRESULT (WINAPI *Unacquire)(::IDirectInputDevice8* This);
+    HRESULT (WINAPI *GetDeviceState)(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData);
+    HRESULT (WINAPI *GetDeviceData)(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+    HRESULT (WINAPI *SetDataFormat)(::IDirectInputDevice8* This, LPCDIDATAFORMAT lpdf);
+    HRESULT (WINAPI *SetEventNotification)(::IDirectInputDevice8* This, HANDLE hEvent);
+    HRESULT (WINAPI *SetCooperativeLevel)(::IDirectInputDevice8* This, HWND hwnd, DWORD dwFlags);
+    HRESULT (WINAPI *GetObjectInfo)(::IDirectInputDevice8* This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+    HRESULT (WINAPI *GetDeviceInfo)(::IDirectInputDevice8* This, LPDIDEVICEINSTANCEA pdidi);
+    HRESULT (WINAPI *RunControlPanel)(::IDirectInputDevice8* This, HWND hwndOwner, DWORD dwFlags);
+    HRESULT (WINAPI *Initialize)(::IDirectInputDevice8* This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+    /*** IDirectInputDevice2A methods ***/
+    HRESULT (WINAPI *CreateEffect)(::IDirectInputDevice8* This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+    HRESULT (WINAPI *EnumEffects)(::IDirectInputDevice8* This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType);
+    HRESULT (WINAPI *GetEffectInfo)(::IDirectInputDevice8* This, LPDIEFFECTINFOA pdei, REFGUID rguid);
+    HRESULT (WINAPI *GetForceFeedbackState)(::IDirectInputDevice8* This, LPDWORD pdwOut);
+    HRESULT (WINAPI *SendForceFeedbackCommand)(::IDirectInputDevice8* This, DWORD dwFlags);
+    HRESULT (WINAPI *EnumCreatedEffectObjects)(::IDirectInputDevice8* This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+    HRESULT (WINAPI *Escape)(::IDirectInputDevice8* This, LPDIEFFESCAPE pesc);
+    HRESULT (WINAPI *Poll)(::IDirectInputDevice8* This);
+    HRESULT (WINAPI *SendDeviceData)(::IDirectInputDevice8* This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+    /*** IDirectInputDevice7A methods ***/
+    HRESULT (WINAPI *EnumEffectsInFile)(::IDirectInputDevice8* This, LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags);
+    HRESULT (WINAPI *WriteEffectToFile)(::IDirectInputDevice8* This, LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags);
+    /*** IDirectInputDevice8A methods ***/
+    HRESULT (WINAPI *BuildActionMap)(::IDirectInputDevice8* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags);
+    HRESULT (WINAPI *SetActionMap)(::IDirectInputDevice8* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags);
+    HRESULT (WINAPI *GetImageInfo)(::IDirectInputDevice8* This, LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader);
+
+    VIDirectInputDevice8();
+  } vIDirectInputDevice8; 
+
+  VIDirectInputDevice8* pvtbl;
+  ::IDirectInputDevice8* pimpl;
+
+  WIDirectInputDevice8(::IDirectInputDevice8* pimpl);
+};
+
+WIDirectInputDevice8::VIDirectInputDevice8::VIDirectInputDevice8()
+{
+  /*** IUnknown methods ***/
+  this->QueryInterface = WIDirectInputDevice8::QueryInterface;
+  this->AddRef = WIDirectInputDevice8::AddRef;
+  this->Release = WIDirectInputDevice8::Release;
+  /*** IDirectInputDeviceA methods ***/
+  this->GetCapabilities = WIDirectInputDevice8::GetCapabilities;
+  this->EnumObjects = WIDirectInputDevice8::EnumObjects;
+  this->GetProperty = WIDirectInputDevice8::GetProperty;
+  this->SetProperty = WIDirectInputDevice8::SetProperty;
+  this->Acquire = WIDirectInputDevice8::Acquire;
+  this->Unacquire = WIDirectInputDevice8::Unacquire;
+  this->GetDeviceState = WIDirectInputDevice8::GetDeviceState;
+  this->GetDeviceData = WIDirectInputDevice8::GetDeviceData;
+  this->SetDataFormat = WIDirectInputDevice8::SetDataFormat;
+  this->SetEventNotification = WIDirectInputDevice8::SetEventNotification;
+  this->SetCooperativeLevel = WIDirectInputDevice8::SetCooperativeLevel;
+  this->GetObjectInfo = WIDirectInputDevice8::GetObjectInfo;
+  this->GetDeviceInfo = WIDirectInputDevice8::GetDeviceInfo;
+  this->RunControlPanel = WIDirectInputDevice8::RunControlPanel;
+  this->Initialize = WIDirectInputDevice8::Initialize;
+  /*** IDirectInputDevice2A methods ***/
+  this->CreateEffect = WIDirectInputDevice8::CreateEffect;
+  this->EnumEffects = WIDirectInputDevice8::EnumEffects;
+  this->GetEffectInfo = WIDirectInputDevice8::GetEffectInfo;
+  this->GetForceFeedbackState = WIDirectInputDevice8::GetForceFeedbackState;
+  this->SendForceFeedbackCommand = WIDirectInputDevice8::SendForceFeedbackCommand;
+  this->EnumCreatedEffectObjects = WIDirectInputDevice8::EnumCreatedEffectObjects;
+  this->Escape = WIDirectInputDevice8::Escape;
+  this->Poll = WIDirectInputDevice8::Poll;
+  this->SendDeviceData = WIDirectInputDevice8::SendDeviceData;
+  /*** IDirectInputDevice7A methods ***/
+  this->EnumEffectsInFile = WIDirectInputDevice8::EnumEffectsInFile;
+  this->WriteEffectToFile = WIDirectInputDevice8::WriteEffectToFile;
+  /*** IDirectInputDevice8A methods ***/
+  this->BuildActionMap = WIDirectInputDevice8::BuildActionMap;
+  this->SetActionMap = WIDirectInputDevice8::SetActionMap;
+  this->GetImageInfo = WIDirectInputDevice8::GetImageInfo;
+}
+
+WIDirectInputDevice8::VIDirectInputDevice8 WIDirectInputDevice8::vIDirectInputDevice8;
+
+WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pimpl_) : pvtbl(&vIDirectInputDevice8), pimpl(pimpl_) {}
+
+HRESULT WINAPI WIDirectInputDevice8::QueryInterface(::IDirectInputDevice8* This, REFIID riid, void** ppvObject)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->QueryInterface(That->pimpl, riid, ppvObject);
+}
+
+ULONG WINAPI WIDirectInputDevice8::AddRef(::IDirectInputDevice8* This)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->AddRef(That->pimpl);
+}
+
+ULONG WINAPI WIDirectInputDevice8::Release(::IDirectInputDevice8* This)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  auto refcount = That->pimpl->lpVtbl->Release(That->pimpl);
+  if (refcount == 0) delete That;
+  return refcount;
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetCapabilities(::IDirectInputDevice8* This, LPDIDEVCAPS lpDIDevCaps)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetCapabilities(That->pimpl, lpDIDevCaps);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::EnumObjects(::IDirectInputDevice8* This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->EnumObjects(That->pimpl, lpCallback, pvRef, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetProperty(::IDirectInputDevice8* This, REFGUID rguidProp, LPDIPROPHEADER pdiph)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetProperty(That->pimpl, rguidProp, pdiph);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::SetProperty(::IDirectInputDevice8* This, REFGUID rguidProp, LPCDIPROPHEADER pdiph)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->SetProperty(That->pimpl, rguidProp, pdiph);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::Acquire(::IDirectInputDevice8* This)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->Acquire(That->pimpl);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::Unacquire(::IDirectInputDevice8* This)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->Unacquire(That->pimpl);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetDeviceState(That->pimpl, cbData, lpvData);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetDeviceData(That->pimpl, cbObjectData, rgdod, pdwInOut, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::SetDataFormat(::IDirectInputDevice8* This, LPCDIDATAFORMAT lpdf)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->SetDataFormat(That->pimpl, lpdf);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::SetEventNotification(::IDirectInputDevice8* This, HANDLE hEvent)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->SetEventNotification(That->pimpl, hEvent);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::SetCooperativeLevel(::IDirectInputDevice8* This, HWND hwnd, DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->SetCooperativeLevel(That->pimpl, hwnd, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetObjectInfo(::IDirectInputDevice8* This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetObjectInfo(That->pimpl, pdidoi, dwObj, dwHow);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetDeviceInfo(::IDirectInputDevice8* This, LPDIDEVICEINSTANCEA pdidi)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetDeviceInfo(That->pimpl, pdidi);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::RunControlPanel(::IDirectInputDevice8* This, HWND hwndOwner, DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->RunControlPanel(That->pimpl, hwndOwner, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::Initialize(::IDirectInputDevice8* This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->Initialize(That->pimpl, hinst, dwVersion, rguid);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::CreateEffect(::IDirectInputDevice8* This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->CreateEffect(That->pimpl, rguid, lpeff, ppdeff, punkOuter);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::EnumEffects(::IDirectInputDevice8* This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->EnumEffects(That->pimpl, lpCallback, pvRef, dwEffType);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetEffectInfo(::IDirectInputDevice8* This, LPDIEFFECTINFOA pdei, REFGUID rguid)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetEffectInfo(That->pimpl, pdei, rguid);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetForceFeedbackState(::IDirectInputDevice8* This, LPDWORD pdwOut)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetForceFeedbackState(That->pimpl, pdwOut);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::SendForceFeedbackCommand(::IDirectInputDevice8* This, DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->SendForceFeedbackCommand(That->pimpl, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::EnumCreatedEffectObjects(::IDirectInputDevice8* This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->EnumCreatedEffectObjects(That->pimpl, lpCallback, pvRef, fl);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::Escape(::IDirectInputDevice8* This, LPDIEFFESCAPE pesc)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->Escape(That->pimpl, pesc);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::Poll(::IDirectInputDevice8* This)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->Poll(That->pimpl);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::SendDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->SendDeviceData(That->pimpl, cbObjectData, rgdod, pdwInOut, fl);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::EnumEffectsInFile(::IDirectInputDevice8* This, LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->EnumEffectsInFile(That->pimpl, lpszFileName, pec, pvRef, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::WriteEffectToFile(::IDirectInputDevice8* This, LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->WriteEffectToFile(That->pimpl, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::BuildActionMap(::IDirectInputDevice8* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->BuildActionMap(That->pimpl, lpdiaf, lpszUserName, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::SetActionMap(::IDirectInputDevice8* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->SetActionMap(That->pimpl, lpdiaf, lpszUserName, dwFlags);
+}
+
+HRESULT WINAPI WIDirectInputDevice8::GetImageInfo(::IDirectInputDevice8* This, LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader)
+{
+  auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
+  return That->pimpl->lpVtbl->GetImageInfo(That->pimpl, lpdiDevImageInfoHeader);
+}
+
+
 struct WIDirectInput8
 {
   static HRESULT WINAPI QueryInterface(::IDirectInput8* This, REFIID riid, void** ppvObject);
