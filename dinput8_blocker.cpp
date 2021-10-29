@@ -32,7 +32,7 @@ VIDirectInputDevice8::VIDirectInputDevice8() : QueryInterface(WIDirectInputDevic
 
 VIDirectInputDevice8 const WIDirectInputDevice8::vIDirectInputDevice8;
 
-WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pimpl_) : pvtbl(&vIDirectInputDevice8), pimpl(pimpl_)
+WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pimpl_, DeviceKind deviceKind_) : pvtbl(&vIDirectInputDevice8), pimpl(pimpl_), deviceKind(deviceKind_)
 {
   log_debug("WIDirectInputDevice8::WIDirectInputDevice8()");
 }
@@ -271,6 +271,18 @@ ULONG WINAPI WIDirectInput8::Release(::IDirectInput8* This)
   return refcount;
 }
 
+DeviceKind get_device_kind(REFGUID rguid)
+{
+  if (IsEqualGUID(rguid, GUID_SysKeyboard))
+    return DeviceKind::keyboard;
+  else if (IsEqualGUID(rguid, GUID_SysMouse))
+    return DeviceKind::mouse;
+  else if (IsEqualGUID(rguid, GUID_Joystick))
+    return DeviceKind::joystick;
+  else
+    return DeviceKind::other;
+}
+
 HRESULT WINAPI WIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
   log_debug("di8b::WIDirectInput8::CreateDevice");
@@ -279,7 +291,8 @@ HRESULT WINAPI WIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid
   HRESULT result = That->pimpl->lpVtbl->CreateDevice(That->pimpl, rguid, lplpDirectInputDevice, pUnkOuter);
   if (result == S_OK)
   {
-    auto pWrapper = new di8b::WIDirectInputDevice8(reinterpret_cast<::IDirectInputDevice8*>(*lplpDirectInputDevice));
+    auto kind = get_device_kind(rguid);
+    auto pWrapper = new di8b::WIDirectInputDevice8(reinterpret_cast<::IDirectInputDevice8*>(*lplpDirectInputDevice), kind);
     *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(pWrapper);
   }
   return result;

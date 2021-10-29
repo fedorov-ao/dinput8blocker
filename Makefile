@@ -5,7 +5,7 @@ TARGET = dinput8.dll
 DEF = $(TARGET:%.dll=%.def)
 CFLAGS = -shared -I. -static-libstdc++ -static-libgcc
 SOURCES = *.cpp
-LDFLAGS = -Wl,--exclude-all-symbols,--enable-auto-import,--kill-at
+LDFLAGS = -Wl,--exclude-all-symbols,--enable-auto-import,--kill-at -ldxguid
 INSTALL_PATH = ~/.wine/drive_c/1946
 
 build: $(SOURCES)

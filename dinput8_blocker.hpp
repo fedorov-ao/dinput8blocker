@@ -21,6 +21,8 @@ void log_debug(char const * msg);
 void log_info(char const * msg);
 void log_error(char const * msg);
 
+enum class DeviceKind { mouse, keyboard, joystick, other };
+
 struct VIDirectInputDevice8
 {
   HRESULT (WINAPI *QueryInterface)(::IDirectInputDevice8* This, REFIID riid, void** ppvObject);
@@ -98,8 +100,9 @@ struct WIDirectInputDevice8
 
   VIDirectInputDevice8 const * const pvtbl;
   ::IDirectInputDevice8* pimpl;
+  DeviceKind deviceKind;
 
-  WIDirectInputDevice8(::IDirectInputDevice8* pimpl);
+  WIDirectInputDevice8(::IDirectInputDevice8* pimpl, DeviceKind deviceKind);
 };
 
 
