@@ -117,7 +117,7 @@ struct WIDirectInputDevice8
     HRESULT (WINAPI *GetImageInfo)(::IDirectInputDevice8* This, LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader);
 
     VIDirectInputDevice8();
-  } vIDirectInputDevice8; 
+  } vIDirectInputDevice8;
 
   VIDirectInputDevice8* pvtbl;
   ::IDirectInputDevice8* pimpl;
@@ -168,7 +168,10 @@ WIDirectInputDevice8::VIDirectInputDevice8::VIDirectInputDevice8()
 
 WIDirectInputDevice8::VIDirectInputDevice8 WIDirectInputDevice8::vIDirectInputDevice8;
 
-WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pimpl_) : pvtbl(&vIDirectInputDevice8), pimpl(pimpl_) {}
+WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pimpl_) : pvtbl(&vIDirectInputDevice8), pimpl(pimpl_)
+{
+  log_debug("WIDirectInputDevice8::WIDirectInputDevice8()");
+}
 
 HRESULT WINAPI WIDirectInputDevice8::QueryInterface(::IDirectInputDevice8* This, REFIID riid, void** ppvObject)
 {
@@ -178,15 +181,21 @@ HRESULT WINAPI WIDirectInputDevice8::QueryInterface(::IDirectInputDevice8* This,
 
 ULONG WINAPI WIDirectInputDevice8::AddRef(::IDirectInputDevice8* This)
 {
+  log_debug("WIDirectInputDevice8::AddRef()");
   auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
   return That->pimpl->lpVtbl->AddRef(That->pimpl);
 }
 
 ULONG WINAPI WIDirectInputDevice8::Release(::IDirectInputDevice8* This)
 {
+  log_debug("WIDirectInputDevice8::Release()");
   auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
   auto refcount = That->pimpl->lpVtbl->Release(That->pimpl);
-  if (refcount == 0) delete That;
+  if (refcount == 0)
+  {
+    log_debug("WIDirectInputDevice8::Release(): deleting self");
+    delete That;
+  }
   return refcount;
 }
 
@@ -431,15 +440,21 @@ HRESULT WINAPI WIDirectInput8::QueryInterface(::IDirectInput8* This, REFIID riid
 
 ULONG WINAPI WIDirectInput8::AddRef(::IDirectInput8* This)
 {
+  log_debug("WIDirectInput8::AddRef()");
   auto That = reinterpret_cast<WIDirectInput8*>(This);
   return That->pimpl->lpVtbl->AddRef(That->pimpl);
 }
 
 ULONG WINAPI WIDirectInput8::Release(::IDirectInput8* This)
 {
+  log_debug("WIDirectInput8::Release()");
   auto That = reinterpret_cast<WIDirectInput8*>(This);
   ULONG refcount = That->pimpl->lpVtbl->Release(That->pimpl);
-  if (refcount == 0) delete That;
+  if (refcount == 0)
+  {
+    log_debug("WIDirectInput8::Release(): deleting self");
+    delete That;
+  }
   return refcount;
 }
 
@@ -447,7 +462,14 @@ HRESULT WINAPI WIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid
 {
   log_debug("di8b::WIDirectInput8::CreateDevice");
   auto That = reinterpret_cast<WIDirectInput8*>(This);
-  return That->pimpl->lpVtbl->CreateDevice(That->pimpl, rguid, lplpDirectInputDevice, pUnkOuter);
+
+  HRESULT result = That->pimpl->lpVtbl->CreateDevice(That->pimpl, rguid, lplpDirectInputDevice, pUnkOuter);
+  if (result == S_OK)
+  {
+    auto pWrapper = new di8b::WIDirectInputDevice8(reinterpret_cast<::IDirectInputDevice8*>(*lplpDirectInputDevice));
+    *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(pWrapper);
+  }
+  return result;
 }
 
 HRESULT WINAPI WIDirectInput8::EnumDevices(::IDirectInput8* This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
@@ -520,7 +542,7 @@ void Imports::fill()
   strcat(szPath, "\\dinput8.dll");
   HMODULE hNativeDinput8Dll = LoadLibrary(szPath);
 
-  if (!hNativeDinput8Dll) 
+  if (!hNativeDinput8Dll)
     throw std::runtime_error("Failed to get native dinput8.dll handle");
 
   dinput8.DirectInput8Create = reinterpret_cast<decltype(::DirectInput8Create) *>(GetProcAddress(hNativeDinput8Dll,"DirectInput8Create"));
@@ -543,7 +565,7 @@ try {
     di8b::log_info("Dll attached");
     di8b::g_imports.fill();
   }
-  
+
   if (reason == DLL_PROCESS_DETACH)
   {
     di8b::log_info("Dll detached");
@@ -551,7 +573,7 @@ try {
 
   di8b::log_debug("DllMain success");
   return TRUE;
-} catch (std::exception const & e) 
+} catch (std::exception const & e)
 {
   di8b::log_error(e.what());
   return FALSE;
