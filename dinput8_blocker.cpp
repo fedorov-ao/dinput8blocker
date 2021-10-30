@@ -1,6 +1,8 @@
 #include <dinput8_blocker.hpp>
 #include <ctime>
 #include <iomanip>
+#include <mingw.thread.h>
+#include <chrono>
 
 #define DLLEXPORT __declspec(dllexport)
 
@@ -48,6 +50,10 @@ void log_error(char const * msg)
 {
   logger() << "[ERROR] " << msg << std::endl;
 }
+
+
+bool g_state = false;
+bool g_exiting = false;
 
 
 VIDirectInputDevice8::VIDirectInputDevice8() : QueryInterface(WIDirectInputDevice8::QueryInterface), AddRef(WIDirectInputDevice8::AddRef), Release(WIDirectInputDevice8::Release), GetCapabilities(WIDirectInputDevice8::GetCapabilities), EnumObjects(WIDirectInputDevice8::EnumObjects), GetProperty(WIDirectInputDevice8::GetProperty), SetProperty(WIDirectInputDevice8::SetProperty), Acquire(WIDirectInputDevice8::Acquire), Unacquire(WIDirectInputDevice8::Unacquire), GetDeviceState(WIDirectInputDevice8::GetDeviceState), GetDeviceData(WIDirectInputDevice8::GetDeviceData), SetDataFormat(WIDirectInputDevice8::SetDataFormat), SetEventNotification(WIDirectInputDevice8::SetEventNotification), SetCooperativeLevel(WIDirectInputDevice8::SetCooperativeLevel), GetObjectInfo(WIDirectInputDevice8::GetObjectInfo), GetDeviceInfo(WIDirectInputDevice8::GetDeviceInfo), RunControlPanel(WIDirectInputDevice8::RunControlPanel), Initialize(WIDirectInputDevice8::Initialize), CreateEffect(WIDirectInputDevice8::CreateEffect), EnumEffects(WIDirectInputDevice8::EnumEffects), GetEffectInfo(WIDirectInputDevice8::GetEffectInfo), GetForceFeedbackState(WIDirectInputDevice8::GetForceFeedbackState), SendForceFeedbackCommand(WIDirectInputDevice8::SendForceFeedbackCommand), EnumCreatedEffectObjects(WIDirectInputDevice8::EnumCreatedEffectObjects), Escape(WIDirectInputDevice8::Escape), Poll(WIDirectInputDevice8::Poll), SendDeviceData(WIDirectInputDevice8::SendDeviceData), EnumEffectsInFile(WIDirectInputDevice8::EnumEffectsInFile), WriteEffectToFile(WIDirectInputDevice8::WriteEffectToFile), BuildActionMap(WIDirectInputDevice8::BuildActionMap), SetActionMap(WIDirectInputDevice8::SetActionMap), GetImageInfo(WIDirectInputDevice8::GetImageInfo)
@@ -133,15 +139,7 @@ HRESULT WINAPI WIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, 
   auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
   auto result = That->pimpl->lpVtbl->GetDeviceData(That->pimpl, cbObjectData, rgdod, pdwInOut, dwFlags);
 
-  static auto state = false;
-  static auto wasPressed = false;
-  auto isPressed = GetAsyncKeyState(VK_SCROLL) & 0x8000;
-  if (isPressed && !wasPressed)
-  {
-    state = !state;
-  }
-  wasPressed = isPressed;
-  if (result == DI_OK && That->deviceKind == DeviceKind::mouse && state == true)
+  if (result == DI_OK && That->deviceKind == DeviceKind::mouse && g_state == true)
   {
     *pdwInOut = 0;
   }
@@ -380,6 +378,32 @@ HRESULT WINAPI WIDirectInput8::ConfigureDevices(::IDirectInput8* This, LPDICONFI
 }
 
 
+void loop()
+{
+  while (true)
+  {
+    if (g_exiting)
+      return;
+
+    static auto wasPressed = false;
+    auto isPressed = GetKeyState(VK_SCROLL) & 0x8000;
+    if (isPressed && !wasPressed)
+    {
+      g_state = !g_state;
+    }
+    wasPressed = isPressed;
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+}
+
+void start_loop()
+{
+  std::thread t (loop);
+  t.detach();
+}
+
+
 struct Imports
 {
   struct Dinput8
@@ -428,11 +452,13 @@ try {
   {
     di8b::log_info("Dll attached");
     di8b::g_imports.fill();
+    di8b::start_loop();
   }
 
   if (reason == DLL_PROCESS_DETACH)
   {
     di8b::log_info("Dll detached");
+    di8b::g_exiting = true;
   }
 
   di8b::log_debug("DllMain success");
