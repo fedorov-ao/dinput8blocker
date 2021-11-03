@@ -1,14 +1,18 @@
 #include <dinput8_blocker.hpp>
+#include <ctime>
+#include <iomanip>
 
 #define DLLEXPORT __declspec(dllexport)
 
 namespace di8b
 {
 
-std::ofstream & logger()
+std::ostream & logger()
 {
   static std::ofstream of ("dinput8_blocker.log");
-  return of;
+  auto tNow = std::time(nullptr);
+  auto tmNow = std::localtime(&tNow);
+  return of << std::put_time(tmNow, "%H:%M:%S: ");
 }
 
 void log_debug(char const * msg)

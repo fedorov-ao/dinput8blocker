@@ -15,7 +15,7 @@
 namespace di8b
 {
 
-std::ofstream & logger();
+std::ostream & logger();
 
 void log_debug(char const * msg);
 void log_info(char const * msg);
