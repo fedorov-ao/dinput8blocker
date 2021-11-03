@@ -7,12 +7,31 @@
 namespace di8b
 {
 
+struct print_time
+{
+  char const * fmt_;
+  print_time(char const * fmt) : fmt_(fmt) {}
+};
+
+std::ostream & operator<< (std::ostream & os, print_time const & pt)
+{
+  auto tNow = std::time(nullptr);
+  auto tmNow = std::localtime(&tNow);
+  return os << std::put_time(tmNow, pt.fmt_);
+}
+
 std::ostream & logger()
 {
   static std::ofstream of ("dinput8_blocker.log");
+  static struct Reporter
+  {
+    char const * fmt = "%d.%m.%Y %H:%M:%S";
+    Reporter() { of << "Logging started at " << print_time(fmt) << std::endl; }
+    ~Reporter() { of << "Logging ended at " << print_time(fmt) << std::endl; }
+  } reporter;
   auto tNow = std::time(nullptr);
   auto tmNow = std::localtime(&tNow);
-  return of << std::put_time(tmNow, "%H:%M:%S: ");
+  return of << print_time("%H:%M:%S: ");
 }
 
 void log_debug(char const * msg)
