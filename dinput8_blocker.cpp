@@ -52,8 +52,7 @@ void log_error(char const * msg)
 }
 
 
-bool g_state = false;
-bool g_state2 = false;
+bool g_state = true;
 bool g_exiting = false;
 
 
@@ -62,7 +61,7 @@ VIDirectInputDevice8::VIDirectInputDevice8() : QueryInterface(WIDirectInputDevic
 
 VIDirectInputDevice8 const WIDirectInputDevice8::vIDirectInputDevice8;
 
-WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pimpl_, DeviceKind deviceKind_) : pvtbl(&vIDirectInputDevice8), pimpl(pimpl_), deviceKind(deviceKind_)
+WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pimpl_, WIDirectInputDevice8::check_state_t const & check_state_) : pvtbl(&vIDirectInputDevice8), pimpl(pimpl_), check_state(check_state_)
 {
   log_debug("WIDirectInputDevice8::WIDirectInputDevice8()");
 }
@@ -140,7 +139,7 @@ HRESULT WINAPI WIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, 
   auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
   auto result = That->pimpl->lpVtbl->GetDeviceData(That->pimpl, cbObjectData, rgdod, pdwInOut, dwFlags);
 
-  if (result == DI_OK && That->deviceKind == DeviceKind::mouse && g_state == true && g_state2 == true)
+  if (result == DI_OK && That->check_state() == false)
   {
     *pdwInOut = 0;
   }
@@ -280,7 +279,7 @@ VIDirectInput8::VIDirectInput8() : QueryInterface(WIDirectInput8::QueryInterface
 
 VIDirectInput8 const WIDirectInput8::vIDirectInput8;
 
-WIDirectInput8::WIDirectInput8(::IDirectInput8* pimpl_) : pvtbl(&vIDirectInput8), pimpl(pimpl_) {}
+WIDirectInput8::WIDirectInput8(::IDirectInput8* pimpl_, WIDirectInput8::check_states_t const & check_states_) : pvtbl(&vIDirectInput8), pimpl(pimpl_), check_states(check_states_) {}
 
 HRESULT WINAPI WIDirectInput8::QueryInterface(::IDirectInput8* This, REFIID riid, void** ppvObject)
 {
@@ -329,7 +328,7 @@ HRESULT WINAPI WIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid
   if (result == S_OK)
   {
     auto kind = get_device_kind(rguid);
-    auto pWrapper = new di8b::WIDirectInputDevice8(reinterpret_cast<::IDirectInputDevice8*>(*lplpDirectInputDevice), kind);
+    auto pWrapper = new di8b::WIDirectInputDevice8(reinterpret_cast<::IDirectInputDevice8*>(*lplpDirectInputDevice), 1 == That->check_states.count(kind) ? That->check_states[kind] : [](){ return true; });
     *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(pWrapper);
   }
   return result;
@@ -387,21 +386,27 @@ void loop()
       return;
 
     static auto wasPressed = false;
+    static auto state = true, state2 = true;
     auto isPressed = GetKeyState(DI8B_TOGGLE_BLOCK_KEY) & 0x8000;
     if (isPressed && !wasPressed)
     {
-      g_state = !g_state;
+      state = !state;
     }
     wasPressed = isPressed;
 
-    g_state2 = !(GetKeyState(DI8B_UNBLOCK_KEY) & 0x8000);
+    state2 = GetKeyState(DI8B_UNBLOCK_KEY) & 0x8000;
+
+    g_state = state || state2;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
 }
 
+WIDirectInput8::check_states_t g_check_states;
+
 void start_loop()
 {
+  g_check_states[DeviceKind::mouse] = [&g_state](){ return g_state; };
   std::thread t (loop);
   t.detach();
 }
@@ -480,7 +485,7 @@ DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, RE
   HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
   if (result == S_OK)
   {
-    auto pWrapper = new di8b::WIDirectInput8(reinterpret_cast<IDirectInput8*>(*ppvOut));
+    auto pWrapper = new di8b::WIDirectInput8(reinterpret_cast<IDirectInput8*>(*ppvOut), di8b::g_check_states);
     *ppvOut = pWrapper;
   }
   return result;

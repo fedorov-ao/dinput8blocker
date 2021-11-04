@@ -7,6 +7,8 @@
 #include <cstring>
 #include <stdexcept>
 #include <fstream>
+#include <functional>
+#include <map>
 #include <windows.h>
 #include <olectl.h>
 #include <dinput.h>
@@ -100,9 +102,10 @@ struct WIDirectInputDevice8
 
   VIDirectInputDevice8 const * const pvtbl;
   ::IDirectInputDevice8* pimpl;
-  DeviceKind deviceKind;
+  typedef std::function<bool()> check_state_t;
+  check_state_t check_state;
 
-  WIDirectInputDevice8(::IDirectInputDevice8* pimpl, DeviceKind deviceKind);
+  WIDirectInputDevice8(::IDirectInputDevice8* pimpl, check_state_t const & check_state);
 };
 
 
@@ -143,8 +146,10 @@ struct WIDirectInput8
 
   VIDirectInput8 const * const pvtbl;
   ::IDirectInput8* pimpl;
+  typedef std::map<DeviceKind, WIDirectInputDevice8::check_state_t> check_states_t;
+  check_states_t check_states;
 
-  WIDirectInput8(::IDirectInput8* pimpl);
+  WIDirectInput8(::IDirectInput8* pimpl, check_states_t const & check_states);
 };
 
 } //namespace di8b
