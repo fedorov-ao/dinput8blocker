@@ -387,14 +387,14 @@ void loop()
       return;
 
     static auto wasPressed = false;
-    auto isPressed = GetKeyState(VK_SCROLL) & 0x8000;
+    auto isPressed = GetKeyState(DI8B_TOGGLE_BLOCK_KEY) & 0x8000;
     if (isPressed && !wasPressed)
     {
       g_state = !g_state;
     }
     wasPressed = isPressed;
 
-    g_state2 = !(GetKeyState(VK_XBUTTON2) & 0x8000);
+    g_state2 = !(GetKeyState(DI8B_UNBLOCK_KEY) & 0x8000);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
