@@ -53,6 +53,7 @@ void log_error(char const * msg)
 
 
 bool g_state = false;
+bool g_state2 = false;
 bool g_exiting = false;
 
 
@@ -139,7 +140,7 @@ HRESULT WINAPI WIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, 
   auto That = reinterpret_cast<WIDirectInputDevice8*>(This);
   auto result = That->pimpl->lpVtbl->GetDeviceData(That->pimpl, cbObjectData, rgdod, pdwInOut, dwFlags);
 
-  if (result == DI_OK && That->deviceKind == DeviceKind::mouse && g_state == true)
+  if (result == DI_OK && That->deviceKind == DeviceKind::mouse && g_state == true && g_state2 == true)
   {
     *pdwInOut = 0;
   }
@@ -392,6 +393,8 @@ void loop()
       g_state = !g_state;
     }
     wasPressed = isPressed;
+
+    g_state2 = !(GetKeyState(VK_XBUTTON2) & 0x8000);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
