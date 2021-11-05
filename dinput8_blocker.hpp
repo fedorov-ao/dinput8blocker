@@ -151,17 +151,17 @@ public:
   virtual ~CIDirectInputDevice8();
 };
 
+class Flag;
+
 class BlockingCIDirectInputDevice8 : public CIDirectInputDevice8
 {
 public:
-  typedef std::function<bool()> check_state_t;
-
   virtual HRESULT GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
 
-  BlockingCIDirectInputDevice8(check_state_t const & check_state);
+  BlockingCIDirectInputDevice8(std::shared_ptr<Flag> const & spFlag);
 
 private:
-  check_state_t check_state;
+  std::shared_ptr<Flag> spFlag_;
 };
 
 

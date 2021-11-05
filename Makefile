@@ -15,5 +15,8 @@ build: $(SOURCES)
 install: build
 	cp $(TARGET) $(INSTALL_PATH)
 
+uninstall:
+	rm $(INSTALL_PATH)/$(TARGET) 
+
 clean:
 	rm  *.o *.def *.lib *.dll

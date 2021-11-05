@@ -53,6 +53,109 @@ void log_error(char const * msg)
   logger() << "[ERROR] " << msg << std::endl;
 }
 
+
+/* Flag */
+class Flag
+{
+public:
+  virtual bool get() const =0;
+
+  virtual ~Flag() =default;
+};
+
+class Tick
+{
+public:
+  virtual void tick() =0;
+
+  virtual ~Tick() =default;
+};
+
+class ToggleTickFlag : public Tick, public Flag
+{
+public:
+  virtual bool get() const { return flag_; }
+
+  virtual void tick()
+  {
+    auto isPressed = GetKeyState(key_) & 0x8000;
+    if (isPressed && !wasPressed_) { flag_ = !flag_; }
+    wasPressed_ = isPressed;
+  }
+
+  ToggleTickFlag(UINT key, bool initial=true)
+    : wasPressed_(false), flag_(initial), key_(key)
+  {
+    wasPressed_ = GetKeyState(key_) & 0x8000;
+  }
+
+private:
+  bool wasPressed_;
+  bool flag_;
+  UINT key_;
+};
+
+class PressTickFlag : public Tick, public Flag
+{
+public:
+  virtual bool get() const { return flag_; }
+
+  virtual void tick()
+  {
+    flag_ = GetKeyState(key_) & 0x8000;
+  }
+
+  PressTickFlag(UINT key) : flag_(false), key_(key) {}
+
+private:
+  bool flag_;
+  UINT key_;
+};
+
+class NotFlag : public Flag
+{
+public:
+  virtual bool get() const { return !spNext_->get(); }
+
+  NotFlag(std::shared_ptr<Flag> const & spNext) : spNext_(spNext) {}
+
+private:
+  std::shared_ptr<Flag> spNext_;
+};
+
+class CompositeFlag : public Flag
+{
+public:
+  virtual bool get() const
+  {
+    auto first = true;
+    auto result = false;
+    for (auto const & spFlag : flags_)
+      result = first ? first = false, spFlag->get() : combine_(result, spFlag->get());
+    return result;
+  }
+
+  CompositeFlag(std::vector<std::shared_ptr<Flag> > const & flags, std::function<bool(bool,bool)> const & combine)
+    : flags_(flags), combine_(combine)
+  {}
+
+private:
+  std::vector<std::shared_ptr<Flag> > flags_;
+  std::function<bool(bool,bool)> combine_;
+};
+
+class ConstantFlag : public Flag
+{
+public:
+  virtual bool get() const { return v_; }
+
+  ConstantFlag(bool v) : v_(v) {}
+
+private:
+  bool v_;
+};
+
+
 /* WIDirectInputDevice8 */
 VIDirectInputDevice8::VIDirectInputDevice8() : QueryInterface(WIDirectInputDevice8::QueryInterface), AddRef(WIDirectInputDevice8::AddRef), Release(WIDirectInputDevice8::Release), GetCapabilities(WIDirectInputDevice8::GetCapabilities), EnumObjects(WIDirectInputDevice8::EnumObjects), GetProperty(WIDirectInputDevice8::GetProperty), SetProperty(WIDirectInputDevice8::SetProperty), Acquire(WIDirectInputDevice8::Acquire), Unacquire(WIDirectInputDevice8::Unacquire), GetDeviceState(WIDirectInputDevice8::GetDeviceState), GetDeviceData(WIDirectInputDevice8::GetDeviceData), SetDataFormat(WIDirectInputDevice8::SetDataFormat), SetEventNotification(WIDirectInputDevice8::SetEventNotification), SetCooperativeLevel(WIDirectInputDevice8::SetCooperativeLevel), GetObjectInfo(WIDirectInputDevice8::GetObjectInfo), GetDeviceInfo(WIDirectInputDevice8::GetDeviceInfo), RunControlPanel(WIDirectInputDevice8::RunControlPanel), Initialize(WIDirectInputDevice8::Initialize), CreateEffect(WIDirectInputDevice8::CreateEffect), EnumEffects(WIDirectInputDevice8::EnumEffects), GetEffectInfo(WIDirectInputDevice8::GetEffectInfo), GetForceFeedbackState(WIDirectInputDevice8::GetForceFeedbackState), SendForceFeedbackCommand(WIDirectInputDevice8::SendForceFeedbackCommand), EnumCreatedEffectObjects(WIDirectInputDevice8::EnumCreatedEffectObjects), Escape(WIDirectInputDevice8::Escape), Poll(WIDirectInputDevice8::Poll), SendDeviceData(WIDirectInputDevice8::SendDeviceData), EnumEffectsInFile(WIDirectInputDevice8::EnumEffectsInFile), WriteEffectToFile(WIDirectInputDevice8::WriteEffectToFile), BuildActionMap(WIDirectInputDevice8::BuildActionMap), SetActionMap(WIDirectInputDevice8::SetActionMap), GetImageInfo(WIDirectInputDevice8::GetImageInfo)
 {}
@@ -471,7 +574,7 @@ HRESULT BlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This,
 {
   auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
 
-  if (result == DI_OK && check_state() == false)
+  if (result == DI_OK && spFlag_->get() == false)
   {
     *pdwInOut = 0;
   }
@@ -479,8 +582,8 @@ HRESULT BlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This,
   return result;
 }
 
-BlockingCIDirectInputDevice8::BlockingCIDirectInputDevice8(BlockingCIDirectInputDevice8::check_state_t const & check_state_)
-  : check_state(check_state_)
+BlockingCIDirectInputDevice8::BlockingCIDirectInputDevice8(std::shared_ptr<Flag> const & spFlag)
+  : spFlag_(spFlag)
 {}
 
 
@@ -691,147 +794,67 @@ FactoryCIDirectInput8::FactoryCIDirectInput8(FactoryCIDirectInput8::make_callbac
 {}
 
 
-class Flag
-{
-public:
-  virtual bool get() const =0;
-
-  virtual ~Flag() =default;
-};
-
-class Tick
-{
-public:
-  virtual void tick() =0;
-
-  virtual ~Tick() =default;
-};
-
-class TickFlag : public Flag, public Tick
-{};
-
-class ToggleFlag : public TickFlag
-{
-public:
-  virtual bool get() const { return flag_; }
-
-  virtual void tick()
-  {
-    auto isPressed = GetKeyState(key_) & 0x8000;
-    if (isPressed && !wasPressed_) { flag_ = !flag_; }
-    wasPressed_ = isPressed;
-  }
-
-  ToggleFlag(UINT key, bool initial=true)
-    : wasPressed_(false), flag_(initial), key_(key)
-  {
-    wasPressed_ = GetKeyState(key_) & 0x8000;
-  }
-
-private:
-  bool wasPressed_;
-  bool flag_;
-  UINT key_;
-};
-
-class PressFlag : public TickFlag
-{
-public:
-  virtual bool get() const { return flag_; }
-
-  virtual void tick()
-  {
-    flag_ = GetKeyState(key_) & 0x8000;
-  }
-
-  PressFlag(UINT key) : flag_(false), key_(key) {}
-
-private:
-  bool flag_;
-  UINT key_;
-};
-
-class NotFlag : public TickFlag
-{
-public:
-  virtual bool get() const { return !spNext_->get(); }
-
-  virtual void tick() { spNext_->tick(); }
-
-  NotFlag(std::shared_ptr<TickFlag> const & spNext) : spNext_(spNext) {}
-
-private:
-  std::shared_ptr<TickFlag> spNext_;
-};
-
-class CompositeFlag : public TickFlag
-{
-public:
-  virtual bool get() const
-  {
-    auto first = true;
-    auto result = false;
-    for (auto const & spFlag : flags_)
-      result = first ? first = false, spFlag->get() : combine_(result, spFlag->get());
-    return result;
-  }
-
-  virtual void tick()
-  {
-    for (auto const & spFlag : flags_)
-      spFlag->tick();
-  }
-
-  CompositeFlag(std::vector<std::shared_ptr<TickFlag> > const & flags, std::function<bool(bool,bool)> const & combine)
-    : flags_(flags), combine_(combine)
-  {}
-
-private:
-  std::vector<std::shared_ptr<TickFlag> > flags_;
-  std::function<bool(bool,bool)> combine_;
-};
-
-
-std::map<DeviceKind, std::shared_ptr<TickFlag> > g_stateFlags;
+std::map<DeviceKind, std::shared_ptr<Flag> > g_stateFlags;
 
 std::unique_ptr<CIDirectInputDevice8> g_make_device_callback(REFGUID rguid)
 {
   auto const deviceKind = get_device_kind(rguid);
   auto const itFlag = g_stateFlags.find(deviceKind);
-  BlockingCIDirectInputDevice8::check_state_t check_state;
-  if (itFlag == g_stateFlags.end())
-    check_state = [](){ return true; };
-  else
-  {
-    auto const & spFlag = itFlag->second;
-    check_state = [spFlag](){ return spFlag->get(); };
-  }
-  return std::unique_ptr<CIDirectInputDevice8>(new BlockingCIDirectInputDevice8(check_state));
+  auto const spFlag = itFlag == g_stateFlags.end() ? std::make_shared<ConstantFlag>(true) : itFlag->second;
+  return std::unique_ptr<CIDirectInputDevice8>(new BlockingCIDirectInputDevice8(spFlag));
 }
 
-bool g_exiting = false;
 
 /* loop */
-void loop()
+class Loop
 {
-  while (!g_exiting)
+public:
+  void operator()()
   {
-    for (auto const & p : g_stateFlags)
-      p.second->tick();
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    while (!exiting_)
+    {
+      for (auto const & spTick : ticks_)
+        spTick->tick();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime_));
   }
-}
+
+  void add_tick(std::shared_ptr<Tick> const & spTick)
+  {
+    ticks_.push_back(spTick);
+  }
+
+  void exit()
+  {
+    exiting_ = true;
+  }
+
+  Loop(unsigned int sleepTime) : ticks_(), sleepTime_(sleepTime) {}
+
+private:
+  std::vector<std::shared_ptr<Tick> > ticks_;
+  bool exiting_ = false;
+  unsigned int sleepTime_;
+};
+
+Loop g_loop (10);
 
 void start_loop()
 {
-  std::vector<std::shared_ptr<TickFlag> > flags;
-  flags.push_back(std::make_shared<ToggleFlag>(DI8B_TOGGLE_BLOCK_KEY, true));
-  flags.push_back(std::make_shared<PressFlag>(DI8B_UNBLOCK_KEY));
-  auto spFlag = std::make_shared<CompositeFlag>(flags, [](bool a, bool b){ return a || b; });
-  g_stateFlags[DeviceKind::mouse] = spFlag;
+  std::vector<std::shared_ptr<Flag>> flags;
+  {
+    auto spTickFlag = std::make_shared<ToggleTickFlag>(DI8B_TOGGLE_BLOCK_KEY, true);
+    flags.push_back(spTickFlag);
+    g_loop.add_tick(spTickFlag);
+  }
+  {
+    auto spTickFlag = std::make_shared<PressTickFlag>(DI8B_UNBLOCK_KEY);
+    flags.push_back(spTickFlag);
+    g_loop.add_tick(spTickFlag);
+  }
+  g_stateFlags[DeviceKind::mouse] = std::make_shared<CompositeFlag>(flags, std::logical_or<bool>());
 
-  std::thread t (loop);
+  std::thread t (&Loop::operator(), &g_loop);
   t.detach();
 }
 
@@ -891,7 +914,7 @@ try {
   if (reason == DLL_PROCESS_DETACH)
   {
     di8b::log_info("Dll detached");
-    di8b::g_exiting = true;
+    di8b::g_loop.exit();
   }
 
   di8b::log_debug("DllMain success");
