@@ -238,19 +238,6 @@ public:
   virtual ~WrappingCIDirectInput8();
 };
 
-class BlockingCIDirectInput8 : public CIDirectInput8
-{
-public:
-  typedef std::map<DeviceKind, BlockingCIDirectInputDevice8::check_state_t> check_states_t;
-
-  virtual HRESULT CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
-
-  BlockingCIDirectInput8(check_states_t const & check_states);
-
-private:
-  check_states_t check_states;
-};
-
 class FactoryCIDirectInput8 : public CIDirectInput8
 {
 public:

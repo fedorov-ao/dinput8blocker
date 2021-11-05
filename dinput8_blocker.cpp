@@ -676,27 +676,6 @@ DeviceKind get_device_kind(REFGUID rguid)
 }
 
 
-/* BlockingCIDirectInput8 */
-HRESULT BlockingCIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
-{
-  HRESULT result = CIDirectInput8::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
-  if (result == S_OK)
-  {
-    auto kind = get_device_kind(rguid);
-    auto check_state = 1 == check_states.count(kind) ? check_states[kind] : [](){ return true; };
-    auto upDeviceCallback = std::unique_ptr<BlockingCIDirectInputDevice8>(new BlockingCIDirectInputDevice8(check_state));
-    auto upDeviceWrapper = std::unique_ptr<WIDirectInputDevice8>(new WIDirectInputDevice8(*lplpDirectInputDevice, upDeviceCallback.get()));
-    *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(upDeviceWrapper.release());
-    upDeviceCallback.release();
-  }
-  return result;
-}
-
-BlockingCIDirectInput8::BlockingCIDirectInput8(BlockingCIDirectInput8::check_states_t const & check_states_)
-  : check_states(check_states_)
-{}
-
-
 /* FactoryCIDirectInput8 */
 HRESULT FactoryCIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
