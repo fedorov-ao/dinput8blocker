@@ -4,7 +4,6 @@
 #include <mingw.thread.h>
 #include <chrono>
 #include <cassert>
-#include <memory>
 
 #define DLLEXPORT __declspec(dllexport)
 
@@ -698,6 +697,42 @@ BlockingCIDirectInput8::BlockingCIDirectInput8(BlockingCIDirectInput8::check_sta
 {}
 
 
+/* FactoryCIDirectInput8 */
+HRESULT FactoryCIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+{
+  HRESULT result = CIDirectInput8::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
+  if (result == S_OK)
+  {
+    auto upDeviceCallback = make_callback_(rguid);
+    auto upDeviceWrapper = std::unique_ptr<WIDirectInputDevice8>(new WIDirectInputDevice8(*lplpDirectInputDevice, upDeviceCallback.get()));
+    *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(upDeviceWrapper.release());
+    upDeviceCallback.release();
+  }
+  return result;
+}
+
+FactoryCIDirectInput8::FactoryCIDirectInput8(FactoryCIDirectInput8::make_callback_t const & make_callback)
+  : make_callback_(make_callback)
+{}
+
+
+std::unique_ptr<CIDirectInputDevice8> g_make_device_callback(REFGUID rguid)
+{
+  auto const deviceKind = get_device_kind(rguid);
+  BlockingCIDirectInputDevice8::check_state_t check_state;
+  switch (deviceKind)
+  {
+    case DeviceKind::mouse:
+      check_state = [](){ return g_state; };
+      break;
+    default:
+      check_state = [](){ return true; };
+      break;
+  }
+  return std::unique_ptr<CIDirectInputDevice8>(new BlockingCIDirectInputDevice8(check_state));
+}
+
+/* loop */
 void loop()
 {
   while (true)
@@ -722,11 +757,8 @@ void loop()
   }
 }
 
-BlockingCIDirectInput8::check_states_t g_check_states;
-
 void start_loop()
 {
-  g_check_states[DeviceKind::mouse] = [&g_state](){ return g_state; };
   std::thread t (loop);
   t.detach();
 }
@@ -806,7 +838,7 @@ DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, RE
   HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
   if (result == S_OK)
   {
-    auto upCallback = std::unique_ptr<di8b::BlockingCIDirectInput8>(new di8b::BlockingCIDirectInput8(di8b::g_check_states));
+    auto upCallback = std::unique_ptr<di8b::FactoryCIDirectInput8>(new di8b::FactoryCIDirectInput8(di8b::g_make_device_callback));
     auto pIDirectInput8 = reinterpret_cast<IDirectInput8*>(*ppvOut);
     auto upWrapper = std::unique_ptr<di8b::WIDirectInput8>(new di8b::WIDirectInput8(pIDirectInput8, upCallback.get()));
     *ppvOut = upWrapper.release();

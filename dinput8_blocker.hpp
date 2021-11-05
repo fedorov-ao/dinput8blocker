@@ -9,6 +9,7 @@
 #include <fstream>
 #include <functional>
 #include <map>
+#include <memory>
 #include <windows.h>
 #include <olectl.h>
 #include <dinput.h>
@@ -248,6 +249,19 @@ public:
 
 private:
   check_states_t check_states;
+};
+
+class FactoryCIDirectInput8 : public CIDirectInput8
+{
+public:
+  typedef std::function<std::unique_ptr<CIDirectInputDevice8> (REFGUID)> make_callback_t;
+
+  virtual HRESULT CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+
+  FactoryCIDirectInput8(make_callback_t const & make_callback);
+
+private:
+  make_callback_t make_callback_;
 };
 
 } //namespace di8b
