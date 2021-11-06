@@ -1,5 +1,6 @@
 #include <dinput8_blocker.hpp>
 #include <vector>
+#include <algorithm>
 #include <ctime>
 #include <iomanip>
 #include <mingw.thread.h>
@@ -813,17 +814,39 @@ public:
   {
     while (!exiting_)
     {
+      if (dirty_) 
+      {
+        cleanup();
+        dirty_ = false;
+      }
+
       for (auto const & spTick : ticks_)
-        spTick->tick();
+        if (spTick)
+          spTick->tick();
+
+      std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime_));
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime_));
   }
 
-  void add_tick(std::shared_ptr<Tick> const & spTick)
+  bool add_tick(std::shared_ptr<Tick> const & spTick)
   {
+    if (spTick && std::find(ticks_.cbegin(), ticks_.cend(), spTick) != ticks_.end()) return false;
     ticks_.push_back(spTick);
+    return true;
   }
 
+  bool remove_tick(std::shared_ptr<Tick> const & spTick)
+  {
+    auto itTick = std::find(ticks_.begin(), ticks_.end(), spTick);
+    if (itTick != ticks_.end())
+    {
+      itTick->reset();
+      dirty_ = true;
+      return true;
+    }
+    return false;
+  }
+  
   void exit()
   {
     exiting_ = true;
@@ -832,8 +855,14 @@ public:
   Loop(unsigned int sleepTime) : ticks_(), sleepTime_(sleepTime) {}
 
 private:
+  void cleanup()
+  {
+    ticks_.erase(std::remove(ticks_.begin(), ticks_.end(), nullptr), ticks_.end());
+  }
+
   std::vector<std::shared_ptr<Tick> > ticks_;
   bool exiting_ = false;
+  bool dirty_ = false;
   unsigned int sleepTime_;
 };
 
