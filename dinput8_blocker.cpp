@@ -72,6 +72,65 @@ public:
   virtual ~Tick() =default;
 };
 
+
+enum class KeyEventType : int { pressed=0, released=1 };
+
+class KeyListenerTick : public Tick
+{
+public:
+  typedef UINT key_t;
+  typedef unsigned int callback_handle_t;
+  typedef std::function<void()> callback_t;
+
+  virtual void tick()
+  {
+    auto isPressed = GetKeyState(key_) & 0x8000;
+    if (isPressed != wasPressed_)
+    {
+      auto const ket = isPressed && !wasPressed_ ? KeyEventType::pressed : KeyEventType::released;
+      for (auto & p : callbacks_[static_cast<int>(ket)])
+        p.first();
+      wasPressed_ = isPressed;
+    }
+  }
+
+  callback_handle_t add(KeyEventType ket, callback_t const & cb)
+  {
+    auto handle = handles_ + 1;
+    callbacks_[static_cast<int>(ket)].push_back(std::make_pair(cb, handle));
+    ++handles_;
+    if (handles_ == 0) ++handles_;
+    return handle;
+  }
+
+  bool remove(callback_handle_t const & ch)
+  {
+    KeyEventType const kets[] = { KeyEventType::pressed, KeyEventType::released };
+    for (auto const & ket : kets)
+    {
+      auto cbs = callbacks_[static_cast<int>(ket)];
+      auto it = std::find_if(cbs.begin(), cbs.end(), [&ch](decltype(cbs)::value_type const & v){ return v.second == ch; });
+      if (it != cbs.end())
+      {
+        cbs.erase(it);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  KeyListenerTick(key_t key) : key_(key) {}
+
+private:
+  typedef std::vector<std::pair<callback_t, callback_handle_t> > callbacks_t;
+  callbacks_t callbacks_[2];
+  callback_handle_t handles_ = 0;
+
+  key_t key_;
+  bool wasPressed_ = false;
+};
+
+
 class ToggleTickFlag : public Tick, public Flag
 {
 public:
