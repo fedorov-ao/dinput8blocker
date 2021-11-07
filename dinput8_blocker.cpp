@@ -420,7 +420,6 @@ try {
     di8b::log_info("Dll detached");
   }
 
-  di8b::log_debug("DllMain success");
   return TRUE;
 } catch (std::exception const & e)
 {
