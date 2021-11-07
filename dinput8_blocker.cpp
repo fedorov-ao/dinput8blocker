@@ -105,7 +105,12 @@ public:
     assert(cb_);
     assert(spFlag_);
 
-    cb_(spFlag_->get());
+    bool b = spFlag_->get();
+    if (b != b_)
+    {
+      cb_(b);
+      b_ = b;
+    }
   }
 
   CallbackTick(callback_t const & cb, std::shared_ptr<Flag> const & spFlag)
@@ -113,9 +118,12 @@ public:
   {
     if (!cb) throw std::runtime_error("Callback is empty");
     if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
+    b_ = spFlag_->get();
+    cb_(b_);
   }
 
 private:
+  bool b_ = false;
   callback_t cb_;
   std::shared_ptr<Flag> spFlag_;
 };
