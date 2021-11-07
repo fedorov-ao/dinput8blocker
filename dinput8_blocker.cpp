@@ -86,7 +86,7 @@ public:
 
   void add(std::shared_ptr<Tick> const & spTick)
   {
-    if (!spTick) throw std::argument_error("Tick pointer is NULL");
+    if (!spTick) throw std::runtime_error("Tick pointer is NULL");
     ticks_.push_back(spTick);
   }
 
@@ -111,8 +111,8 @@ public:
   CallbackTick(callback_t const & cb, std::shared_ptr<Flag> const & spFlag)
     : cb_(cb), spFlag_(spFlag)
   {
-    if (!cb) throw std::argument_error("Callback is empty");
-    if (!spFlag) throw std::argument_error("Flag pointer is NULL");
+    if (!cb) throw std::runtime_error("Callback is empty");
+    if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
   }
 
 private:
@@ -139,10 +139,10 @@ public:
       dirty_ = false;
     }
 
-    auto isPressed = GetKeyState(key_) & 0x8000;
+    bool isPressed = GetKeyState(key_) & 0x8000;
     if (isPressed != wasPressed_)
     {
-      auto const ket = isPressed && !wasPressed_ ? KeyEventType::pressed : KeyEventType::released;
+      auto const ket = (isPressed && !wasPressed_) ? KeyEventType::pressed : KeyEventType::released;
       for (auto & p : callbacks_[static_cast<int>(ket)])
         if (p.second != 0)
           p.first();
@@ -272,7 +272,7 @@ public:
 
   void add(std::shared_ptr<Flag> const & spFlag)
   {
-    if (!spFlag) throw std::argument_error("Flag pointer is NULL");
+    if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
     flags_.push_back(spFlag);
   }
 
@@ -284,7 +284,7 @@ public:
     : flags_(flags), combine_(combine)
   {
     for (auto const & spFlag : flags)
-      if (!spFlag) throw std::argument_error("Flag pointer is NULL");
+      if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
   }
 
 private:
@@ -1027,18 +1027,27 @@ Loop g_loop (10);
 
 void start_loop()
 {
-  std::vector<std::shared_ptr<Flag>> flags;
+  /* TODO Move this into factory and create when device is created. */
+  auto spCompositeFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
+  auto spCompositeTick = std::make_shared<CompositeTick>();
+
   {
-    auto spTickFlag = std::make_shared<ToggleTickFlag>(DI8B_TOGGLE_BLOCK_KEY, true);
-    flags.push_back(spTickFlag);
-    g_loop.add_tick(spTickFlag);
+    auto spFlag = std::make_shared<ConstantFlag>(true);
+    auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_TOGGLE_BLOCK_KEY);
+    spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(!spFlag->get()); });
+    spCompositeFlag->add(spFlag);
+    spCompositeTick->add(spKeyTick);
   }
   {
-    auto spTickFlag = std::make_shared<PressTickFlag>(DI8B_UNBLOCK_KEY);
-    flags.push_back(spTickFlag);
-    g_loop.add_tick(spTickFlag);
+    auto spFlag = std::make_shared<ConstantFlag>(false);
+    auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_UNBLOCK_KEY);
+    spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(true); });
+    spKeyTick->add(KeyEventType::released, [spFlag](){ spFlag->set(false); });
+    spCompositeFlag->add(spFlag);
+    spCompositeTick->add(spKeyTick);
   }
-  g_stateFlags[DeviceKind::mouse] = std::make_shared<CompositeFlag>(flags, std::logical_or<bool>());
+  g_stateFlags[DeviceKind::mouse] = spCompositeFlag;
+  g_loop.add_tick(spCompositeTick);
 
   std::thread t (&Loop::operator(), &g_loop);
   t.detach();
