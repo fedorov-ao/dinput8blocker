@@ -1112,7 +1112,6 @@ try {
     di8b::g_loop.exit();
   }
 
-  di8b::log_debug("DllMain success");
   return TRUE;
 } catch (std::exception const & e)
 {
