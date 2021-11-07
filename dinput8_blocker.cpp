@@ -208,6 +208,7 @@ class ConstantFlag : public Flag
 {
 public:
   virtual bool get() const { return v_; }
+  void set(bool b) { v_ = b; }
 
   ConstantFlag(bool v) : v_(v) {}
 
