@@ -984,14 +984,17 @@ FactoryCIDirectInput8::FactoryCIDirectInput8(FactoryCIDirectInput8::make_callbac
 {}
 
 
-std::map<DeviceKind, std::shared_ptr<Flag> > g_stateFlags;
+std::map<DeviceKind, std::function<std::unique_ptr<CIDirectInputDevice8>()> > g_deviceFactoies;
 
 std::unique_ptr<CIDirectInputDevice8> g_make_device_callback(REFGUID rguid)
 {
   auto const deviceKind = get_device_kind(rguid);
-  auto const itFlag = g_stateFlags.find(deviceKind);
-  auto const spFlag = itFlag == g_stateFlags.end() ? std::make_shared<ConstantFlag>(true) : itFlag->second;
-  return std::unique_ptr<CIDirectInputDevice8>(new BlockingCIDirectInputDevice8(spFlag));
+  auto const itFactory = g_deviceFactoies.find(deviceKind);
+  auto upDevice =
+    itFactory == g_deviceFactoies.end() ?
+    std::unique_ptr<CIDirectInputDevice8>(new CIDirectInputDevice8) :
+    itFactory->second();
+  return upDevice;
 }
 
 
@@ -1064,33 +1067,53 @@ private:
   unsigned int sleepTime_;
 };
 
-Loop g_loop (10);
+Loop * g_pLoop;
 
 void start_loop()
 {
-  /* TODO Move this into factory and create when device is created. */
-  auto spCompositeFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
-  auto spCompositeTick = std::make_shared<CompositeTick>();
+  g_pLoop = new Loop (10);
 
+  g_deviceFactoies[DeviceKind::mouse] = [g_pLoop]()
   {
-    auto spFlag = std::make_shared<ConstantFlag>(true);
-    auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_TOGGLE_BLOCK_KEY);
-    spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(!spFlag->get()); });
-    spCompositeFlag->add(spFlag);
-    spCompositeTick->add(spKeyTick);
-  }
-  {
-    auto spFlag = std::make_shared<ConstantFlag>(false);
-    auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_UNBLOCK_KEY);
-    spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(true); });
-    spKeyTick->add(KeyEventType::released, [spFlag](){ spFlag->set(false); });
-    spCompositeFlag->add(spFlag);
-    spCompositeTick->add(spKeyTick);
-  }
-  g_stateFlags[DeviceKind::mouse] = spCompositeFlag;
-  g_loop.add_tick(spCompositeTick);
+    auto spCompositeFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
+    auto spCompositeTick = std::make_shared<CompositeTick>();
+    auto pCompositeTick = spCompositeTick.get();
 
-  std::thread t (&Loop::operator(), &g_loop);
+    auto onDestroy = [g_pLoop, pCompositeTick]()
+    {
+      /* TODO Guard with mutex. */
+      g_pLoop->remove_tick(pCompositeTick);
+    };
+
+    std::unique_ptr<BoundBlockingCIDirectInputDevice8> upDevice (new BoundBlockingCIDirectInputDevice8 (true, onDestroy));
+
+    {
+      auto spFlag = std::make_shared<ConstantFlag>(true);
+      auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_TOGGLE_BLOCK_KEY);
+      spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(!spFlag->get()); });
+      spCompositeFlag->add(spFlag);
+      spCompositeTick->add(spKeyTick);
+    }
+    {
+      auto spFlag = std::make_shared<ConstantFlag>(false);
+      auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_UNBLOCK_KEY);
+      spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(true); });
+      spKeyTick->add(KeyEventType::released, [spFlag](){ spFlag->set(false); });
+      spCompositeFlag->add(spFlag);
+      spCompositeTick->add(spKeyTick);
+    }
+    {
+      auto pDevice = upDevice.get();
+      /* TODO Guard set_state() with mutex. */
+      auto spTick = std::make_shared<CallbackTick>([pDevice](bool b){ pDevice->set_state(b); }, spCompositeFlag);
+      spCompositeTick->add(spTick);
+    }
+
+    g_pLoop->add_tick(spCompositeTick);
+    return upDevice;
+  };
+
+  std::thread t (&Loop::operator(), g_pLoop);
   t.detach();
 }
 
@@ -1150,7 +1173,7 @@ try {
   if (reason == DLL_PROCESS_DETACH)
   {
     di8b::log_info("Dll detached");
-    di8b::g_loop.exit();
+    di8b::g_pLoop->exit();
   }
 
   return TRUE;
