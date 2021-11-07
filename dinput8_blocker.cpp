@@ -73,6 +73,54 @@ public:
 };
 
 
+class CompositeTick : public Tick
+{
+public:
+  virtual void tick()
+  {
+    for (auto const & pt : ticks_)
+    {
+      pt->tick();
+    }
+  }
+
+  void add(std::shared_ptr<Tick> const & spTick)
+  {
+    assert(spTick);
+    ticks_.push_back(spTick);
+  }
+
+private:
+  std::vector<std::shared_ptr<Tick> > ticks_;
+};
+
+
+class CallbackTick : public Tick
+{
+public:
+  typedef std::function<void(bool)> callback_t;
+
+  virtual void tick()
+  {
+    assert(cb_);
+    assert(spFlag_);
+
+    cb_(spFlag_->get());
+  }
+
+  CallbackTick(callback_t const & cb, std::shared_ptr<Flag> const & spFlag)
+    : cb_(cb), spFlag_(spFlag)
+  {
+    assert(cb);
+    assert(spFlag);
+  }
+
+private:
+  callback_t cb_;
+  std::shared_ptr<Flag> spFlag_;
+};
+
+
 enum class KeyEventType : int { pressed=0, released=1 };
 
 class KeyListenerTick : public Tick
