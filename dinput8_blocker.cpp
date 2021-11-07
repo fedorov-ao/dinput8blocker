@@ -86,7 +86,7 @@ public:
 
   void add(std::shared_ptr<Tick> const & spTick)
   {
-    assert(spTick);
+    if (!spTick) throw std::argument_error("Tick pointer is NULL");
     ticks_.push_back(spTick);
   }
 
@@ -111,8 +111,8 @@ public:
   CallbackTick(callback_t const & cb, std::shared_ptr<Flag> const & spFlag)
     : cb_(cb), spFlag_(spFlag)
   {
-    assert(cb);
-    assert(spFlag);
+    if (!cb) throw std::argument_error("Callback is empty");
+    if (!spFlag) throw std::argument_error("Flag pointer is NULL");
   }
 
 private:
@@ -270,9 +270,22 @@ public:
     return result;
   }
 
+  void add(std::shared_ptr<Flag> const & spFlag)
+  {
+    if (!spFlag) throw std::argument_error("Flag pointer is NULL");
+    flags_.push_back(spFlag);
+  }
+
+  CompositeFlag(std::function<bool(bool,bool)> const & combine)
+    : flags_(), combine_(combine)
+  {}
+
   CompositeFlag(std::vector<std::shared_ptr<Flag> > const & flags, std::function<bool(bool,bool)> const & combine)
     : flags_(flags), combine_(combine)
-  {}
+  {
+    for (auto const & spFlag : flags)
+      if (!spFlag) throw std::argument_error("Flag pointer is NULL");
+  }
 
 private:
   std::vector<std::shared_ptr<Flag> > flags_;
