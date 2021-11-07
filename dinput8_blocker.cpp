@@ -736,6 +736,39 @@ BlockingCIDirectInputDevice8::BlockingCIDirectInputDevice8(std::shared_ptr<Flag>
 {}
 
 
+/* BoundBlockingCIDirectInputDevice8 */
+HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+{
+  auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
+
+  if (result == DI_OK && state_ == false)
+  {
+    *pdwInOut = 0;
+  }
+
+  return result;
+}
+
+void BoundBlockingCIDirectInputDevice8::set_state(bool s)
+{
+  state_ = s;
+}
+
+bool BoundBlockingCIDirectInputDevice8::get_state() const
+{
+  return state_;
+}
+
+BoundBlockingCIDirectInputDevice8::BoundBlockingCIDirectInputDevice8(bool state, BoundBlockingCIDirectInputDevice8::on_destroy_t const & onDestroy)
+  : state_(state), onDestroy_(onDestroy)
+{}
+
+BoundBlockingCIDirectInputDevice8::~BoundBlockingCIDirectInputDevice8()
+{
+  if (onDestroy_) onDestroy_();
+}
+
+
 /* WIDirectInput8 */
 VIDirectInput8::VIDirectInput8() : QueryInterface(WIDirectInput8::QueryInterface), AddRef(WIDirectInput8::AddRef), Release(WIDirectInput8::Release), CreateDevice(WIDirectInput8::CreateDevice), EnumDevices(WIDirectInput8::EnumDevices), GetDeviceStatus(WIDirectInput8::GetDeviceStatus), RunControlPanel(WIDirectInput8::RunControlPanel), Initialize(WIDirectInput8::Initialize), FindDevice(WIDirectInput8::FindDevice), EnumDevicesBySemantics(WIDirectInput8::EnumDevicesBySemantics), ConfigureDevices(WIDirectInput8::ConfigureDevices)
 {}

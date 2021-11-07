@@ -165,6 +165,25 @@ private:
 };
 
 
+class BoundBlockingCIDirectInputDevice8 : public CIDirectInputDevice8
+{
+public:
+  typedef std::function<void()> on_destroy_t;
+
+  virtual HRESULT GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+
+  void set_state(bool s);
+  bool get_state() const;
+
+  BoundBlockingCIDirectInputDevice8(bool state, on_destroy_t const & onDestroy = on_destroy_t());
+  ~BoundBlockingCIDirectInputDevice8();
+
+private:
+  bool state_;
+  on_destroy_t onDestroy_;
+};
+
+
 struct VIDirectInput8
 {
   HRESULT (WINAPI *QueryInterface)(::IDirectInput8* This, REFIID riid, void** ppvObject);
