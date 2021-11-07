@@ -814,7 +814,7 @@ public:
   {
     while (!exiting_)
     {
-      if (dirty_) 
+      if (dirty_)
       {
         cleanup();
         dirty_ = false;
@@ -835,9 +835,13 @@ public:
     return true;
   }
 
-  bool remove_tick(std::shared_ptr<Tick> const & spTick)
+  bool remove_tick(Tick const * pTick)
   {
-    auto itTick = std::find(ticks_.begin(), ticks_.end(), spTick);
+    auto itTick = std::find_if(
+      ticks_.begin(),
+      ticks_.end(),
+      [pTick](std::shared_ptr<Tick> const & spTick){ return spTick.get() == pTick; }
+    );
     if (itTick != ticks_.end())
     {
       itTick->reset();
@@ -846,7 +850,12 @@ public:
     }
     return false;
   }
-  
+
+  bool remove_tick(std::shared_ptr<Tick> const & spTick)
+  {
+    return remove_tick(spTick.get());
+  }
+
   void exit()
   {
     exiting_ = true;
