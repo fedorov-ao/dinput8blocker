@@ -84,13 +84,28 @@ public:
 
   virtual void tick()
   {
+    /* In case some callbacks were removed between tick() calls. */
+    if (dirty_ == true)
+    {
+      cleanup();
+      dirty_ = false;
+    }
+
     auto isPressed = GetKeyState(key_) & 0x8000;
     if (isPressed != wasPressed_)
     {
       auto const ket = isPressed && !wasPressed_ ? KeyEventType::pressed : KeyEventType::released;
       for (auto & p : callbacks_[static_cast<int>(ket)])
-        p.first();
+        if (p.second != 0)
+          p.first();
       wasPressed_ = isPressed;
+    }
+
+    /* In case some callbacks were removed during this tick() call (i.e. by callback itself). */
+    if (dirty_ == true)
+    {
+      cleanup();
+      dirty_ = false;
     }
   }
 
@@ -112,7 +127,8 @@ public:
       auto it = std::find_if(cbs.begin(), cbs.end(), [&ch](decltype(cbs)::value_type const & v){ return v.second == ch; });
       if (it != cbs.end())
       {
-        cbs.erase(it);
+        it->second = 0;
+        dirty_ = true;
         return true;
       }
     }
@@ -122,12 +138,23 @@ public:
   KeyListenerTick(key_t key) : key_(key) {}
 
 private:
+  void cleanup()
+  {
+    KeyEventType const kets[] = { KeyEventType::pressed, KeyEventType::released };
+    for (auto const & ket : kets)
+    {
+      auto cbs = callbacks_[static_cast<int>(ket)];
+      cbs.erase(std::remove_if(cbs.begin(), cbs.end(), [](decltype(cbs)::value_type & v) { return v.second == 0; }), cbs.end());
+    }
+  }
+
   typedef std::vector<std::pair<callback_t, callback_handle_t> > callbacks_t;
   callbacks_t callbacks_[2];
   callback_handle_t handles_ = 0;
 
   key_t key_;
   bool wasPressed_ = false;
+  bool dirty_ = false;
 };
 
 
