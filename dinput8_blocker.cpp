@@ -1062,6 +1062,40 @@ std::unique_ptr<CIDirectInputDevice8> g_make_device_callback(REFGUID rguid)
 }
 
 
+/* config */
+typedef std::map<std::string, std::map<std::string, std::string> > config_t;
+config_t g_config;
+
+void parse_config()
+{
+  log_debug("Parsing config");
+
+  auto m = config_t::mapped_type();
+
+#if(0)
+  auto file = std::fopen("dinput8_blocker.ini", "r");
+  if (!file)
+    throw std::runtime_error(std::string("Can't open config: ") + std::strerror(errno));
+  char buf[128], k[64], v[64];
+  while (std::fgets(buf, sizeof(buf), file) != nullptr)
+  {
+    log_debug("Parsing: %s", buf);
+    auto i = std::sscanf(buf, "%s=%s\n", k, v);
+    if (i == 0 || i == EOF)
+      throw std::runtime_error(std::string("Can't parse line: ") + buf);
+    log_debug("Parsed: %s=%s", k, v);
+    m[k] = v; 
+  }
+#else
+  m["toggleKey"] = "SCROLL";
+  m["unblockKey"] = "XBUTTON2";
+#endif
+  g_config["mouse"] = m;
+
+  log_debug("Parsed config");
+}
+
+
 /* loop */
 class Loop
 {
@@ -1168,15 +1202,21 @@ void start_loop()
     std::unique_ptr<BoundBlockingCIDirectInputDevice8> upDevice (new BoundBlockingCIDirectInputDevice8 (true, onDestroy));
 
     {
+      /* TODO Error checking.*/
+      auto & keyName = g_config["mouse"]["toggleKey"];
+      auto key = name2key(keyName.c_str());
       auto spFlag = std::make_shared<ConstantFlag>(true);
-      auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_TOGGLE_BLOCK_KEY);
+      auto spKeyTick = std::make_shared<KeyListenerTick>(key);
       spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(!spFlag->get()); });
       spCompositeFlag->add(spFlag);
       spCompositeTick->add(spKeyTick);
     }
     {
+      /* TODO Error checking.*/
+      auto & keyName = g_config["mouse"]["unblockKey"];
+      auto key = name2key(keyName.c_str());
       auto spFlag = std::make_shared<ConstantFlag>(false);
-      auto spKeyTick = std::make_shared<KeyListenerTick>(DI8B_UNBLOCK_KEY);
+      auto spKeyTick = std::make_shared<KeyListenerTick>(key);
       spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(true); });
       spKeyTick->add(KeyEventType::released, [spFlag](){ spFlag->set(false); });
       spCompositeFlag->add(spFlag);
@@ -1247,6 +1287,7 @@ try {
   if (reason == DLL_PROCESS_ATTACH)
   {
     di8b::log_info("Dll attached");
+    di8b::parse_config();
     di8b::g_imports.fill();
     di8b::start_loop();
   }
