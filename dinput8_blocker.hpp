@@ -6,7 +6,6 @@
 
 #include <cstring>
 #include <stdexcept>
-#include <fstream>
 #include <functional>
 #include <map>
 #include <memory>
@@ -17,6 +16,9 @@
 
 namespace di8b
 {
+
+UINT name2key(char const * name);
+char const * key2name(UINT key);
 
 enum class LogLevel { debug, info, error };
 
