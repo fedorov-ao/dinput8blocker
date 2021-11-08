@@ -6,62 +6,93 @@
 #include <mingw.thread.h>
 #include <mingw.mutex.h>
 #include <chrono>
+#include <cstdio>
+#include <cstdarg>
 #include <cassert>
+
 
 #define DLLEXPORT __declspec(dllexport)
 
 namespace di8b
 {
 
-struct print_time
-{
-  char const * fmt_;
-  print_time(char const * fmt) : fmt_(fmt) {}
-};
-
-std::ostream & operator<< (std::ostream & os, print_time const & pt)
-{
-  auto tNow = std::time(nullptr);
-  auto tmNow = std::localtime(&tNow);
-  return os << std::put_time(tmNow, pt.fmt_);
-}
-
-std::ostream & logger()
-{
-  static std::ofstream of ("dinput8_blocker.log");
-  static struct Reporter
-  {
-    char const * fmt = "%d.%m.%Y %H:%M:%S";
-    Reporter() { of << "Logging started at " << print_time(fmt) << std::endl; }
-    ~Reporter() { of << "Logging ended at " << print_time(fmt) << std::endl; }
-  } reporter;
-  auto tNow = std::time(nullptr);
-  auto tmNow = std::localtime(&tNow);
-  return of << print_time("%H:%M:%S: ");
-}
-
-enum class LogLevel { debug, info, error };
-
-char const * logLevel_to_name(LogLevel level)
+char const * ll2cs(LogLevel level)
 {
   return level == LogLevel::debug ? "DEBUG" :
     level == LogLevel::info ? "INFO" :
     level == LogLevel::error ? "ERROR" : "";
 }
 
-void log_debug(char const * msg)
+int ct2cs(char * buf, int n, char const * fmt)
 {
-  logger() << "[DEBUG] " << msg << std::endl;
+  auto tNow = std::time(nullptr);
+  auto tmNow = std::localtime(&tNow);
+  return std::strftime(buf, n, fmt, tmNow);
 }
 
-void log_info(char const * msg)
+void log(LogLevel level, char const * fmt, ...)
 {
-  logger() << "[INFO] " << msg << std::endl;
+  static char const * fname = "dinput8_blocker.log";
+  static auto * f = std::fopen(fname, "w");
+  struct Fmgr
+  {
+    Fmgr(std::FILE * f) : f_(f)
+    {
+      char const * fmt = "%d.%m.%Y %H:%M:%S";
+      char buf [128] = {0};
+      ct2cs(buf, sizeof(buf), fmt);
+      std::fprintf(f_, "Logging started at %s\n", buf);
+      std::fflush(f_);
+    }
+    ~Fmgr()
+    {
+      char const * fmt = "%d.%m.%Y %H:%M:%S";
+      char buf [128] = {0};
+      ct2cs(buf, sizeof(buf), fmt);
+      std::fprintf(f_, "Logging ended at %s\n", buf);
+      std::fflush(f_);
+      std::fclose(f_);
+    }
+    std::FILE * f_; 
+  };
+  static Fmgr fmgr (f);
+
+  static std::mutex m;
+
+  std::lock_guard<std::mutex> l (m);
+  char buf[128] = {0};
+  ct2cs(buf, sizeof(buf), "%H:%M:%S");
+  std::fprintf(f, "%s: [%s] ", buf, ll2cs(level));
+  std::va_list args;
+  va_start(args, fmt);
+  std::vfprintf(f, fmt, args);
+  va_end(args);
+  std::fprintf(f, "\n");
+  std::fflush(f);
 }
 
-void log_error(char const * msg)
+void log_debug(char const * fmt, ...)
 {
-  logger() << "[ERROR] " << msg << std::endl;
+  std::va_list args;
+  va_start(args, fmt);
+  log(LogLevel::debug, fmt, args);
+  va_end(args);
+}
+
+void log_info(char const * fmt, ...)
+{
+  std::va_list args;
+  va_start(args, fmt);
+  log(LogLevel::info, fmt, args);
+  va_end(args);
+}
+
+void log_error(char const * fmt, ...)
+{
+  std::va_list args;
+  va_start(args, fmt);
+  log(LogLevel::error, fmt, args);
+  va_end(args);
 }
 
 

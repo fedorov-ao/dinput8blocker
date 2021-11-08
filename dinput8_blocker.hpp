@@ -18,11 +18,13 @@
 namespace di8b
 {
 
-std::ostream & logger();
+enum class LogLevel { debug, info, error };
 
-void log_debug(char const * msg);
-void log_info(char const * msg);
-void log_error(char const * msg);
+void log(LogLevel level, char const * fmt, ...);
+
+void log_debug(char const * fmt, ...);
+void log_info(char const * fmt, ...);
+void log_error(char const * fmt, ...);
 
 enum class DeviceKind { mouse, keyboard, joystick, other };
 
