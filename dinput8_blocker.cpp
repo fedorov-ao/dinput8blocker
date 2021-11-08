@@ -1074,35 +1074,21 @@ void parse_config()
 
   auto m = config_t::mapped_type();
 
-#if(1)
   char buf[128] = {0};
   char k[64] = {0};
   char v[64] = {0};
-#if(0)
   auto file = std::fopen("dinput8_blocker.ini", "r");
   if (!file)
     throw std::runtime_error(std::string("Can't open config: ") + std::strerror(errno));
-  std::fread(buf, sizeof(buf[0]), sizeof(buf), file);
-  buf[sizeof(buf)-1] = '\0';
-  std::rewind(file);
-  log_debug("Config contents: %s", buf);
   while (std::fgets(buf, sizeof(buf), file) != nullptr)
-#else
-  auto file = std::ifstream("dinput8_blocker.ini");
-  while (file.getline(buf, sizeof(buf)))
-#endif
   {
-    log_debug("Parsing: %s", buf);
-    auto i = std::sscanf(buf, "%s=%s\n", k, v);
-    if (i == 0 || i == EOF)
+    buf[std::strlen(buf)-1] = '\0';
+    auto i = std::sscanf(buf, "%[^= \t\n\r]=%[^= \t\n\r]", k, v);
+    log_debug("Parsed: buf: %s; k:%s; v:%s", buf, k, v);
+    if (i != 2)
       throw std::runtime_error(std::string("Can't parse line: ") + buf);
-    log_debug("Parsed: %s=%s", k, v);
     m[k] = v; 
   }
-#else
-  m["toggleKey"] = "SCROLL";
-  m["unblockKey"] = "XBUTTON2";
-#endif
   g_config["mouse"] = m;
 
   log_debug("Parsed config");
