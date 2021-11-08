@@ -4,6 +4,7 @@
 #include <ctime>
 #include <iomanip>
 #include <mingw.thread.h>
+#include <mingw.mutex.h>
 #include <chrono>
 #include <cassert>
 
@@ -1002,10 +1003,15 @@ std::unique_ptr<CIDirectInputDevice8> g_make_device_callback(REFGUID rguid)
 class Loop
 {
 public:
+  typedef std::recursive_mutex mutex_t;
+  typedef std::unique_lock<mutex_t> lock_t;
+
   void operator()()
   {
     while (!exiting_)
     {
+      lock_t l (mutex_);
+
       if (dirty_)
       {
         cleanup();
@@ -1016,12 +1022,15 @@ public:
         if (spTick)
           spTick->tick();
 
+      l.unlock();
+
       std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime_));
     }
   }
 
   bool add_tick(std::shared_ptr<Tick> const & spTick)
   {
+    lock_t l (mutex_);
     if (spTick && std::find(ticks_.cbegin(), ticks_.cend(), spTick) != ticks_.end()) return false;
     ticks_.push_back(spTick);
     return true;
@@ -1029,6 +1038,7 @@ public:
 
   bool remove_tick(Tick const * pTick)
   {
+    lock_t l (mutex_);
     auto itTick = std::find_if(
       ticks_.begin(),
       ticks_.end(),
@@ -1053,6 +1063,11 @@ public:
     exiting_ = true;
   }
 
+  mutex_t & get_mutex()
+  {
+    return mutex_;
+  }
+
   Loop(unsigned int sleepTime) : ticks_(), sleepTime_(sleepTime) {}
 
 private:
@@ -1065,6 +1080,8 @@ private:
   bool exiting_ = false;
   bool dirty_ = false;
   unsigned int sleepTime_;
+
+  mutex_t mutex_;
 };
 
 Loop * g_pLoop;
@@ -1073,15 +1090,15 @@ void start_loop()
 {
   g_pLoop = new Loop (10);
 
-  g_deviceFactoies[DeviceKind::mouse] = [g_pLoop]()
+  g_deviceFactoies[DeviceKind::mouse] = []()
   {
     auto spCompositeFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
     auto spCompositeTick = std::make_shared<CompositeTick>();
     auto pCompositeTick = spCompositeTick.get();
 
-    auto onDestroy = [g_pLoop, pCompositeTick]()
+    auto onDestroy = [pCompositeTick]()
     {
-      /* TODO Guard with mutex. */
+      Loop::lock_t l (g_pLoop->get_mutex());
       g_pLoop->remove_tick(pCompositeTick);
     };
 
@@ -1104,11 +1121,12 @@ void start_loop()
     }
     {
       auto pDevice = upDevice.get();
-      /* TODO Guard set_state() with mutex. */
+      /* TODO Guard set_state() with mutex or make state_ atomic. */
       auto spTick = std::make_shared<CallbackTick>([pDevice](bool b){ pDevice->set_state(b); }, spCompositeFlag);
       spCompositeTick->add(spTick);
     }
 
+    Loop::lock_t l (g_pLoop->get_mutex());
     g_pLoop->add_tick(spCompositeTick);
     return upDevice;
   };
