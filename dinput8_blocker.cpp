@@ -363,7 +363,7 @@ VIDirectInputDevice8 const WIDirectInputDevice8::vIDirectInputDevice8;
 WIDirectInputDevice8::WIDirectInputDevice8(::IDirectInputDevice8* pNative, CIDirectInputDevice8* pCallback)
   : pVtbl_(&vIDirectInputDevice8), pNative_(pNative), pCallback_(pCallback)
 {
-  log_debug("WIDirectInputDevice8::WIDirectInputDevice8()");
+  log_debug("WIDirectInputDevice8::WIDirectInputDevice8(%p)", this);
 }
 
 HRESULT WINAPI WIDirectInputDevice8::QueryInterface(::IDirectInputDevice8* This, REFIID riid, void** ppvObject)
@@ -387,7 +387,7 @@ ULONG WINAPI WIDirectInputDevice8::Release(::IDirectInputDevice8* This)
   auto refcount = That->pCallback_->Release(That->pNative_);
   if (refcount == 0)
   {
-    log_debug("WIDirectInputDevice8::Release(): deleting self");
+    log_debug("WIDirectInputDevice8::Release(%p): deleting self", This);
     delete That;
   }
   return refcount;
@@ -613,7 +613,7 @@ ULONG CIDirectInputDevice8::Release(::IDirectInputDevice8* This)
   auto refcount = This->lpVtbl->Release(This);
   if (refcount == 0)
   {
-    log_debug("CIDirectInputDevice8::Release(): deleting self");
+    log_debug("CIDirectInputDevice8::Release(%p): deleting self", this);
     delete this;
   }
   return refcount;
@@ -849,7 +849,7 @@ ULONG WINAPI WIDirectInput8::Release(::IDirectInput8* This)
   auto refcount = That->pCallback_->Release(That->pNative_);
   if (refcount == 0)
   {
-    log_debug("WIDirectInput8::Release(): deleting self");
+    log_debug("WIDirectInput8::Release(%p): deleting self", This);
     delete That;
   }
   return refcount;
@@ -927,7 +927,7 @@ ULONG CIDirectInput8::Release(::IDirectInput8* This)
   auto refcount = This->lpVtbl->Release(This);
   if (refcount == 0)
   {
-    log_debug("CIDirectInput8::Release(): deleting self");
+    log_debug("CIDirectInput8::Release(%p): deleting self", this);
     delete this;
   }
   return refcount;
