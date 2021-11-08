@@ -7,7 +7,6 @@
 #include <chrono>
 #include <cstdio>
 #include <string>
-#include <cstdarg>
 #include <cassert>
 
 
@@ -51,6 +50,14 @@ int ct2cs(char * buf, int n, char const * fmt)
 
 void log(LogLevel level, char const * fmt, ...)
 {
+  std::va_list args;
+  va_start(args, fmt);
+  vlog(level, fmt, args);
+  va_end(args);
+}
+
+void vlog(LogLevel level, char const * fmt, va_list vlist)
+{
   static char const * fname = "dinput8_blocker.log";
   static auto * f = std::fopen(fname, "w");
   struct Fmgr
@@ -82,10 +89,7 @@ void log(LogLevel level, char const * fmt, ...)
   char buf[128] = {0};
   ct2cs(buf, sizeof(buf), "%H:%M:%S");
   std::fprintf(f, "%s: [%s] ", buf, ll2cs(level));
-  std::va_list args;
-  va_start(args, fmt);
-  std::vfprintf(f, fmt, args);
-  va_end(args);
+  std::vfprintf(f, fmt, vlist);
   std::fprintf(f, "\n");
   std::fflush(f);
 }
@@ -94,7 +98,7 @@ void log_debug(char const * fmt, ...)
 {
   std::va_list args;
   va_start(args, fmt);
-  log(LogLevel::debug, fmt, args);
+  vlog(LogLevel::debug, fmt, args);
   va_end(args);
 }
 
@@ -102,7 +106,7 @@ void log_info(char const * fmt, ...)
 {
   std::va_list args;
   va_start(args, fmt);
-  log(LogLevel::info, fmt, args);
+  vlog(LogLevel::info, fmt, args);
   va_end(args);
 }
 
@@ -110,7 +114,7 @@ void log_error(char const * fmt, ...)
 {
   std::va_list args;
   va_start(args, fmt);
-  log(LogLevel::error, fmt, args);
+  vlog(LogLevel::error, fmt, args);
   va_end(args);
 }
 

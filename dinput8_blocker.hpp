@@ -9,6 +9,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <cstdarg>
 #include <windows.h>
 #include <olectl.h>
 #include <dinput.h>
@@ -23,6 +24,7 @@ char const * key2name(UINT key);
 enum class LogLevel { debug, info, error };
 
 void log(LogLevel level, char const * fmt, ...);
+void vlog(LogLevel level, char const * fmt, std::va_list vlist);
 
 void log_debug(char const * fmt, ...);
 void log_info(char const * fmt, ...);
