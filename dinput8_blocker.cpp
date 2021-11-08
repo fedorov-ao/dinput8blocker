@@ -40,6 +40,15 @@ std::ostream & logger()
   return of << print_time("%H:%M:%S: ");
 }
 
+enum class LogLevel { debug, info, error };
+
+char const * logLevel_to_name(LogLevel level)
+{
+  return level == LogLevel::debug ? "DEBUG" :
+    level == LogLevel::info ? "INFO" :
+    level == LogLevel::error ? "ERROR" : "";
+}
+
 void log_debug(char const * msg)
 {
   logger() << "[DEBUG] " << msg << std::endl;
