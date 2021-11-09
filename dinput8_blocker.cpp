@@ -81,7 +81,7 @@ void vlog(LogLevel level, char const * fmt, va_list vlist)
       std::fflush(f_);
       std::fclose(f_);
     }
-    std::FILE * f_; 
+    std::FILE * f_;
   };
   static Fmgr fmgr (f);
 
@@ -1072,25 +1072,66 @@ void parse_config()
 {
   log_debug("Parsing config");
 
-  auto m = config_t::mapped_type();
+  auto configFileName = "dinput8_blocker.ini";
+  auto configFile = std::fopen(configFileName, "r");
+  if (!configFile)
+  {
+    log_error("Can't open config: %s", std::strerror(errno));
+    return;
+  }
+  else
+  {
+    log_info("Found config: %s", configFileName);
+  }
+  struct FileWrapper
+  {
+    std::FILE * file;
+    ~FileWrapper() { std::fclose(file); }
+  } fw = { configFile };
+
+  config_t config;
+  std::string section ("");
+  config[section] = config_t::mapped_type();
 
   char buf[128] = {0};
   char k[64] = {0};
   char v[64] = {0};
-  auto file = std::fopen("dinput8_blocker.ini", "r");
-  if (!file)
-    throw std::runtime_error(std::string("Can't open config: ") + std::strerror(errno));
-  while (std::fgets(buf, sizeof(buf), file) != nullptr)
-  {
-    buf[std::strlen(buf)-1] = '\0';
-    auto i = std::sscanf(buf, "%[^= \t\n\r]=%[^= \t\n\r]", k, v);
-    log_debug("Parsed: buf: %s; k:%s; v:%s", buf, k, v);
-    if (i != 2)
-      throw std::runtime_error(std::string("Can't parse line: ") + buf);
-    m[k] = v; 
-  }
-  g_config["mouse"] = m;
+  int i = 0;
 
+  while (std::fgets(buf, sizeof(buf), configFile) != nullptr)
+  {
+    ++i;
+    k[0] = v[0] = '\0';
+    buf[std::strlen(buf)-1] = '\0';
+    if (0 == std::strlen(buf))
+    {
+      log_debug("%d: Skipping empty line", i);
+      continue;
+    }
+    else if ('#' == buf[0])
+    {
+      log_debug("%d: Parsed: buf:%s; skipping comment", i, buf);
+      continue;
+    }
+    else if (1 == std::sscanf(buf, "[%[^] \t\n\r]]", k))
+    {
+      log_debug("%d: Parsed: buf:%s; section:%s", i, buf, k);
+      section = k;
+      config[section] = config_t::mapped_type();
+    }
+    else if (2 == std::sscanf(buf, "%[^= \t\n\r]=%[^= \t\n\r]", k, v))
+    {
+      log_debug("%d: Parsed: buf:%s; k:%s; v:%s; adding to section:%s", i, buf, k, v, section.c_str());
+      config[section][k] = v;
+    }
+    else
+    {
+      log_error("%s:%d: Can't parse line:%s", configFileName, i, buf);
+      continue;
+    }
+  }
+
+  g_config = config;
   log_debug("Parsed config");
 }
 
