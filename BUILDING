@@ -1,37 +1,20 @@
 BUILDING
 
-Building process (based on Library_Wrappers)
+Declare exported functions as __declspec(dllexport)
 
-cd to working dir
-$ cd /media/veracrypt1/axf/devel/Library_Wrappers-master/Windows/dinput8/src
-
-generate dll and def
-$ i686-w64-mingw32-gcc-win32 -o dinput8.dll *.c -shared -I ../include -I /media/veracrypt1/axf/devel/dx9-sdk/c-sdk-directx9/Include -ldxguid -Wl,--out-implib,dinput8.lib,--output-def,dinput8.def
-
-edit def to include only needed exports and set aliases for them
-dinput8.def:
-EXPORTS
-    __E__0__@20 @1090
-    __E__1__@0 @1091
-    __E__2__@12 @1092
-    __E__3__@0 @1093
-    __E__4__@0 @1094
-    DirectInput8Create=__E__0__@20
-    DllCanUnloadNow=__E__1__@0
-    DllGetClassObject=__E__2__@12
-    DllRegisterServer=__E__3__@0
-    DllUnregisterServer=__E__4__@0
-
-rebuild dll using def and install it
-$ i686-w64-mingw32-gcc-win32 -o dinput8.dll *.c dinput8.def -shared -I ../include -I /media/veracrypt1/axf/devel/dx9-sdk/c-sdk-directx9/Include -ldxguid -luser32 && cp dinput8.dll ~/.wine/drive_c/1946/ && echo "done"
-
+Build with:
+$i686-w64-mingw32-g++-win32 -std=c++11 -shared -I. -static-libstdc++ -static-libgcc -D_WIN32_WINNT=0x0501 -o dinput8.dll *.cpp -Wl,--exclude-all-symbols,--enable-auto-import,--kill-at -ldxguid
 
 TODO
 
-Update building process to current project.
-Use make to build.
-Use mingw32's DirectX headers.
-Eliminate the need to link to dxguid.
-Add config.
-Add logging. 
-Implement for all DirectInput versions. 
+Add Main global struct variable to store all globals.
+Add Options global struct variable to store options (default and read from config).
+Check config contents (keys, values...) while parsing and report errors to log.
+Enable key specification both by name and by code.
+Print available devices and their properties (GUID, name, axes, buttons...) if requested by config setting.
+Enable device specification by GUID/name in config.
+Add optional modifiers to key specification (like RSHIFT+L).
+Add system mouse and keyboard hooks to block these inputs.
+Enable setting path to next dinput8.dll in config.
+Block immediate device state input from IDirectInputDevice8::GetDeviceState().
+Eliminate the need to link to dxguid. 
