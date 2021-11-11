@@ -1,6 +1,7 @@
 #include <dinput8_blocker.hpp>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 #include <ctime>
 #include <mingw.thread.h>
 #include <mingw.mutex.h>
@@ -1073,60 +1074,54 @@ void parse_config()
   log_debug("Parsing config");
 
   auto configFileName = "dinput8_blocker.ini";
-  auto configFile = std::fopen(configFileName, "r");
-  if (!configFile)
+  auto configFile = std::ifstream(configFileName);
+  if (!configFile.is_open())
   {
-    log_error("Can't open config: %s", std::strerror(errno));
+    log_error("Can't open config: %s", configFileName);
     return;
   }
   else
   {
     log_info("Found config: %s", configFileName);
   }
-  struct FileWrapper
-  {
-    std::FILE * file;
-    ~FileWrapper() { std::fclose(file); }
-  } fw = { configFile };
 
   config_t config;
   std::string section ("");
   config[section] = config_t::mapped_type();
 
-  char buf[128] = {0};
+  std::string buf;
   char k[64] = {0};
   char v[64] = {0};
   int i = 0;
 
-  while (std::fgets(buf, sizeof(buf), configFile) != nullptr)
+  while (std::getline(configFile, buf))
   {
     ++i;
     k[0] = v[0] = '\0';
-    buf[std::strlen(buf)-1] = '\0';
-    if (0 == std::strlen(buf))
+    if (0 == buf.length())
     {
       log_debug("%d: Skipping empty line", i);
       continue;
     }
     else if ('#' == buf[0])
     {
-      log_debug("%d: Parsed: buf:%s; skipping comment", i, buf);
+      log_debug("%d: Parsed: buf:%s; skipping comment", i, buf.data());
       continue;
     }
-    else if (1 == std::sscanf(buf, "[%[^] \t\n\r]]", k))
+    else if (1 == std::sscanf(buf.data(), "[%[^] \t\n\r]]", k))
     {
-      log_debug("%d: Parsed: buf:%s; section:%s", i, buf, k);
+      log_debug("%d: Parsed: buf:%s; section:%s", i, buf.data(), k);
       section = k;
       config[section] = config_t::mapped_type();
     }
-    else if (2 == std::sscanf(buf, "%[^= \t\n\r]=%[^= \t\n\r]", k, v))
+    else if (2 == std::sscanf(buf.data(), "%[^= \t\n\r]=%[^= \t\n\r]", k, v))
     {
-      log_debug("%d: Parsed: buf:%s; k:%s; v:%s; adding to section:%s", i, buf, k, v, section.c_str());
+      log_debug("%d: Parsed: buf:%s; k:%s; v:%s; adding to section:%s", i, buf.data(), k, v, section.data());
       config[section][k] = v;
     }
     else
     {
-      log_error("%s:%d: Can't parse line:%s", configFileName, i, buf);
+      log_error("%s:%d: Can't parse line:%s", configFileName, i, buf.data());
       continue;
     }
   }
