@@ -1088,40 +1088,65 @@ void parse_config()
   config_t config;
   std::string section ("");
   config[section] = config_t::mapped_type();
+  auto validSection = true;
 
   std::string buf;
-  char k[64] = {0};
-  char v[64] = {0};
   int i = 0;
 
   while (std::getline(configFile, buf))
   {
     ++i;
-    k[0] = v[0] = '\0';
     if (0 == buf.length())
     {
       log_debug("%d: Skipping empty line", i);
       continue;
     }
-    else if ('#' == buf[0])
+    else if ('#' == buf.front())
     {
-      log_debug("%d: Parsed: buf:%s; skipping comment", i, buf.data());
+      log_debug("%d: Parsed %s: skipping comment", i, buf.data());
       continue;
     }
-    else if (1 == std::sscanf(buf.data(), "[%[^] \t\n\r]]", k))
+    else if ('[' == buf.front())
     {
-      log_debug("%d: Parsed: buf:%s; section:%s", i, buf.data(), k);
-      section = k;
-      config[section] = config_t::mapped_type();
+      char sectionName[64] = {0};
+      if (1 == std::sscanf(buf.data(), "[%[^] \t\n\r]]", sectionName))
+      {
+        log_debug("%d: Parsed %s: section:%s", i, buf.data(), sectionName);
+        section = sectionName;
+        config[section] = config_t::mapped_type();
+        validSection = true;
+      }
+      else
+      {
+        log_error("%s:%d: Invalid section definition:\"%s\" (should be [sectionName])", configFileName, i, buf.data());
+        validSection = false;
+      }
     }
-    else if (2 == std::sscanf(buf.data(), "%[^= \t\n\r]=%[^= \t\n\r]", k, v))
+    if (std::strstr(buf.data(), "="))
     {
-      log_debug("%d: Parsed: buf:%s; k:%s; v:%s; adding to section:%s", i, buf.data(), k, v, section.data());
-      config[section][k] = v;
+      char k[64] = {0};
+      char v[64] = {0};
+      if (2 == std::sscanf(buf.data(), "%[^= \t\n\r]=%[^= \t\n\r]", k, v))
+      {
+        if (!validSection)
+        {
+          log_debug("%d: Parsed %s: skipping due to invalid section", i, buf.data(), section.data());
+          continue;
+        }
+        else
+        {
+          log_debug("%d: Parsed %s: k:%s; v:%s; adding to section:%s", i, buf.data(), k, v, section.data());
+          config[section][k] = v;
+        }
+      }
+      else
+      {
+        log_error("%s:%d: Invalid property definition:\"%s\" (should be property=value)", configFileName, i, buf.data());
+      }
     }
     else
     {
-      log_error("%s:%d: Can't parse line:%s", configFileName, i, buf.data());
+      log_error("%s:%d: Can't parse:\"%s\" (must be [sectionName] or property=value)", configFileName, i, buf.data());
       continue;
     }
   }
