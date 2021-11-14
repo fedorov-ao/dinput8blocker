@@ -1067,24 +1067,9 @@ std::unique_ptr<CIDirectInputDevice8> g_make_device_callback(REFGUID rguid)
 
 /* config */
 typedef std::map<std::string, std::map<std::string, std::string> > config_t;
-config_t g_config;
 
-void parse_config()
+config_t parse_config(std::istream & configStream, char const * configName)
 {
-  log_debug("Parsing config");
-
-  auto configFileName = "dinput8_blocker.ini";
-  auto configFile = std::ifstream(configFileName);
-  if (!configFile.is_open())
-  {
-    log_error("Can't open config: %s", configFileName);
-    return;
-  }
-  else
-  {
-    log_info("Found config: %s", configFileName);
-  }
-
   config_t config;
   std::string section ("");
   config[section] = config_t::mapped_type();
@@ -1093,7 +1078,7 @@ void parse_config()
   std::string buf;
   int i = 0;
 
-  while (std::getline(configFile, buf))
+  while (std::getline(configStream, buf))
   {
     ++i;
     if (0 == buf.length())
@@ -1118,7 +1103,7 @@ void parse_config()
       }
       else
       {
-        log_error("%s:%d: Invalid section definition:\"%s\" (should be [sectionName])", configFileName, i, buf.data());
+        log_error("%s:%d: Invalid section definition:\"%s\" (should be [sectionName])", configName, i, buf.data());
         validSection = false;
       }
     }
@@ -1141,17 +1126,38 @@ void parse_config()
       }
       else
       {
-        log_error("%s:%d: Invalid property definition:\"%s\" (should be property=value)", configFileName, i, buf.data());
+        log_error("%s:%d: Invalid property definition:\"%s\" (should be property=value)", configName, i, buf.data());
       }
     }
     else
     {
-      log_error("%s:%d: Can't parse:\"%s\" (must be [sectionName] or property=value)", configFileName, i, buf.data());
+      log_error("%s:%d: Can't parse:\"%s\" (must be [sectionName] or property=value)", configName, i, buf.data());
       continue;
     }
   }
 
-  g_config = config;
+  return config;
+}
+
+config_t g_config;
+
+void open_and_parse_config()
+{
+  log_debug("Parsing config");
+
+  auto configFileName = "dinput8_blocker.ini";
+  auto configFile = std::ifstream(configFileName);
+  if (!configFile.is_open())
+  {
+    log_error("Can't open config: %s", configFileName);
+    return;
+  }
+  else
+  {
+    log_info("Found config: %s", configFileName);
+  }
+
+  g_config = parse_config(configFile, configFileName);
   log_debug("Parsed config");
 }
 
@@ -1347,7 +1353,7 @@ try {
   if (reason == DLL_PROCESS_ATTACH)
   {
     di8b::log_info("Dll attached");
-    di8b::parse_config();
+    di8b::open_and_parse_config();
     di8b::g_imports.fill();
     di8b::start_loop();
   }
