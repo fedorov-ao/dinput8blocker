@@ -1122,7 +1122,7 @@ void parse_config()
         validSection = false;
       }
     }
-    if (std::strstr(buf.data(), "="))
+    else if (std::strstr(buf.data(), "="))
     {
       char k[64] = {0};
       char v[64] = {0};
