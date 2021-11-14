@@ -3,7 +3,7 @@ TARGET = dinput8.dll
 DEF = $(TARGET:%.dll=%.def)
 CFLAGS = -std=c++11 -shared -I. -static-libstdc++ -static-libgcc -D_WIN32_WINNT=0x0501
 HEADERS = di8b_common.hpp di8b_wrappers.hpp di8b.hpp 
-SOURCES = di8b_wrappers.cpp di8b.cpp
+SOURCES = di8b_common.cpp di8b_wrappers.cpp di8b.cpp
 LDFLAGS = -Wl,--exclude-all-symbols,--kill-at -ldxguid
 INSTALL_PATH = ~/.wine/drive_c/1946
 

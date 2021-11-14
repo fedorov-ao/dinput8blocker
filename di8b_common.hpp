@@ -7,6 +7,7 @@ namespace di8b
 {
 
 enum class LogLevel { debug, info, error };
+char const * ll2cs(LogLevel level);
 
 void log(LogLevel level, char const * fmt, ...);
 void vlog(LogLevel level, char const * fmt, std::va_list vlist);
