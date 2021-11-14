@@ -457,7 +457,8 @@ config_t parse_config(std::istream & configStream, char const * configName)
     else if ('[' == buf.front())
     {
       char sectionName[64] = {0};
-      if (1 == std::sscanf(buf.data(), "[%[^] \t\n\r]]", sectionName))
+      char dummy[2];
+      if (2 == std::sscanf(buf.data(), "[%[^] \t\n\r]%[]]", sectionName, dummy))
       {
         log_debug("%d: Parsed %s: section:%s", i, buf.data(), sectionName);
         section = sectionName;
