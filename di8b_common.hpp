@@ -1,6 +1,5 @@
 #ifndef DI8B_COMMON_HPP
 #define DI8B_COMMON_HPP
-#include <cstdarg>
 
 #include <cstdarg>
 

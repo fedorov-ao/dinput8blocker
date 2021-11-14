@@ -1,8 +1,8 @@
-#ifndef DINPUT8_BLOCKER_HPP
-#define DINPUT8_BLOCKER_HPP
+#ifndef DI8B_HPP
+#define DI8B_HPP
 
-#define DIRECTINPUT_VERSION  0x0800
-#define CINTERFACE
+#include <di8b_common.hpp>
+#include <di8b_wrappers.hpp>
 
 #include <cstring>
 #include <stdexcept>
@@ -12,8 +12,6 @@
 #include <cstdarg>
 #include <windows.h>
 #include <olectl.h>
-#include <di8b_wrappers.hpp>
-#include <di8b_common.hpp>
 
 namespace di8b
 {
@@ -22,7 +20,6 @@ UINT name2key(char const * name);
 char const * key2name(UINT key);
 
 enum class DeviceKind { mouse, keyboard, joystick, other };
-
 
 class Flag;
 

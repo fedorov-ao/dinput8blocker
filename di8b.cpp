@@ -1,4 +1,4 @@
-#include <dinput8_blocker.hpp>
+#include <di8b.hpp>
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -9,9 +9,7 @@
 #include <cstdio>
 #include <string>
 #include <cassert>
-
 #include <fstream>
-
 
 #define DLLEXPORT __declspec(dllexport)
 
