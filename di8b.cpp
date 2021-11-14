@@ -312,8 +312,23 @@ private:
 
 
 /* BlockingCIDirectInputDevice8 */
+HRESULT BlockingCIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData)
+{
+  log_debug("BlockingCIDirectInputDevice8::GetDeviceState(%p)", This);
+  auto result = This->lpVtbl->GetDeviceState(This, cbData, lpvData);
+
+  if (result == DI_OK && spFlag_->get() == false)
+  {
+    /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
+    std::memset(lpvData, cbData, 0);
+  }
+
+  return result;
+}
+
 HRESULT BlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
 {
+  log_debug("BlockingCIDirectInputDevice8::GetDeviceData(%p)", This);
   auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
 
   if (result == DI_OK && spFlag_->get() == false)
@@ -330,8 +345,23 @@ BlockingCIDirectInputDevice8::BlockingCIDirectInputDevice8(std::shared_ptr<Flag>
 
 
 /* BoundBlockingCIDirectInputDevice8 */
+HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData)
+{
+  log_debug("BoundBlockingCIDirectInputDevice8::GetDeviceState(%p)", This);
+  auto result = This->lpVtbl->GetDeviceState(This, cbData, lpvData);
+
+  if (result == DI_OK && state_ == false)
+  {
+    /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
+    std::memset(lpvData, cbData, 0);
+  }
+
+  return result;
+}
+
 HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
 {
+  log_debug("BoundBlockingCIDirectInputDevice8::GetDeviceData(%p)", This);
   auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
 
   if (result == DI_OK && state_ == false)

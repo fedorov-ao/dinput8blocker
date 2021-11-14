@@ -26,6 +26,7 @@ class Flag;
 class BlockingCIDirectInputDevice8 : public CIDirectInputDevice8
 {
 public:
+  virtual HRESULT GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData);
   virtual HRESULT GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
 
   BlockingCIDirectInputDevice8(std::shared_ptr<Flag> const & spFlag);
@@ -40,6 +41,7 @@ class BoundBlockingCIDirectInputDevice8 : public CIDirectInputDevice8
 public:
   typedef std::function<void()> on_destroy_t;
 
+  virtual HRESULT GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData);
   virtual HRESULT GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
 
   void set_state(bool s);
