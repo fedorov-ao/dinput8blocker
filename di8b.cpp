@@ -34,6 +34,25 @@ char const * key2name(UINT key)
 }
 
 
+size_t guid2cstr(char * buf, size_t n, REFGUID rguid)
+{
+  char const * fmt = "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX"; 
+  return snprintf(buf, n, fmt,
+    rguid.Data1, rguid.Data2, rguid.Data3, 
+    rguid.Data4[0], rguid.Data4[1], rguid.Data4[2], rguid.Data4[3],
+    rguid.Data4[4], rguid.Data4[5], rguid.Data4[6], rguid.Data4[7]);
+}
+
+
+std::string guid2str(REFGUID rguid)
+{
+  size_t const n = 37;
+  char buf[n] = {0};
+  guid2cstr(buf, n, rguid);
+  return buf;
+}
+
+
 /* Flag */
 class Flag
 {
@@ -376,6 +395,9 @@ DeviceKind get_device_kind(REFGUID rguid)
 /* FactoryCIDirectInput8 */
 HRESULT FactoryCIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
+  char csGuid [37];
+  guid2cstr(csGuid, sizeof(csGuid), rguid);
+  log_debug("Creating device for GUID: %s", csGuid);
   HRESULT result = CIDirectInput8::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
   if (result == S_OK)
   {
