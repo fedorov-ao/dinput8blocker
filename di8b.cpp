@@ -450,6 +450,15 @@ HRESULT FactoryCIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid
   HRESULT result = CIDirectInput8::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
   if (result == S_OK)
   {
+    DIDEVICEINSTANCE ddi;
+    std::memset(&ddi, 0, sizeof(ddi));
+    ddi.dwSize = sizeof(ddi);
+    HRESULT ddiResult = (*lplpDirectInputDevice)->lpVtbl->GetDeviceInfo(*lplpDirectInputDevice, &ddi);
+    if (ddiResult == S_OK)
+    {
+      log_debug("Created device: GUID: %s; name: %s", csGuid, ddi.tszInstanceName);
+    }
+
     auto upDeviceCallback = make_callback_(rguid);
     auto upDeviceWrapper = std::unique_ptr<WIDirectInputDevice8>(new WIDirectInputDevice8(*lplpDirectInputDevice, upDeviceCallback.get()));
     *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(upDeviceWrapper.release());
