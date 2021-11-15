@@ -47,11 +47,12 @@ public:
   void set_state(bool s);
   bool get_state() const;
 
-  BoundBlockingCIDirectInputDevice8(bool state, on_destroy_t const & onDestroy = on_destroy_t());
+  BoundBlockingCIDirectInputDevice8(bool state, bool clearBuffer = false, on_destroy_t const & onDestroy = on_destroy_t());
   ~BoundBlockingCIDirectInputDevice8();
 
 private:
   bool state_;
+  bool clearBuffer_;
   on_destroy_t onDestroy_;
 };
 

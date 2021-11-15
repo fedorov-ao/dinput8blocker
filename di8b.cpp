@@ -379,12 +379,17 @@ HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8*
 HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
 {
   log_debug("BoundBlockingCIDirectInputDevice8::GetDeviceData(%p)", This);
-  auto n = *pdwInOut;
-  auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
 
-  if (result == DI_OK && state_ == false)
+  /* Setting dwFlags to 0 to read all messages in supplied buffer and thus definitely clear dinput message queue. */
+  if (state_ == false)
+    dwFlags = 0;
+  /* Setting rgdod to nullptr leaves messages in internal dinput queue, so have to read them into supplied buffer. */
+  auto const num = *pdwInOut;
+  auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
+  if (state_ == false)
   {
-    std::memset(rgdod, 0, n*cbObjectData);
+    if (clearBuffer_ == true)
+      std::memset(rgdod, 0, num*cbObjectData);
     *pdwInOut = 0;
   }
 
@@ -401,8 +406,8 @@ bool BoundBlockingCIDirectInputDevice8::get_state() const
   return state_;
 }
 
-BoundBlockingCIDirectInputDevice8::BoundBlockingCIDirectInputDevice8(bool state, BoundBlockingCIDirectInputDevice8::on_destroy_t const & onDestroy)
-  : state_(state), onDestroy_(onDestroy)
+BoundBlockingCIDirectInputDevice8::BoundBlockingCIDirectInputDevice8(bool state, bool clearBuffer, BoundBlockingCIDirectInputDevice8::on_destroy_t const & onDestroy)
+  : state_(state), clearBuffer_(clearBuffer), onDestroy_(onDestroy)
 {}
 
 BoundBlockingCIDirectInputDevice8::~BoundBlockingCIDirectInputDevice8()
@@ -693,7 +698,7 @@ void start_loop()
       g_pLoop->remove_tick(pCompositeTick);
     };
 
-    std::unique_ptr<BoundBlockingCIDirectInputDevice8> upDevice (new BoundBlockingCIDirectInputDevice8 (true, onDestroy));
+    std::unique_ptr<BoundBlockingCIDirectInputDevice8> upDevice (new BoundBlockingCIDirectInputDevice8 (true, false, onDestroy));
 
     {
       /* TODO Error checking.*/
