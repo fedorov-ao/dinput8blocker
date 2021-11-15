@@ -53,6 +53,23 @@ std::string guid2str(REFGUID rguid)
 }
 
 
+std::string preset_guid2str(REFGUID rguid)
+{
+  static struct { REFGUID rguid; char const * name; } names[] =
+  {
+    { GUID_SysKeyboard, "keyboard" },
+    { GUID_SysMouse, "mouse" },
+    { GUID_Joystick, "joystick" }
+  };
+
+  for (auto const & p : names)
+  {
+    if (IsEqualGUID(p.rguid, rguid))
+      return p.name;
+  }
+  return "";
+}
+
 /* Flag */
 class Flag
 {
@@ -446,23 +463,31 @@ FactoryCIDirectInput8::FactoryCIDirectInput8(FactoryCIDirectInput8::make_callbac
 {}
 
 
-std::map<DeviceKind, std::function<std::unique_ptr<CIDirectInputDevice8>()> > g_deviceFactoies;
+typedef std::map<std::string, std::map<std::string, std::string> > config_t;
+config_t g_config;
 
-std::unique_ptr<CIDirectInputDevice8> g_make_device_callback(REFGUID rguid)
+typedef std::unique_ptr<CIDirectInputDevice8> device_callback_ptr_t;
+std::function<device_callback_ptr_t(std::map<std::string,std::string> const &)> g_device_callback_factory;
+
+device_callback_ptr_t g_make_device_callback(REFGUID rguid)
 {
-  auto const deviceKind = get_device_kind(rguid);
-  auto const itFactory = g_deviceFactoies.find(deviceKind);
+  auto itBindings = g_config.find(guid2str(rguid));
+  if (itBindings == g_config.end())
+  {
+    auto s = preset_guid2str(rguid);
+    if (s != "")
+      itBindings = g_config.find(preset_guid2str(rguid));
+  }
+
   auto upDevice =
-    itFactory == g_deviceFactoies.end() ?
-    std::unique_ptr<CIDirectInputDevice8>(new CIDirectInputDevice8) :
-    itFactory->second();
+    itBindings == g_config.end() ?
+    device_callback_ptr_t(new CIDirectInputDevice8) :
+    g_device_callback_factory(itBindings->second);
   return upDevice;
 }
 
 
 /* config */
-typedef std::map<std::string, std::map<std::string, std::string> > config_t;
-
 config_t parse_config(std::istream & configStream, char const * configName)
 {
   config_t config;
@@ -534,8 +559,6 @@ config_t parse_config(std::istream & configStream, char const * configName)
 
   return config;
 }
-
-config_t g_config;
 
 void open_and_parse_config()
 {
@@ -649,7 +672,7 @@ void start_loop()
 {
   g_pLoop = new Loop (10);
 
-  g_deviceFactoies[DeviceKind::mouse] = []()
+  g_device_callback_factory = [](std::map<std::string,std::string> const & bindings)
   {
     auto spCompositeFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
     auto spCompositeTick = std::make_shared<CompositeTick>();
@@ -665,8 +688,8 @@ void start_loop()
 
     {
       /* TODO Error checking.*/
-      auto & keyName = g_config["mouse"]["toggleKey"];
-      auto key = name2key(keyName.c_str());
+      auto const & keyName = bindings.at("toggleKey");
+      auto key = name2key(keyName.data());
       auto spFlag = std::make_shared<ConstantFlag>(true);
       auto spKeyTick = std::make_shared<KeyListenerTick>(key);
       spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(!spFlag->get()); });
@@ -675,8 +698,8 @@ void start_loop()
     }
     {
       /* TODO Error checking.*/
-      auto & keyName = g_config["mouse"]["unblockKey"];
-      auto key = name2key(keyName.c_str());
+      auto const & keyName = bindings.at("unblockKey");
+      auto key = name2key(keyName.data());
       auto spFlag = std::make_shared<ConstantFlag>(false);
       auto spKeyTick = std::make_shared<KeyListenerTick>(key);
       spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(true); });
