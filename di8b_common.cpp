@@ -53,6 +53,8 @@ int ct2cs(char * buf, int n, char const * fmt)
 
 void log(LogLevel level, char const * fmt, ...)
 {
+  if (static_cast<int>(log_get_level()) > static_cast<int>(level))
+    return;
   std::va_list args;
   va_start(args, fmt);
   vlog(level, fmt, args);
@@ -88,6 +90,8 @@ void vlog(LogLevel level, char const * fmt, va_list vlist)
 
   static std::mutex m;
 
+  if (static_cast<int>(log_get_level()) > static_cast<int>(level))
+    return;
   std::lock_guard<std::mutex> l (m);
   char buf[128] = {0};
   ct2cs(buf, sizeof(buf), "%H:%M:%S");
@@ -99,8 +103,6 @@ void vlog(LogLevel level, char const * fmt, va_list vlist)
 
 void log_debug(char const * fmt, ...)
 {
-  if (static_cast<int>(log_get_level()) > static_cast<int>(LogLevel::debug))
-    return;
   std::va_list args;
   va_start(args, fmt);
   vlog(LogLevel::debug, fmt, args);
@@ -109,8 +111,6 @@ void log_debug(char const * fmt, ...)
 
 void log_info(char const * fmt, ...)
 {
-  if (static_cast<int>(log_get_level()) > static_cast<int>(LogLevel::info))
-    return;
   std::va_list args;
   va_start(args, fmt);
   vlog(LogLevel::info, fmt, args);
@@ -119,13 +119,10 @@ void log_info(char const * fmt, ...)
 
 void log_error(char const * fmt, ...)
 {
-  if (static_cast<int>(log_get_level()) > static_cast<int>(LogLevel::error))
-    return;
   std::va_list args;
   va_start(args, fmt);
   vlog(LogLevel::error, fmt, args);
   va_end(args);
 }
-
 
 } //di8b
