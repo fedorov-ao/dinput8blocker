@@ -994,7 +994,7 @@ HRESULT WINAPI BIDirectInput2A::FindDevice(LPDIRECTINPUT2A This, REFGUID rguid, 
   log_debug("BIDirectInput2A::FindDevice(%p)", THAT);
   return CALL_NATIVE(FindDevice)(NATIVE, rguid, pszName, pguidInstance);
 }
-#undef CAL_NATIVE
+#undef CALL_NATIVE
 #undef NATIVE
 #undef THAT
 
@@ -1095,7 +1095,7 @@ HRESULT WINAPI BIDirectInput7A::CreateDeviceEx(LPDIRECTINPUT7A This, REFGUID rgu
   log_debug("BIDirectInput7A::CreateDeviceEx(%p)", THAT);
   return CALL_NATIVE(CreateDeviceEx)(NATIVE, rguid, riid, pvOut, lpUnknownOuter);
 }
-#undef CAL_NATIVE
+#undef CALL_NATIVE
 #undef NATIVE
 #undef THAT
 
@@ -1203,7 +1203,7 @@ HRESULT WINAPI BIDirectInput8A::ConfigureDevices(LPDIRECTINPUT8A This, LPDICONFI
   log_debug("BIDirectInput8A::ConfigureDevices(%p)", THAT);
   return CALL_NATIVE(ConfigureDevices)(NATIVE, lpdiCallback, lpdiCDParams, dwFlags, pvRefData);
 }
-#undef CAL_NATIVE
+#undef CALL_NATIVE
 #undef NATIVE
 #undef THAT
 
@@ -1233,6 +1233,115 @@ VIDirectInput8A const BIDirectInput8A::vtbl_ =
   &BIDirectInput8A::FindDevice,
   &BIDirectInput8A::EnumDevicesBySemantics,
   &BIDirectInput8A::ConfigureDevices
+};
+
+
+/* WIDirectInput8W */
+#define THAT reinterpret_cast<BIDirectInput8W*>(This)
+#define NATIVE THAT->pNative_
+#define CALL_NATIVE(method) NATIVE->lpVtbl->method
+HRESULT WINAPI BIDirectInput8W::QueryInterface(LPDIRECTINPUT8W This, REFIID riid, void** ppvObject)
+{
+  log_debug("BIDirectInput8W::QueryInterface(%p)", THAT);
+  /* TODO Apparently should return pointer to wrapper. */
+  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+}
+
+ULONG WINAPI BIDirectInput8W::AddRef(LPDIRECTINPUT8W This)
+{
+  log_debug("BIDirectInput8W::AddRef(%p)", THAT);
+  return CALL_NATIVE(AddRef)(NATIVE);
+}
+
+ULONG WINAPI BIDirectInput8W::Release(LPDIRECTINPUT8W This)
+{
+  log_debug("BIDirectInput8W::Release(%p)", THAT);
+  ULONG r = CALL_NATIVE(Release)(NATIVE);
+  if ((r == 0) && (THAT->deleteSelf_))
+  {
+    log_debug("BIDirectInput8W::Release(%p): deleting self", THAT);
+    delete THAT;
+  }
+  return r;
+}
+
+HRESULT WINAPI BIDirectInput8W::CreateDevice(LPDIRECTINPUT8W This, REFGUID rguid, LPDIRECTINPUTDEVICE8W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+{
+  log_debug("BIDirectInput8W::CreateDevice(%p)", THAT);
+  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, lplpDirectInputDevice, pUnkOuter);
+}
+
+HRESULT WINAPI BIDirectInput8W::EnumDevices(LPDIRECTINPUT8W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags)
+{
+  log_debug("BIDirectInput8W::EnumDevices(%p)", THAT);
+  return CALL_NATIVE(EnumDevices)(NATIVE, dwDevType, lpCallback, pvRef, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInput8W::GetDeviceStatus(LPDIRECTINPUT8W This, REFGUID rguidInstance)
+{
+  log_debug("BIDirectInput8W::GetDeviceStatus(%p)", THAT);
+  return CALL_NATIVE(GetDeviceStatus)(NATIVE, rguidInstance);
+}
+
+HRESULT WINAPI BIDirectInput8W::RunControlPanel(LPDIRECTINPUT8W This, HWND hwndOwner, DWORD dwFlags)
+{
+  log_debug("BIDirectInput8W::RunControlPanel(%p)", THAT);
+  return CALL_NATIVE(RunControlPanel)(NATIVE, hwndOwner, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInput8W::Initialize(LPDIRECTINPUT8W This, HINSTANCE hinst, DWORD dwVersion)
+{
+  log_debug("BIDirectInput8W::Initialize(%p)", THAT);
+  return CALL_NATIVE(Initialize)(NATIVE, hinst, dwVersion);
+}
+
+HRESULT WINAPI BIDirectInput8W::FindDevice(LPDIRECTINPUT8W This, REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance)
+{
+  log_debug("BIDirectInput8W::FindDevice(%p)", THAT);
+  return CALL_NATIVE(FindDevice)(NATIVE, rguid, pszName, pguidInstance);
+}
+
+HRESULT WINAPI BIDirectInput8W::EnumDevicesBySemantics(LPDIRECTINPUT8W This, LPCWSTR ptszUserName, LPDIACTIONFORMATW lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBW lpCallback, LPVOID pvRef, DWORD dwFlags)
+{
+  log_debug("BIDirectInput8W::EnumDevicesBySemantics(%p)", THAT);
+  return CALL_NATIVE(EnumDevicesBySemantics)(NATIVE, ptszUserName, lpdiActionFormat, lpCallback, pvRef, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInput8W::ConfigureDevices(LPDIRECTINPUT8W This, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData)
+{
+  log_debug("BIDirectInput8W::ConfigureDevices(%p)", THAT);
+  return CALL_NATIVE(ConfigureDevices)(NATIVE, lpdiCallback, lpdiCDParams, dwFlags, pvRefData);
+}
+#undef CALL_NATIVE
+#undef NATIVE
+#undef THAT
+
+BIDirectInput8W::BIDirectInput8W(LPDIRECTINPUT8W pNative, VIDirectInput8W const * pVtbl, bool deleteSelf)
+  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
+{
+  log_debug("BIDirectInput8W::BIDirectInput8W(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
+  if (pVtbl_ == nullptr)
+    pVtbl_ = &vtbl_;
+}
+
+BIDirectInput8W::~BIDirectInput8W()
+{
+  log_debug("BIDirectInput8W::~BIDirectInput8W(%p)", this);
+}
+
+VIDirectInput8W const BIDirectInput8W::vtbl_ =
+{
+  &BIDirectInput8W::QueryInterface,
+  &BIDirectInput8W::AddRef,
+  &BIDirectInput8W::Release,
+  &BIDirectInput8W::CreateDevice,
+  &BIDirectInput8W::EnumDevices,
+  &BIDirectInput8W::GetDeviceStatus,
+  &BIDirectInput8W::RunControlPanel,
+  &BIDirectInput8W::Initialize,
+  &BIDirectInput8W::FindDevice,
+  &BIDirectInput8W::EnumDevicesBySemantics,
+  &BIDirectInput8W::ConfigureDevices
 };
 
 } //namespace di8b

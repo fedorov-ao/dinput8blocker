@@ -517,15 +517,17 @@ device_callback_ptr_t g_make_device_callback(REFGUID rguid)
 
 
 /* Template-based implementations. */
-class BlockingWIDirectInputDevice8A : public WIDirectInputDevice8A<BlockingWIDirectInputDevice8A>
+template <template <class> class B, class LPDID>
+class BlockingWIDirectInputDevice : public B<BlockingWIDirectInputDevice<B, LPDID> >
 {
 public:
-  typedef WIDirectInputDevice8A<BlockingWIDirectInputDevice8A> base_type;
+  typedef BlockingWIDirectInputDevice<B, LPDID> that_type;
+  typedef B<that_type> base_type;
 
-  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICE8A This, DWORD cbData, LPVOID lpvData)
+  static HRESULT WINAPI GetDeviceState(LPDID This, DWORD cbData, LPVOID lpvData)
   {
-    log_debug("BlockingWIDirectInputDevice8A:GetDeviceState(%p)", This);
-    auto That = reinterpret_cast<BlockingWIDirectInputDevice8A*>(This);
+    log_debug("BlockingWIDirectInputDevice:GetDeviceState(%p)", This);
+    auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::GetDeviceState(This, cbData, lpvData);
     if (hr == DI_OK && That->spFlag_->get() == false)
     {
@@ -535,10 +537,10 @@ public:
     return hr;
   }
 
-  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICE8A This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+  static HRESULT WINAPI GetDeviceData(LPDID This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
   {
-    log_debug("BlockingWIDirectInputDevice8A::GetDeviceData(%p)", This);
-    auto That = reinterpret_cast<BlockingWIDirectInputDevice8A*>(This);
+    log_debug("BlockingWIDirectInputDevice::GetDeviceData(%p)", This);
+    auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
     if (hr == DI_OK && That->spFlag_->get() == false)
     {
@@ -547,20 +549,23 @@ public:
     return hr;
   }
 
-  BlockingWIDirectInputDevice8A(LPDIRECTINPUTDEVICE8A pNative, std::shared_ptr<Flag> const & spFlag)
+  BlockingWIDirectInputDevice(LPDID pNative, std::shared_ptr<Flag> const & spFlag)
     : base_type(pNative), spFlag_(spFlag)
   {
-    log_debug("BlockingWIDirectInputDevice8A::BlockingWIDirectInputDevice8A(%p)", this);
+    log_debug("BlockingWIDirectInputDevice::BlockingWIDirectInputDevice(%p)", this);
   }
 
-  ~BlockingWIDirectInputDevice8A()
+  ~BlockingWIDirectInputDevice()
   {
-    log_debug("BlockingWIDirectInputDevice8A::~BlockingWIDirectInputDevice8A(%p)", this);
+    log_debug("BlockingWIDirectInputDevice::~BlockingWIDirectInputDevice(%p)", this);
   }
 
 private:
   std::shared_ptr<Flag> spFlag_;
 };
+
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A> BlockingWIDirectInputDevice8A;
+
 
 /** Makes device using external factory method */
 template <template <class> class B, class LPDI, class LPDID>
@@ -615,7 +620,11 @@ private:
   device_factory_t deviceFactory_;
 };
 
+typedef FactoryWIDirectInput<WIDirectInputA, LPDIRECTINPUTA, LPDIRECTINPUTDEVICEA> FactoryWIDirectInputA;
+typedef FactoryWIDirectInput<WIDirectInput2A, LPDIRECTINPUT2A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput2A;
+typedef FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput7A;
 typedef FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A> FactoryWIDirectInput8A;
+typedef FactoryWIDirectInput<WIDirectInput8W, LPDIRECTINPUT8W, LPDIRECTINPUTDEVICE8W> FactoryWIDirectInput8W;
 
 LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
 {
