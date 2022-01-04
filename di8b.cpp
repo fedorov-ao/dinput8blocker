@@ -344,7 +344,7 @@ private:
 
 
 /* BlockingCIDirectInputDevice8 */
-HRESULT BlockingCIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData)
+HRESULT BlockingCIDirectInputDevice8::GetDeviceState(LPDIRECTINPUTDEVICE8 This, DWORD cbData, LPVOID lpvData)
 {
   log_debug("BlockingCIDirectInputDevice8::GetDeviceState(%p)", This);
   auto result = This->lpVtbl->GetDeviceState(This, cbData, lpvData);
@@ -358,7 +358,7 @@ HRESULT BlockingCIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8* This
   return result;
 }
 
-HRESULT BlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+HRESULT BlockingCIDirectInputDevice8::GetDeviceData(LPDIRECTINPUTDEVICE8 This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
 {
   log_debug("BlockingCIDirectInputDevice8::GetDeviceData(%p)", This);
   auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
@@ -377,7 +377,7 @@ BlockingCIDirectInputDevice8::BlockingCIDirectInputDevice8(std::shared_ptr<Flag>
 
 
 /* BoundBlockingCIDirectInputDevice8 */
-HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData)
+HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceState(LPDIRECTINPUTDEVICE8 This, DWORD cbData, LPVOID lpvData)
 {
   log_debug("BoundBlockingCIDirectInputDevice8::GetDeviceState(%p)", This);
   auto result = This->lpVtbl->GetDeviceState(This, cbData, lpvData);
@@ -391,7 +391,7 @@ HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceState(::IDirectInputDevice8*
   return result;
 }
 
-HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceData(LPDIRECTINPUTDEVICE8 This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
 {
   log_debug("BoundBlockingCIDirectInputDevice8::GetDeviceData(%p)", This);
 
@@ -432,7 +432,7 @@ BoundBlockingCIDirectInputDevice8::~BoundBlockingCIDirectInputDevice8()
 
 
 /* WrappingCIDirectInput8 */
-HRESULT WrappingCIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+HRESULT WrappingCIDirectInput8::CreateDevice(LPDIRECTINPUT8 This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
   auto result = CIDirectInput8::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
   if (result == S_OK)
@@ -462,7 +462,7 @@ DeviceKind get_device_kind(REFGUID rguid)
 
 
 /* FactoryCIDirectInput8 */
-HRESULT FactoryCIDirectInput8::CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+HRESULT FactoryCIDirectInput8::CreateDevice(LPDIRECTINPUT8 This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
   char csGuid [37];
   guid2cstr(csGuid, sizeof(csGuid), rguid);
@@ -522,7 +522,7 @@ class BlockingWIDirectInputDevice8A : public WIDirectInputDevice8A<BlockingWIDir
 public:
   typedef WIDirectInputDevice8A<BlockingWIDirectInputDevice8A> base_type;
 
-  static HRESULT WINAPI GetDeviceState(::IDirectInputDevice8A* This, DWORD cbData, LPVOID lpvData)
+  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICE8A This, DWORD cbData, LPVOID lpvData)
   {
     log_debug("BlockingWIDirectInputDevice8A:GetDeviceState(%p)", This);
     auto That = reinterpret_cast<BlockingWIDirectInputDevice8A*>(This);
@@ -535,7 +535,7 @@ public:
     return hr;
   }
 
-  static HRESULT WINAPI GetDeviceData(::IDirectInputDevice8A* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICE8A This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
   {
     log_debug("BlockingWIDirectInputDevice8A::GetDeviceData(%p)", This);
     auto That = reinterpret_cast<BlockingWIDirectInputDevice8A*>(This);
@@ -547,7 +547,7 @@ public:
     return hr;
   }
 
-  BlockingWIDirectInputDevice8A(::IDirectInputDevice8A* pNative, std::shared_ptr<Flag> const & spFlag)
+  BlockingWIDirectInputDevice8A(LPDIRECTINPUTDEVICE8A pNative, std::shared_ptr<Flag> const & spFlag)
     : base_type(pNative), spFlag_(spFlag)
   {
     log_debug("BlockingWIDirectInputDevice8A::BlockingWIDirectInputDevice8A(%p)", this);
@@ -568,7 +568,7 @@ class WrappingWIDirectInput8A : public WIDirectInput8A<WrappingWIDirectInput8A>
 public:
   typedef WIDirectInput8A<WrappingWIDirectInput8A> base_type;
 
-  WrappingWIDirectInput8A(::IDirectInput8A* pNative) : base_type(pNative) {}
+  WrappingWIDirectInput8A(LPDIRECTINPUT8A pNative) : base_type(pNative) {}
 };
 
 /** Makes device using external factory method */
@@ -576,9 +576,9 @@ class FactoryWIDirectInput8A : public WIDirectInput8A<FactoryWIDirectInput8A>
 {
 public:
   typedef WIDirectInput8A<FactoryWIDirectInput8A> base_type;
-  typedef std::function<::IDirectInputDevice8A* (REFGUID, ::IDirectInputDevice8A*)> device_factory_t;
+  typedef std::function<LPDIRECTINPUTDEVICE8A (REFGUID, LPDIRECTINPUTDEVICE8A)> device_factory_t;
 
-  static HRESULT WINAPI CreateDevice(::IDirectInput8A* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT8A This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
     log_debug("FactoryWIDirectInput8A::CreateDevice(%p)", This);
     auto That = reinterpret_cast<FactoryWIDirectInput8A*>(This);
@@ -601,10 +601,10 @@ public:
     return hr; 
   }
 
-  FactoryWIDirectInput8A(::IDirectInput8A* pNative, device_factory_t const & deviceFactory) : base_type(pNative), deviceFactory_(deviceFactory) {}
+  FactoryWIDirectInput8A(LPDIRECTINPUT8A pNative, device_factory_t const & deviceFactory) : base_type(pNative), deviceFactory_(deviceFactory) {}
 
 private:
-  static void print_device_info(::IDirectInputDevice8A * pDevice)
+  static void print_device_info(LPDIRECTINPUTDEVICE8A pDevice)
   {
     DIDEVICEINSTANCE ddi;
     std::memset(&ddi, 0, sizeof(ddi));
@@ -623,7 +623,7 @@ private:
 };
 
 
-::IDirectInputDevice8A* make_idid8a_wrapper(REFGUID rguid, ::IDirectInputDevice8A* pIDirectInput8Device8A)
+LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
 {
   log_debug("make_idid8a_wrapper(%s, %p)", guid2str(rguid).data(), pIDirectInput8Device8A);
   auto strGuid = guid2str(rguid);
@@ -656,7 +656,7 @@ private:
     spFlag->add(spUnblockFlag);
   }
 
-  auto pWrapper = reinterpret_cast<::IDirectInputDevice8A*>(new BlockingWIDirectInputDevice8A(pIDirectInput8Device8A, spFlag));
+  auto pWrapper = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(new BlockingWIDirectInputDevice8A(pIDirectInput8Device8A, spFlag));
   log_debug("make_idid8a_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pIDirectInput8Device8A, pWrapper);
   return pWrapper;
 }
@@ -1004,20 +1004,20 @@ DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, RE
       *ppvOut = upWrapper.release();
     } else if (1)
     {
-      auto noop_make_device = [](REFGUID rguid, ::IDirectInputDevice8A* pIDirectInput8Device8A)
+      auto noop_make_device = [](REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
       {
         return pIDirectInput8Device8A;
       };
-      auto base_make_device = [](REFGUID rguid, ::IDirectInputDevice8A* pIDirectInput8Device8A)
+      auto base_make_device = [](REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
       {
-        return reinterpret_cast<::IDirectInputDevice8A*>(new di8b::BIDirectInputDevice8A(pIDirectInput8Device8A, nullptr, true));
+        return reinterpret_cast<LPDIRECTINPUTDEVICE8A>(new di8b::BIDirectInputDevice8A(pIDirectInput8Device8A, nullptr, true));
       };
-      auto blocking_make_device = [](REFGUID rguid, ::IDirectInputDevice8A* pIDirectInput8Device8A)
+      auto blocking_make_device = [](REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
       {
         if (di8b::DeviceKind::mouse == di8b::get_device_kind(rguid))
         {
           auto spFlag = std::make_shared<di8b::ToggleTickFlag>(VK_SCROLL, true, true);
-          return reinterpret_cast<::IDirectInputDevice8A*>(new di8b::BlockingWIDirectInputDevice8A(pIDirectInput8Device8A, spFlag));
+          return reinterpret_cast<LPDIRECTINPUTDEVICE8A>(new di8b::BlockingWIDirectInputDevice8A(pIDirectInput8Device8A, spFlag));
         }
         else
         {

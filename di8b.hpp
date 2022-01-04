@@ -26,8 +26,8 @@ class Flag;
 class BlockingCIDirectInputDevice8 : public CIDirectInputDevice8
 {
 public:
-  virtual HRESULT GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData);
-  virtual HRESULT GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  virtual HRESULT GetDeviceState(LPDIRECTINPUTDEVICE8 This, DWORD cbData, LPVOID lpvData);
+  virtual HRESULT GetDeviceData(LPDIRECTINPUTDEVICE8 This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
 
   BlockingCIDirectInputDevice8(std::shared_ptr<Flag> const & spFlag);
 
@@ -41,8 +41,8 @@ class BoundBlockingCIDirectInputDevice8 : public CIDirectInputDevice8
 public:
   typedef std::function<void()> on_destroy_t;
 
-  virtual HRESULT GetDeviceState(::IDirectInputDevice8* This, DWORD cbData, LPVOID lpvData);
-  virtual HRESULT GetDeviceData(::IDirectInputDevice8* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  virtual HRESULT GetDeviceState(LPDIRECTINPUTDEVICE8 This, DWORD cbData, LPVOID lpvData);
+  virtual HRESULT GetDeviceData(LPDIRECTINPUTDEVICE8 This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
 
   void set_state(bool s);
   bool get_state() const;
@@ -60,7 +60,7 @@ private:
 class WrappingCIDirectInput8 : public CIDirectInput8
 {
 public:
-  virtual HRESULT CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  virtual HRESULT CreateDevice(LPDIRECTINPUT8 This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   
   virtual ~WrappingCIDirectInput8();
 };
@@ -70,7 +70,7 @@ class FactoryCIDirectInput8 : public CIDirectInput8
 public:
   typedef std::function<std::unique_ptr<CIDirectInputDevice8> (REFGUID)> make_callback_t;
 
-  virtual HRESULT CreateDevice(::IDirectInput8* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  virtual HRESULT CreateDevice(LPDIRECTINPUT8 This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
 
   FactoryCIDirectInput8(make_callback_t const & make_callback);
 
