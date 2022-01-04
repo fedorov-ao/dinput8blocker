@@ -565,6 +565,7 @@ private:
 };
 
 typedef BlockingWIDirectInputDevice<WIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A> BlockingWIDirectInputDevice8A;
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W> BlockingWIDirectInputDevice8W;
 
 
 /** Makes device using external factory method */
