@@ -563,28 +563,30 @@ private:
 };
 
 /** Makes device using external factory method */
-class FactoryWIDirectInput8A : public WIDirectInput8A<FactoryWIDirectInput8A>
+template <template <class> class B, class LPDI, class LPDID>
+class FactoryWIDirectInput : public B<FactoryWIDirectInput<B, LPDI, LPDID> >
 {
 public:
-  typedef WIDirectInput8A<FactoryWIDirectInput8A> base_type;
-  typedef std::function<LPDIRECTINPUTDEVICE8A (REFGUID, LPDIRECTINPUTDEVICE8A)> device_factory_t;
+  typedef FactoryWIDirectInput<B, LPDI, LPDID> that_type;
+  typedef B<that_type> base_type;
+  typedef std::function<LPDID (REFGUID, LPDID)> device_factory_t;
 
-  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT8A This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+  static HRESULT WINAPI CreateDevice(LPDI This, REFGUID rguid, LPDID *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
-    log_debug("FactoryWIDirectInput8A::CreateDevice(%p)", This);
-    auto That = reinterpret_cast<FactoryWIDirectInput8A*>(This);
+    log_debug("FactoryWIDirectInput::CreateDevice(%p)", This);
+    auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
     if (hr == S_OK)
     { 
       print_device_info(*lplpDirectInputDevice);
       if (That->deviceFactory_)
         try {
-          log_debug("FactoryWIDirectInput8A::CreateDevice(%p): created native device: %p", This, *lplpDirectInputDevice);
+          log_debug("FactoryWIDirectInput::CreateDevice(%p): created native device: %p", This, *lplpDirectInputDevice);
           auto pDevice = That->deviceFactory_(rguid, *lplpDirectInputDevice);
-          log_debug("FactoryWIDirectInput8A::CreateDevice(%p): created wrapper device: %p", This, pDevice);
+          log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
           *lplpDirectInputDevice = pDevice;
         } catch (...) {
-          log_error("Exception, releasing native device %p", *lplpDirectInputDevice);
+          log_error("FactoryWIDirectInput::CreateDevice(%p): exception, releasing native device %p", *lplpDirectInputDevice);
           (*lplpDirectInputDevice)->lpVtbl->Release(*lplpDirectInputDevice);
           throw;
         }
@@ -592,10 +594,10 @@ public:
     return hr; 
   }
 
-  FactoryWIDirectInput8A(LPDIRECTINPUT8A pNative, device_factory_t const & deviceFactory) : base_type(pNative), deviceFactory_(deviceFactory) {}
+  FactoryWIDirectInput(LPDI pNative, device_factory_t const & deviceFactory) : base_type(pNative), deviceFactory_(deviceFactory) {}
 
 private:
-  static void print_device_info(LPDIRECTINPUTDEVICE8A pDevice)
+  static void print_device_info(LPDID pDevice)
   {
     DIDEVICEINSTANCE ddi;
     std::memset(&ddi, 0, sizeof(ddi));
@@ -613,6 +615,7 @@ private:
   device_factory_t deviceFactory_;
 };
 
+typedef FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A> FactoryWIDirectInput8A;
 
 LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
 {
