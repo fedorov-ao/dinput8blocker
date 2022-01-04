@@ -529,9 +529,11 @@ public:
     log_debug("BlockingWIDirectInputDevice:GetDeviceState(%p)", This);
     auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::GetDeviceState(This, cbData, lpvData);
-    if (hr == DI_OK && That->spFlag_->get() == false)
+    auto flag = That->spFlag_->get();
+    if ((hr == DI_OK) && !flag)
     {
       /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
+      log_debug("BlockingWIDirectInputDevice:GetDeviceState(%p): erasing state", This);
       std::memset(lpvData, 0, cbData);
     }
     return hr;
@@ -542,8 +544,10 @@ public:
     log_debug("BlockingWIDirectInputDevice::GetDeviceData(%p)", This);
     auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
-    if (hr == DI_OK && That->spFlag_->get() == false)
+    auto flag = That->spFlag_->get();
+    if ((hr == DI_OK) && !flag)
     {
+      log_debug("BlockingWIDirectInputDevice:GetDeviceData(%p): erasing data", This);
       *pdwInOut = 0;
     }
     return hr;
@@ -576,6 +580,7 @@ public:
   typedef FactoryWIDirectInput<B, LPDI, LPDID> that_type;
   typedef B<that_type> base_type;
   typedef std::function<LPDID (REFGUID, LPDID)> device_factory_t;
+  typedef std::function<void (LPDID)> reporter_t;
 
   static HRESULT WINAPI CreateDevice(LPDI This, REFGUID rguid, LPDID *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
@@ -584,7 +589,8 @@ public:
     auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
     if (hr == S_OK)
     { 
-      print_device_info(*lplpDirectInputDevice);
+      if (That->reporter_)
+        That->reporter_(*lplpDirectInputDevice);
       if (That->deviceFactory_)
         try {
           log_debug("FactoryWIDirectInput::CreateDevice(%p): created native device: %p", This, *lplpDirectInputDevice);
@@ -600,26 +606,44 @@ public:
     return hr; 
   }
 
-  FactoryWIDirectInput(LPDI pNative, device_factory_t const & deviceFactory) : base_type(pNative), deviceFactory_(deviceFactory) {}
+  FactoryWIDirectInput(LPDI pNative, device_factory_t const & deviceFactory, reporter_t const & reporter=reporter_t())
+    : base_type(pNative), deviceFactory_(deviceFactory), reporter_(reporter)
+  {}
 
 private:
-  static void print_device_info(LPDID pDevice)
-  {
-    DIDEVICEINSTANCE ddi;
-    std::memset(&ddi, 0, sizeof(ddi));
-    ddi.dwSize = sizeof(ddi);
-    HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
-    if (ddiResult == S_OK)
-    {
-      static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %s; product name: %s; type: 0x%x; usage page: 0x%x; usage: 0x%x";
-      log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
-    }
-    else
-      log_error("Failed to get device info");
-  }
-
   device_factory_t deviceFactory_;
+  reporter_t reporter_;
 };
+
+void print_idid8a_info(LPDIRECTINPUTDEVICE8A pDevice)
+{
+  DIDEVICEINSTANCEA ddi;
+  std::memset(&ddi, 0, sizeof(ddi));
+  ddi.dwSize = sizeof(ddi);
+  HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
+  if (ddiResult == S_OK)
+  {
+    static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %s; product name: %s; type: 0x%x; usage page: 0x%x; usage: 0x%x";
+    log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
+  }
+  else
+    log_error("Failed to get device info");
+}
+
+void print_idid8w_info(LPDIRECTINPUTDEVICE8W pDevice)
+{
+  DIDEVICEINSTANCEW ddi;
+  std::memset(&ddi, 0, sizeof(ddi));
+  ddi.dwSize = sizeof(ddi);
+  HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
+  if (ddiResult == S_OK)
+  {
+    static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %ls; product name: %ls; type: 0x%x; usage page: 0x%x; usage: 0x%x";
+    log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
+  }
+  else
+    log_error("Failed to get device info");
+}
 
 typedef FactoryWIDirectInput<WIDirectInputA, LPDIRECTINPUTA, LPDIRECTINPUTDEVICEA> FactoryWIDirectInputA;
 typedef FactoryWIDirectInput<WIDirectInput2A, LPDIRECTINPUT2A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput2A;
@@ -679,6 +703,10 @@ LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A p
   return make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A>(rguid, pIDirectInput8Device8A);
 }
 
+LPDIRECTINPUTDEVICE8W make_idid8w_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8W pIDirectInput8Device8W)
+{
+  return make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W>(rguid, pIDirectInput8Device8W);
+}
 
 /* config */
 config_t parse_config(std::istream & configStream, char const * configName)
@@ -1003,17 +1031,36 @@ DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, RE
   HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, &pOut, punkOuter);
   if (result == S_OK)
   {
-    IDirectInput8* pIDirectInput8 = reinterpret_cast<IDirectInput8*>(pOut);
-    di8b::log_debug("DirectInput8Create(): created native device: %p", pIDirectInput8);
-    try {
-      auto pWrapper = new di8b::FactoryWIDirectInput8A(pIDirectInput8, di8b::make_idid8a_wrapper);
-      *ppvOut = pWrapper;
-    } catch (...) {
-      di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8A, releasing native");
-      pIDirectInput8->lpVtbl->Release(pIDirectInput8);
-      throw;
+    if (IsEqualGUID(riidltf, IID_IDirectInput8A))
+    {
+      IDirectInput8A* pIDirectInput8A = reinterpret_cast<IDirectInput8A*>(pOut);
+      di8b::log_debug("DirectInput8Create(): created native device: %p", pIDirectInput8A);
+      try {
+        auto pWrapper = new di8b::FactoryWIDirectInput8A(pIDirectInput8A, di8b::make_idid8a_wrapper, di8b::print_idid8a_info);
+        *ppvOut = pWrapper;
+        di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
+      } catch (...) {
+        di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8A, releasing native");
+        pIDirectInput8A->lpVtbl->Release(pIDirectInput8A);
+        throw;
+      }
     }
-    di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
+    else if (IsEqualGUID(riidltf, IID_IDirectInput8W))
+    {
+      IDirectInput8W* pIDirectInput8W = reinterpret_cast<IDirectInput8W*>(pOut);
+      di8b::log_debug("DirectInput8Create(): created native device: %p", pIDirectInput8W);
+      try {
+        auto pWrapper = new di8b::FactoryWIDirectInput8W(pIDirectInput8W, di8b::make_idid8w_wrapper, di8b::print_idid8w_info);
+        *ppvOut = pWrapper;
+        di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
+      } catch (...) {
+        di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8W, releasing native");
+        pIDirectInput8W->lpVtbl->Release(pIDirectInput8W);
+        throw;
+      }
+    }
+    else
+      di8b::log_debug("DirectInput8Create(): unknown GUID: %s", di8b::guid2str(riidltf).data());
   }
   return result;
 }
