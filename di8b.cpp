@@ -594,6 +594,15 @@ void open_and_parse_config()
   log_debug("Parsed config");
 }
 
+void init_log()
+try {
+  auto const & strLogLevel = g_config.at("").at("logLevel");
+  auto logLevel = name2loglevel(strLogLevel.data());
+  log_set_level(logLevel);
+} catch (...) {
+  log_set_level(LogLevel::notset);
+}
+
 
 /* loop */
 class Loop
@@ -785,8 +794,10 @@ BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason,LPVOID v)
 try {
   if (reason == DLL_PROCESS_ATTACH)
   {
+    di8b::log_set_level(di8b::LogLevel::info);
     di8b::log_info("Dll attached");
     di8b::open_and_parse_config();
+    di8b::init_log();
     di8b::g_imports.fill();
     di8b::start_loop();
   }
