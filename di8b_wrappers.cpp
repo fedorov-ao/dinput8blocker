@@ -576,6 +576,272 @@ CIDirectInput8::~CIDirectInput8() {}
 
 
 /* Templates */
+/* WIDirectInputDevice8A */
+#define THAT reinterpret_cast<BIDirectInputDevice8A*>(This)
+#define NATIVE THAT->pNative_
+#define CALL_NATIVE(method) NATIVE->lpVtbl->method
+/*** IUnknown methods ***/
+HRESULT WINAPI BIDirectInputDevice8A::QueryInterface(::IDirectInputDevice8A* This, REFIID riid, void** ppvObject)
+{
+  log_debug("BIDirectInputDevice8A::QueryInterface(%p)", THAT);
+  /* TODO Apparently should return pointer to wrapper. */
+  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+}
+
+ULONG WINAPI BIDirectInputDevice8A::AddRef(::IDirectInputDevice8A* This)
+{
+  log_debug("BIDirectInputDevice8A::AddRef(%p)", THAT);
+  return CALL_NATIVE(AddRef)(NATIVE);
+}
+
+ULONG WINAPI BIDirectInputDevice8A::Release(::IDirectInputDevice8A* This)
+{
+  log_debug("BIDirectInputDevice8A::Release(%p)", THAT);
+  ULONG r = CALL_NATIVE(Release)(NATIVE);
+  if ((r == 0) && (THAT->deleteSelf_))
+  {
+    log_debug("BIDirectInputDevice8A::Release(%p): deleting self", THAT);
+    delete THAT;
+  }
+  return r;
+}
+
+/*** IDirectInputDeviceA methods ***/
+HRESULT WINAPI BIDirectInputDevice8A::GetCapabilities(::IDirectInputDevice8A* This, LPDIDEVCAPS lpDIDevCaps)
+{
+  log_debug("BIDirectInputDevice8A::GetCapabilities(%p)", THAT);
+  return CALL_NATIVE(GetCapabilities)(NATIVE, lpDIDevCaps);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::EnumObjects(::IDirectInputDevice8A* This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::EnumObjects(%p)", THAT);
+  return CALL_NATIVE(EnumObjects)(NATIVE, lpCallback, pvRef, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetProperty(::IDirectInputDevice8A* This, REFGUID rguidProp, LPDIPROPHEADER pdiph)
+{
+  log_debug("BIDirectInputDevice8A::GetProperty(%p)", THAT);
+  return CALL_NATIVE(GetProperty)(NATIVE, rguidProp, pdiph);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::SetProperty(::IDirectInputDevice8A* This, REFGUID rguidProp, LPCDIPROPHEADER pdiph)
+{
+  log_debug("BIDirectInputDevice8A::SetProperty(%p)", THAT);
+  return CALL_NATIVE(SetProperty)(NATIVE, rguidProp, pdiph);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::Acquire(::IDirectInputDevice8A* This)
+{
+  log_debug("BIDirectInputDevice8A::Acquire(%p)", THAT);
+  return CALL_NATIVE(Acquire)(NATIVE);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::Unacquire(::IDirectInputDevice8A* This)
+{
+  log_debug("BIDirectInputDevice8A::Unacquire(%p)", THAT);
+  return CALL_NATIVE(Unacquire)(NATIVE);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetDeviceState(::IDirectInputDevice8A* This, DWORD cbData, LPVOID lpvData)
+{
+  log_debug("BIDirectInputDevice8A::GetDeviceState(%p)", THAT);
+  return CALL_NATIVE(GetDeviceState)(NATIVE, cbData, lpvData);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetDeviceData(::IDirectInputDevice8A* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::GetDeviceData(%p)", THAT);
+  return CALL_NATIVE(GetDeviceData)(NATIVE, cbObjectData, rgdod, pdwInOut, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::SetDataFormat(::IDirectInputDevice8A* This, LPCDIDATAFORMAT lpdf)
+{
+  log_debug("BIDirectInputDevice8A::SetDataFormat(%p)", THAT);
+  return CALL_NATIVE(SetDataFormat)(NATIVE, lpdf);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::SetEventNotification(::IDirectInputDevice8A* This, HANDLE hEvent)
+{
+  log_debug("BIDirectInputDevice8A::SetEventNotification(%p)", THAT);
+  return CALL_NATIVE(SetEventNotification)(NATIVE, hEvent);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::SetCooperativeLevel(::IDirectInputDevice8A* This, HWND hwnd, DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::SetCooperativeLevel(%p)", THAT);
+  return CALL_NATIVE(SetCooperativeLevel)(NATIVE, hwnd, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetObjectInfo(::IDirectInputDevice8A* This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
+{
+  log_debug("BIDirectInputDevice8A::GetObjectInfo(%p)", THAT);
+  return CALL_NATIVE(GetObjectInfo)(NATIVE, pdidoi, dwObj, dwHow);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetDeviceInfo(::IDirectInputDevice8A* This, LPDIDEVICEINSTANCEA pdidi)
+{
+  log_debug("BIDirectInputDevice8A::GetDeviceInfo(%p)", THAT);
+  return CALL_NATIVE(GetDeviceInfo)(NATIVE, pdidi);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::RunControlPanel(::IDirectInputDevice8A* This, HWND hwndOwner, DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::RunControlPanel(%p)", THAT);
+  return CALL_NATIVE(RunControlPanel)(NATIVE, hwndOwner, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::Initialize(::IDirectInputDevice8A* This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid)
+{
+  log_debug("BIDirectInputDevice8A::Initialize(%p)", THAT);
+  return CALL_NATIVE(Initialize)(NATIVE, hinst, dwVersion, rguid);
+}
+
+/*** IDirectInputDevice2A methods ***/
+HRESULT WINAPI BIDirectInputDevice8A::CreateEffect(::IDirectInputDevice8A* This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter)
+{
+  log_debug("BIDirectInputDevice8A::CreateEffect(%p)", THAT);
+  return CALL_NATIVE(CreateEffect)(NATIVE, rguid, lpeff, ppdeff, punkOuter);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::EnumEffects(::IDirectInputDevice8A* This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType)
+{
+  log_debug("BIDirectInputDevice8A::EnumEffects(%p)", THAT);
+  return CALL_NATIVE(EnumEffects)(NATIVE, lpCallback, pvRef, dwEffType);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetEffectInfo(::IDirectInputDevice8A* This, LPDIEFFECTINFOA pdei, REFGUID rguid)
+{
+  log_debug("BIDirectInputDevice8A::GetEffectInfo(%p)", THAT);
+  return CALL_NATIVE(GetEffectInfo)(NATIVE, pdei, rguid);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetForceFeedbackState(::IDirectInputDevice8A* This, LPDWORD pdwOut)
+{
+  log_debug("BIDirectInputDevice8A::GetForceFeedbackState(%p)", THAT);
+  return CALL_NATIVE(GetForceFeedbackState)(NATIVE, pdwOut);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::SendForceFeedbackCommand(::IDirectInputDevice8A* This, DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::SendForceFeedbackCommand(%p)", THAT);
+  return CALL_NATIVE(SendForceFeedbackCommand)(NATIVE, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::EnumCreatedEffectObjects(::IDirectInputDevice8A* This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl)
+{
+  log_debug("BIDirectInputDevice8A::EnumCreatedEffectObjects(%p)", THAT);
+  return CALL_NATIVE(EnumCreatedEffectObjects)(NATIVE, lpCallback, pvRef, fl);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::Escape(::IDirectInputDevice8A* This, LPDIEFFESCAPE pesc)
+{
+  log_debug("BIDirectInputDevice8A::Escape(%p)", THAT);
+  return CALL_NATIVE(Escape)(NATIVE, pesc);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::Poll(::IDirectInputDevice8A* This)
+{
+  log_debug("BIDirectInputDevice8A::Poll(%p)", THAT);
+  return CALL_NATIVE(Poll)(NATIVE);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::SendDeviceData(::IDirectInputDevice8A* This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl)
+{
+  log_debug("BIDirectInputDevice8A::SendDeviceData(%p)", THAT);
+  return CALL_NATIVE(SendDeviceData)(NATIVE, cbObjectData, rgdod, pdwInOut, fl);
+}
+
+/*** IDirectInputDevice7A methods ***/
+HRESULT WINAPI BIDirectInputDevice8A::EnumEffectsInFile(::IDirectInputDevice8A* This, LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::EnumEffectsInFile(%p)", THAT);
+  return CALL_NATIVE(EnumEffectsInFile)(NATIVE, lpszFileName, pec, pvRef, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::WriteEffectToFile(::IDirectInputDevice8A* This, LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::WriteEffectToFile(%p)", THAT);
+  return CALL_NATIVE(WriteEffectToFile)(NATIVE, lpszFileName, dwEntries, rgDiFileEft, dwFlags);
+}
+
+/*** IDirectInputDevice8A methods ***/
+HRESULT WINAPI BIDirectInputDevice8A::BuildActionMap(::IDirectInputDevice8A* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::BuildActionMap(%p)", THAT);
+  return CALL_NATIVE(BuildActionMap)(NATIVE, lpdiaf, lpszUserName, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::SetActionMap(::IDirectInputDevice8A* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags)
+{
+  log_debug("BIDirectInputDevice8A::SetActionMap(%p)", THAT);
+  return CALL_NATIVE(SetActionMap)(NATIVE, lpdiaf, lpszUserName, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInputDevice8A::GetImageInfo(::IDirectInputDevice8A* This, LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader)
+{
+  log_debug("BIDirectInputDevice8A::GetImageInfo(%p)", THAT);
+  return CALL_NATIVE(GetImageInfo)(NATIVE, lpdiDevImageInfoHeader);
+}
+#undef CALL_NATIVE
+#undef NATIVE
+#undef THAT
+
+BIDirectInputDevice8A::BIDirectInputDevice8A(::IDirectInputDevice8A* pNative, VIDirectInputDevice8A const * pVtbl, bool deleteSelf)
+  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
+{
+  log_debug("BIDirectInputDevice8A::BIDirectInputDevice8A(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
+  if (pVtbl_ == nullptr)
+    pVtbl_ = &vtbl_;
+}
+
+BIDirectInputDevice8A::~BIDirectInputDevice8A()
+{
+  log_debug("BIDirectInputDevice8A::~BIDirectInputDevice8A(%p)", this);
+}
+
+VIDirectInputDevice8A const BIDirectInputDevice8A::vtbl_ =
+{
+  /*** IUnknown methods ***/
+  &BIDirectInputDevice8A::QueryInterface,
+  &BIDirectInputDevice8A::AddRef,
+  &BIDirectInputDevice8A::Release,
+  /*** IDirectInputDeviceA methods ***/
+  &BIDirectInputDevice8A::GetCapabilities,
+  &BIDirectInputDevice8A::EnumObjects,
+  &BIDirectInputDevice8A::GetProperty,
+  &BIDirectInputDevice8A::SetProperty,
+  &BIDirectInputDevice8A::Acquire,
+  &BIDirectInputDevice8A::Unacquire,
+  &BIDirectInputDevice8A::GetDeviceState,
+  &BIDirectInputDevice8A::GetDeviceData,
+  &BIDirectInputDevice8A::SetDataFormat,
+  &BIDirectInputDevice8A::SetEventNotification,
+  &BIDirectInputDevice8A::SetCooperativeLevel,
+  &BIDirectInputDevice8A::GetObjectInfo,
+  &BIDirectInputDevice8A::GetDeviceInfo,
+  &BIDirectInputDevice8A::RunControlPanel,
+  &BIDirectInputDevice8A::Initialize,
+  /*** IDirectInputDevice2A methods ***/
+  &BIDirectInputDevice8A::CreateEffect,
+  &BIDirectInputDevice8A::EnumEffects,
+  &BIDirectInputDevice8A::GetEffectInfo,
+  &BIDirectInputDevice8A::GetForceFeedbackState,
+  &BIDirectInputDevice8A::SendForceFeedbackCommand,
+  &BIDirectInputDevice8A::EnumCreatedEffectObjects,
+  &BIDirectInputDevice8A::Escape,
+  &BIDirectInputDevice8A::Poll,
+  &BIDirectInputDevice8A::SendDeviceData,
+  /*** IDirectInputDevice7A methods ***/
+  &BIDirectInputDevice8A::EnumEffectsInFile,
+  &BIDirectInputDevice8A::WriteEffectToFile,
+  /*** IDirectInputDevice8A methods ***/
+  &BIDirectInputDevice8A::BuildActionMap,
+  &BIDirectInputDevice8A::SetActionMap,
+  &BIDirectInputDevice8A::GetImageInfo
+};
+
+
 /* WIDirectInputA */
 #define THAT reinterpret_cast<BIDirectInputA*>(This)
 #define NATIVE THAT->pNative_
