@@ -232,7 +232,12 @@ private:
 class ToggleTickFlag : public Tick, public Flag
 {
 public:
-  virtual bool get() const { return flag_; }
+  virtual bool get() const
+  {
+    if (updateOnGet_)
+      const_cast<ToggleTickFlag&>(*this).tick();
+    return flag_;
+  }
 
   virtual void tick()
   {
@@ -241,8 +246,8 @@ public:
     wasPressed_ = isPressed;
   }
 
-  ToggleTickFlag(UINT key, bool initial=true)
-    : wasPressed_(false), flag_(initial), key_(key)
+  ToggleTickFlag(UINT key, bool initial=true, bool updateOnGet=false)
+    : wasPressed_(false), flag_(initial), key_(key), updateOnGet_(updateOnGet)
   {
     wasPressed_ = GetKeyState(key_) & 0x8000;
   }
@@ -251,23 +256,30 @@ private:
   bool wasPressed_;
   bool flag_;
   UINT key_;
+  bool updateOnGet_;
 };
 
 class PressTickFlag : public Tick, public Flag
 {
 public:
-  virtual bool get() const { return flag_; }
+  virtual bool get() const
+  {
+    if (updateOnGet_)
+      const_cast<PressTickFlag&>(*this).tick();
+    return flag_;
+  }
 
   virtual void tick()
   {
     flag_ = GetKeyState(key_) & 0x8000;
   }
 
-  PressTickFlag(UINT key) : flag_(false), key_(key) {}
+  PressTickFlag(UINT key, bool updateOnGet=false) : flag_(false), key_(key), updateOnGet_(updateOnGet) {}
 
 private:
   bool flag_;
   UINT key_;
+  bool updateOnGet_;
 };
 
 class NotFlag : public Flag

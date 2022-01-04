@@ -634,7 +634,7 @@ HRESULT WINAPI BIDirectInputA::Initialize(::IDirectInputA* This, HINSTANCE hinst
   log_debug("BIDirectInputA::Initialize(%p)", THAT);
   return CALL_NATIVE(Initialize)(NATIVE, hinst, dwVersion);
 }
-#undef CAL_NATIVE
+#undef CALL_NATIVE
 #undef NATIVE
 #undef THAT
 
