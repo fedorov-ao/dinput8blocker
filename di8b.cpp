@@ -819,40 +819,55 @@ extern "C" {
 
 DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
 {
-  di8b::log_debug("DirectInput8Create");
-  HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
+  di8b::log_debug("DirectInput8Create()");
+  void* pOut = nullptr;
+  HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, &pOut, punkOuter);
   if (result == S_OK)
   {
-    auto upCallback = std::unique_ptr<di8b::FactoryCIDirectInput8>(new di8b::FactoryCIDirectInput8(di8b::g_make_device_callback));
-    auto pIDirectInput8 = reinterpret_cast<IDirectInput8*>(*ppvOut);
-    auto upWrapper = std::unique_ptr<di8b::WIDirectInput8>(new di8b::WIDirectInput8(pIDirectInput8, upCallback.get()));
-    *ppvOut = upWrapper.release();
-    upCallback.release();
+    IDirectInput8* pIDirectInput8 = reinterpret_cast<IDirectInput8*>(pOut);
+    di8b::log_debug("DirectInput8Create(): created native device: %p", pIDirectInput8);
+    if (0)
+    {
+      auto upCallback = std::unique_ptr<di8b::FactoryCIDirectInput8>(new di8b::FactoryCIDirectInput8(di8b::g_make_device_callback));
+      di8b::log_debug("DirectInput8Create(): created callback: %p", upCallback.get());
+      auto upWrapper = std::unique_ptr<di8b::WIDirectInput8>(new di8b::WIDirectInput8(pIDirectInput8, upCallback.get()));
+      *ppvOut = upWrapper.release();
+      upCallback.release();
+    } else if (1)
+    {
+      auto upWrapper = std::unique_ptr<di8b::WrappingWIDirectInput8A>(new di8b::WrappingWIDirectInput8A(pIDirectInput8));
+      *ppvOut = upWrapper.release();
+    } else
+    {
+      auto upWrapper = std::unique_ptr<di8b::BIDirectInput8A>(new di8b::BIDirectInput8A(pIDirectInput8, nullptr, true));
+      *ppvOut = upWrapper.release();
+    }
+    di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
   }
   return result;
 }
 
 DLLEXPORT HRESULT WINAPI DllCanUnloadNow()
 {
-  di8b::log_debug("DllCanUnloadNow");
+  di8b::log_debug("DllCanUnloadNow()");
   return di8b::g_imports.dinput8.DllCanUnloadNow();
 }
 
 DLLEXPORT HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
-  di8b::log_debug("DllGetClassObject");
+  di8b::log_debug("DllGetClassObject()");
   return di8b::g_imports.dinput8.DllGetClassObject(rclsid, riid, ppv);
 }
 
 DLLEXPORT HRESULT WINAPI DllRegisterServer()
 {
-  di8b::log_debug("DllRegisterServer");
+  di8b::log_debug("DllRegisterServer()");
   return di8b::g_imports.dinput8.DllRegisterServer();
 }
 
 DLLEXPORT HRESULT WINAPI DllUnregisterServer()
 {
-  di8b::log_debug("DllUnregisterServer");
+  di8b::log_debug("DllUnregisterServer()");
   return di8b::g_imports.dinput8.DllUnregisterServer();
 }
 

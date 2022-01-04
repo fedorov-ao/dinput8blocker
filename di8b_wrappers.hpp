@@ -202,6 +202,102 @@ public:
 };
 
 
+/* Templates */
+/* WIDirectInput8A */
+struct VIDirectInput8A
+{
+  HRESULT (WINAPI *QueryInterface)(::IDirectInput8A* This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(::IDirectInput8A* This);
+  ULONG (WINAPI *Release)(::IDirectInput8A* This);
+
+  HRESULT (WINAPI *CreateDevice)(::IDirectInput8A* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *EnumDevices)(::IDirectInput8A* This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetDeviceStatus)(::IDirectInput8A* This, REFGUID rguidInstance);
+  HRESULT (WINAPI *RunControlPanel)(::IDirectInput8A* This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(::IDirectInput8A* This, HINSTANCE hinst, DWORD dwVersion);
+  HRESULT (WINAPI *FindDevice)(::IDirectInput8A* This, REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance);
+  HRESULT (WINAPI *EnumDevicesBySemantics)(::IDirectInput8A* This, LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *ConfigureDevices)(::IDirectInput8A* This, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData);
+};
+
+class BIDirectInput8A
+{
+public:
+  static HRESULT WINAPI QueryInterface(::IDirectInput8A* This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(::IDirectInput8A* This);
+  static ULONG WINAPI Release(::IDirectInput8A* This);
+
+  static HRESULT WINAPI CreateDevice(::IDirectInput8A* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI EnumDevices(::IDirectInput8A* This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetDeviceStatus(::IDirectInput8A* This, REFGUID rguidInstance);
+  static HRESULT WINAPI RunControlPanel(::IDirectInput8A* This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(::IDirectInput8A* This, HINSTANCE hinst, DWORD dwVersion);
+  static HRESULT WINAPI FindDevice(::IDirectInput8A* This, REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance);
+  static HRESULT WINAPI EnumDevicesBySemantics(::IDirectInput8A* This, LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI ConfigureDevices(::IDirectInput8A* This, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData);
+
+  BIDirectInput8A(::IDirectInput8A* pNative, VIDirectInput8A const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInput8A();
+
+private:
+  static VIDirectInput8A const vtbl_;
+
+  VIDirectInput8A const * pVtbl_;
+  ::IDirectInput8A* pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInput8A : public BIDirectInput8A
+{
+public:
+  static ULONG WINAPI Release(::IDirectInput8A* This);
+  WIDirectInput8A(::IDirectInput8A* pNative);
+
+private:
+  static VIDirectInput8A const vtbl_;
+};
+
+template <class D>
+VIDirectInput8A const WIDirectInput8A<D>::vtbl_ =
+{
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  &D::CreateDevice,
+  &D::EnumDevices,
+  &D::GetDeviceStatus,
+  &D::RunControlPanel,
+  &D::Initialize,
+  &D::FindDevice,
+  &D::EnumDevicesBySemantics,
+  &D::ConfigureDevices
+};
+
+template <class D>
+ULONG WINAPI WIDirectInput8A<D>::Release(::IDirectInput8A* This)
+{
+  ULONG r = BIDirectInput8A::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInput8A<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInput8A<D>::WIDirectInput8A(::IDirectInput8A* pNative) : BIDirectInput8A(pNative, &vtbl_, false)
+{}
+
+class WrappingWIDirectInput8A : public WIDirectInput8A<WrappingWIDirectInput8A>
+{
+public:
+  typedef WIDirectInput8A<WrappingWIDirectInput8A> base_type;
+
+  WrappingWIDirectInput8A(::IDirectInput8A* pNative) : base_type(pNative) {}
+};
+
 } //namespace di8b
 
 #endif

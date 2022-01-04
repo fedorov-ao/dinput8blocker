@@ -575,4 +575,113 @@ HRESULT CIDirectInput8::ConfigureDevices(::IDirectInput8* This, LPDICONFIGUREDEV
 CIDirectInput8::~CIDirectInput8() {}
 
 
+/* Templates */
+
+#define THAT reinterpret_cast<BIDirectInput8A*>(This)
+#define NATIVE THAT->pNative_
+#define CALL_NATIVE(method) NATIVE->lpVtbl->method
+HRESULT WINAPI BIDirectInput8A::QueryInterface(::IDirectInput8A* This, REFIID riid, void** ppvObject)
+{
+  log_debug("BIDirectInput8A::QueryInterface(%p)", THAT);
+  /* TODO Apparently should return pointer to wrapper. */
+  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+}
+
+ULONG WINAPI BIDirectInput8A::AddRef(::IDirectInput8A* This)
+{
+  log_debug("BIDirectInput8A::AddRef(%p)", THAT);
+  return CALL_NATIVE(AddRef)(NATIVE);
+}
+
+ULONG WINAPI BIDirectInput8A::Release(::IDirectInput8A* This)
+{
+  log_debug("BIDirectInput8A::Release(%p)", THAT);
+  ULONG r = CALL_NATIVE(Release)(NATIVE);
+  if ((r == 0) && (THAT->deleteSelf_))
+  {
+    log_debug("BIDirectInput8A::Release(%p): deleting self", THAT);
+    delete THAT;
+  }
+  return r;
+}
+
+HRESULT WINAPI BIDirectInput8A::CreateDevice(::IDirectInput8A* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+{
+  log_debug("BIDirectInput8A::CreateDevice(%p)", THAT);
+  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, lplpDirectInputDevice, pUnkOuter);
+}
+
+HRESULT WINAPI BIDirectInput8A::EnumDevices(::IDirectInput8A* This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
+{
+  log_debug("BIDirectInput8A::EnumDevices(%p)", THAT);
+  return CALL_NATIVE(EnumDevices)(NATIVE, dwDevType, lpCallback, pvRef, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInput8A::GetDeviceStatus(::IDirectInput8A* This, REFGUID rguidInstance)
+{
+  log_debug("BIDirectInput8A::GetDeviceStatus(%p)", THAT);
+  return CALL_NATIVE(GetDeviceStatus)(NATIVE, rguidInstance);
+}
+
+HRESULT WINAPI BIDirectInput8A::RunControlPanel(::IDirectInput8A* This, HWND hwndOwner, DWORD dwFlags)
+{
+  log_debug("BIDirectInput8A::RunControlPanel(%p)", THAT);
+  return CALL_NATIVE(RunControlPanel)(NATIVE, hwndOwner, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInput8A::Initialize(::IDirectInput8A* This, HINSTANCE hinst, DWORD dwVersion)
+{
+  log_debug("BIDirectInput8A::Initialize(%p)", THAT);
+  return CALL_NATIVE(Initialize)(NATIVE, hinst, dwVersion);
+}
+
+HRESULT WINAPI BIDirectInput8A::FindDevice(::IDirectInput8A* This, REFGUID rguid, LPCSTR pszName, LPGUID pguidInstance)
+{
+  log_debug("BIDirectInput8A::FindDevice(%p)", THAT);
+  return CALL_NATIVE(FindDevice)(NATIVE, rguid, pszName, pguidInstance);
+}
+
+HRESULT WINAPI BIDirectInput8A::EnumDevicesBySemantics(::IDirectInput8A* This, LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags)
+{
+  log_debug("BIDirectInput8A::EnumDevicesBySemantics(%p)", THAT);
+  return CALL_NATIVE(EnumDevicesBySemantics)(NATIVE, ptszUserName, lpdiActionFormat, lpCallback, pvRef, dwFlags);
+}
+
+HRESULT WINAPI BIDirectInput8A::ConfigureDevices(::IDirectInput8A* This, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData)
+{
+  log_debug("BIDirectInput8A::ConfigureDevices(%p)", THAT);
+  return CALL_NATIVE(ConfigureDevices)(NATIVE, lpdiCallback, lpdiCDParams, dwFlags, pvRefData);
+}
+#undef CAL_NATIVE
+#undef NATIVE
+#undef THAT
+
+BIDirectInput8A::BIDirectInput8A(::IDirectInput8A* pNative, VIDirectInput8A const * pVtbl, bool deleteSelf)
+  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
+{
+  log_debug("BIDirectInput8A::BIDirectInput8A(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
+  if (pVtbl_ == nullptr)
+    pVtbl_ = &vtbl_;
+}
+
+BIDirectInput8A::~BIDirectInput8A()
+{
+  log_debug("BIDirectInput8A::~BIDirectInput8A(%p)", this);
+}
+
+VIDirectInput8A const BIDirectInput8A::vtbl_ =
+{
+  &BIDirectInput8A::QueryInterface,
+  &BIDirectInput8A::AddRef,
+  &BIDirectInput8A::Release,
+  &BIDirectInput8A::CreateDevice,
+  &BIDirectInput8A::EnumDevices,
+  &BIDirectInput8A::GetDeviceStatus,
+  &BIDirectInput8A::RunControlPanel,
+  &BIDirectInput8A::Initialize,
+  &BIDirectInput8A::FindDevice,
+  &BIDirectInput8A::EnumDevicesBySemantics,
+  &BIDirectInput8A::ConfigureDevices
+};
+
 } //namespace di8b
