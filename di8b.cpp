@@ -627,9 +627,9 @@ typedef FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVI
 typedef FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A> FactoryWIDirectInput8A;
 typedef FactoryWIDirectInput<WIDirectInput8W, LPDIRECTINPUT8W, LPDIRECTINPUTDEVICE8W> FactoryWIDirectInput8W;
 
-LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
+
+std::shared_ptr<Flag> make_flag(REFGUID rguid)
 {
-  log_debug("make_idid8a_wrapper(%s, %p)", guid2str(rguid).data(), pIDirectInput8Device8A);
   auto strGuid = guid2str(rguid);
   auto itSection = g_config.find(strGuid);
   if (itSection == g_config.end())
@@ -639,13 +639,13 @@ LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A p
       itSection = g_config.find(strPreset);
   }
   if (itSection == g_config.end())
-    return pIDirectInput8Device8A;
+    return nullptr;
 
   auto const & bindings = itSection->second;
   auto itToggleBinding = bindings.find("toggleKey");
   auto itUnblockBinding = bindings.find("unblockKey");
   if ((itToggleBinding == bindings.end()) && (itUnblockBinding == bindings.end()))
-    return pIDirectInput8Device8A;
+    return nullptr;
 
   auto spFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
   if (itToggleBinding != bindings.end())
@@ -659,10 +659,24 @@ LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A p
     auto spUnblockFlag = std::make_shared<PressTickFlag>(unblockKey, true);
     spFlag->add(spUnblockFlag);
   }
+  return spFlag;
+}
 
-  auto pWrapper = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(new BlockingWIDirectInputDevice8A(pIDirectInput8Device8A, spFlag));
-  log_debug("make_idid8a_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pIDirectInput8Device8A, pWrapper);
+template <class DeviceWrapper, class LPDID>
+LPDID make_device_wrapper(REFGUID rguid, LPDID pDID)
+{
+  log_debug("make_device_wrapper(%s, %p)", guid2str(rguid).data(), pDID);
+  auto spFlag = make_flag(rguid);
+  if (!spFlag)
+    return pDID;
+  auto pWrapper = reinterpret_cast<LPDID>(new DeviceWrapper(pDID, spFlag));
+  log_debug("make_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
   return pWrapper;
+}
+
+LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
+{
+  return make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A>(rguid, pIDirectInput8Device8A);
 }
 
 
