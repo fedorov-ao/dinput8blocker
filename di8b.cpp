@@ -562,15 +562,6 @@ private:
   std::shared_ptr<Flag> spFlag_;
 };
 
-/** Simple directinput8a wrapping class */
-class WrappingWIDirectInput8A : public WIDirectInput8A<WrappingWIDirectInput8A>
-{
-public:
-  typedef WIDirectInput8A<WrappingWIDirectInput8A> base_type;
-
-  WrappingWIDirectInput8A(LPDIRECTINPUT8A pNative) : base_type(pNative) {}
-};
-
 /** Makes device using external factory method */
 class FactoryWIDirectInput8A : public WIDirectInput8A<FactoryWIDirectInput8A>
 {
@@ -987,51 +978,13 @@ DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, RE
   {
     IDirectInput8* pIDirectInput8 = reinterpret_cast<IDirectInput8*>(pOut);
     di8b::log_debug("DirectInput8Create(): created native device: %p", pIDirectInput8);
-    if (0)
-    {
-      auto upCallback = std::unique_ptr<di8b::FactoryCIDirectInput8>(new di8b::FactoryCIDirectInput8(di8b::g_make_device_callback));
-      di8b::log_debug("DirectInput8Create(): created callback: %p", upCallback.get());
-      auto upWrapper = std::unique_ptr<di8b::WIDirectInput8>(new di8b::WIDirectInput8(pIDirectInput8, upCallback.get()));
-      *ppvOut = upWrapper.release();
-      upCallback.release();
-    } else if (0)
-    {
-      auto upWrapper = std::unique_ptr<di8b::WrappingWIDirectInput8A>(new di8b::WrappingWIDirectInput8A(pIDirectInput8));
-      *ppvOut = upWrapper.release();
-    } else if (0)
-    {
-      auto upWrapper = std::unique_ptr<di8b::BIDirectInput8A>(new di8b::BIDirectInput8A(pIDirectInput8, nullptr, true));
-      *ppvOut = upWrapper.release();
-    } else if (1)
-    {
-      auto noop_make_device = [](REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
-      {
-        return pIDirectInput8Device8A;
-      };
-      auto base_make_device = [](REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
-      {
-        return reinterpret_cast<LPDIRECTINPUTDEVICE8A>(new di8b::BIDirectInputDevice8A(pIDirectInput8Device8A, nullptr, true));
-      };
-      auto blocking_make_device = [](REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
-      {
-        if (di8b::DeviceKind::mouse == di8b::get_device_kind(rguid))
-        {
-          auto spFlag = std::make_shared<di8b::ToggleTickFlag>(VK_SCROLL, true, true);
-          return reinterpret_cast<LPDIRECTINPUTDEVICE8A>(new di8b::BlockingWIDirectInputDevice8A(pIDirectInput8Device8A, spFlag));
-        }
-        else
-        {
-          return pIDirectInput8Device8A;
-        }
-      };
-      try {
-        auto pWrapper = new di8b::FactoryWIDirectInput8A(pIDirectInput8, di8b::make_idid8a_wrapper);
-        *ppvOut = pWrapper;
-      } catch (...) {
-        di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8A, releasing native");
-        pIDirectInput8->lpVtbl->Release(pIDirectInput8);
-        throw;
-      }
+    try {
+      auto pWrapper = new di8b::FactoryWIDirectInput8A(pIDirectInput8, di8b::make_idid8a_wrapper);
+      *ppvOut = pWrapper;
+    } catch (...) {
+      di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8A, releasing native");
+      pIDirectInput8->lpVtbl->Release(pIDirectInput8);
+      throw;
     }
     di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
   }
