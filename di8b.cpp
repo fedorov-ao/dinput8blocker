@@ -585,7 +585,7 @@ public:
     auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
     if (hr == S_OK)
     { 
-      log_info("Created device: %s (%s)", guid2str(rguid).data(), preset_guid2str(rguid).data());
+      print_device_info(*lplpDirectInputDevice);
       if (That->deviceFactory_)
         try {
           log_debug("FactoryWIDirectInput8A::CreateDevice(%p): created native device: %p", This, *lplpDirectInputDevice);
@@ -604,6 +604,21 @@ public:
   FactoryWIDirectInput8A(::IDirectInput8A* pNative, device_factory_t const & deviceFactory) : base_type(pNative), deviceFactory_(deviceFactory) {}
 
 private:
+  static void print_device_info(::IDirectInputDevice8A * pDevice)
+  {
+    DIDEVICEINSTANCE ddi;
+    std::memset(&ddi, 0, sizeof(ddi));
+    ddi.dwSize = sizeof(ddi);
+    HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
+    if (ddiResult == S_OK)
+    {
+      static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %s; product name: %s; type: 0x%x; usage page: 0x%x; usage: 0x%x";
+      log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
+    }
+    else
+      log_error("Failed to get device info");
+  }
+
   device_factory_t deviceFactory_;
 };
 
