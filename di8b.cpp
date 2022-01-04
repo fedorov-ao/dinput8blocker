@@ -236,6 +236,7 @@ public:
   {
     if (updateOnGet_)
       const_cast<ToggleTickFlag&>(*this).tick();
+    log_debug("ToggleTickFlag::get(%p): flag_: %d", this, flag_);
     return flag_;
   }
 
@@ -266,6 +267,7 @@ public:
   {
     if (updateOnGet_)
       const_cast<PressTickFlag&>(*this).tick();
+    log_debug("PressTickFlag::get(%p): flag_: %d", this, flag_);
     return flag_;
   }
 
@@ -302,6 +304,7 @@ public:
     auto result = false;
     for (auto const & spFlag : flags_)
       result = first ? first = false, spFlag->get() : combine_(result, spFlag->get());
+    log_debug("CompositeFlag::get(%p): result: %d", this, result);
     return result;
   }
 
@@ -573,32 +576,75 @@ class FactoryWIDirectInput8A : public WIDirectInput8A<FactoryWIDirectInput8A>
 {
 public:
   typedef WIDirectInput8A<FactoryWIDirectInput8A> base_type;
-  typedef std::function<::IDirectInputDevice8A* (REFGUID, ::IDirectInputDevice8A*)> make_device_t;
+  typedef std::function<::IDirectInputDevice8A* (REFGUID, ::IDirectInputDevice8A*)> device_factory_t;
 
   static HRESULT WINAPI CreateDevice(::IDirectInput8A* This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
     log_debug("FactoryWIDirectInput8A::CreateDevice(%p)", This);
     auto That = reinterpret_cast<FactoryWIDirectInput8A*>(This);
     auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
-    if ((hr == S_OK) && That->make_device_)
-      try {
-        log_debug("FactoryWIDirectInput8A::CreateDevice(%p): created native device: %p", This, *lplpDirectInputDevice);
-        auto pDevice = That->make_device_(rguid, *lplpDirectInputDevice);
-        log_debug("FactoryWIDirectInput8A::CreateDevice(%p): created wrapper device: %p", This, pDevice);
-        *lplpDirectInputDevice = pDevice;
-      } catch (...) {
-        log_error("Exception, releasing native device %p", *lplpDirectInputDevice);
-        (*lplpDirectInputDevice)->lpVtbl->Release(*lplpDirectInputDevice);
-        throw;
-      }
+    if (hr == S_OK)
+    { 
+      log_info("Created device: %s (%s)", guid2str(rguid).data(), preset_guid2str(rguid).data());
+      if (That->deviceFactory_)
+        try {
+          log_debug("FactoryWIDirectInput8A::CreateDevice(%p): created native device: %p", This, *lplpDirectInputDevice);
+          auto pDevice = That->deviceFactory_(rguid, *lplpDirectInputDevice);
+          log_debug("FactoryWIDirectInput8A::CreateDevice(%p): created wrapper device: %p", This, pDevice);
+          *lplpDirectInputDevice = pDevice;
+        } catch (...) {
+          log_error("Exception, releasing native device %p", *lplpDirectInputDevice);
+          (*lplpDirectInputDevice)->lpVtbl->Release(*lplpDirectInputDevice);
+          throw;
+        }
+    }
     return hr; 
   }
 
-  FactoryWIDirectInput8A(::IDirectInput8A* pNative, make_device_t const & make_device) : base_type(pNative), make_device_(make_device) {}
+  FactoryWIDirectInput8A(::IDirectInput8A* pNative, device_factory_t const & deviceFactory) : base_type(pNative), deviceFactory_(deviceFactory) {}
 
 private:
-  make_device_t make_device_;
+  device_factory_t deviceFactory_;
 };
+
+
+::IDirectInputDevice8A* make_idid8a_wrapper(REFGUID rguid, ::IDirectInputDevice8A* pIDirectInput8Device8A)
+{
+  log_debug("make_idid8a_wrapper(%s, %p)", guid2str(rguid).data(), pIDirectInput8Device8A);
+  auto strGuid = guid2str(rguid);
+  auto itSection = g_config.find(strGuid);
+  if (itSection == g_config.end())
+  {
+    auto strPreset = preset_guid2str(rguid);
+    if (strPreset != "")
+      itSection = g_config.find(strPreset);
+  }
+  if (itSection == g_config.end())
+    return pIDirectInput8Device8A;
+
+  auto const & bindings = itSection->second;
+  auto itToggleBinding = bindings.find("toggleKey");
+  auto itUnblockBinding = bindings.find("unblockKey");
+  if ((itToggleBinding == bindings.end()) && (itUnblockBinding == bindings.end()))
+    return pIDirectInput8Device8A;
+
+  auto spFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
+  if (itToggleBinding != bindings.end())
+  {
+    auto toggleKey = name2key(itToggleBinding->second.data());
+    spFlag->add(std::make_shared<ToggleTickFlag>(toggleKey, true, true));
+  }
+  if (itUnblockBinding != bindings.end())
+  {
+    auto unblockKey = name2key(itUnblockBinding->second.data());
+    auto spUnblockFlag = std::make_shared<PressTickFlag>(unblockKey, true);
+    spFlag->add(spUnblockFlag);
+  }
+
+  auto pWrapper = reinterpret_cast<::IDirectInputDevice8A*>(new BlockingWIDirectInputDevice8A(pIDirectInput8Device8A, spFlag));
+  log_debug("make_idid8a_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pIDirectInput8Device8A, pWrapper);
+  return pWrapper;
+}
 
 
 /* config */
@@ -964,7 +1010,7 @@ DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, RE
         }
       };
       try {
-        auto pWrapper = new di8b::FactoryWIDirectInput8A(pIDirectInput8, blocking_make_device);
+        auto pWrapper = new di8b::FactoryWIDirectInput8A(pIDirectInput8, di8b::make_idid8a_wrapper);
         *ppvOut = pWrapper;
       } catch (...) {
         di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8A, releasing native");
