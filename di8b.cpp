@@ -648,6 +648,7 @@ void print_idid8w_info(LPDIRECTINPUTDEVICE8W pDevice)
 typedef FactoryWIDirectInput<WIDirectInputA, LPDIRECTINPUTA, LPDIRECTINPUTDEVICEA> FactoryWIDirectInputA;
 typedef FactoryWIDirectInput<WIDirectInput2A, LPDIRECTINPUT2A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput2A;
 typedef FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput7A;
+typedef FactoryWIDirectInput<WIDirectInput7W, LPDIRECTINPUT7W, LPDIRECTINPUTDEVICEW> FactoryWIDirectInput7W;
 typedef FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A> FactoryWIDirectInput8A;
 typedef FactoryWIDirectInput<WIDirectInput8W, LPDIRECTINPUT8W, LPDIRECTINPUTDEVICE8W> FactoryWIDirectInput8W;
 

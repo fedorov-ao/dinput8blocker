@@ -1686,6 +1686,261 @@ WIDirectInput8A<D>::WIDirectInput8A(LPDIRECTINPUT8A pNative) : BIDirectInput8A(p
 {}
 
 
+/* WIDirectInputW */
+struct VIDirectInputW
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUTW This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUTW This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUTW This);
+  /*** IDirectInputW methods ***/
+  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUTW This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *EnumDevices)(LPDIRECTINPUTW This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetDeviceStatus)(LPDIRECTINPUTW This, REFGUID rguidInstance);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUTW This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUTW This, HINSTANCE hinst, DWORD dwVersion);
+};
+
+class BIDirectInputW
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUTW This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUTW This);
+  static ULONG WINAPI Release(LPDIRECTINPUTW This);
+  /*** IDirectInputW methods ***/
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUTW This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI EnumDevices(LPDIRECTINPUTW This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetDeviceStatus(LPDIRECTINPUTW This, REFGUID rguidInstance);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUTW This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUTW This, HINSTANCE hinst, DWORD dwVersion);
+
+  BIDirectInputW(LPDIRECTINPUTW pNative, VIDirectInputW const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInputW();
+
+private:
+  static VIDirectInputW const vtbl_;
+
+  VIDirectInputW const * pVtbl_;
+  LPDIRECTINPUTW pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInputW : public BIDirectInputW
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUTW This);
+  WIDirectInputW(LPDIRECTINPUTW pNative);
+
+private:
+  static VIDirectInputW const vtbl_;
+};
+
+template <class D>
+VIDirectInputW const WIDirectInputW<D>::vtbl_ =
+{
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  &D::CreateDevice,
+  &D::EnumDevices,
+  &D::GetDeviceStatus,
+  &D::RunControlPanel,
+  &D::Initialize
+};
+
+template <class D>
+ULONG WINAPI WIDirectInputW<D>::Release(LPDIRECTINPUTW This)
+{
+  ULONG r = BIDirectInputW::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInputW<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInputW<D>::WIDirectInputW(LPDIRECTINPUTW pNative) : BIDirectInputW(pNative, &vtbl_, false)
+{}
+
+/* WIDirectInput2W */
+struct VIDirectInput2W
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUT2W This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUT2W This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUT2W This);
+  /*** IDirectInputW methods ***/
+  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *EnumDevices)(LPDIRECTINPUT2W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetDeviceStatus)(LPDIRECTINPUT2W This, REFGUID rguidInstance);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUT2W This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUT2W This, HINSTANCE hinst, DWORD dwVersion);
+  /*** IDirectInput2W methods ***/
+  HRESULT (WINAPI *FindDevice)(LPDIRECTINPUT2W This, REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance);
+};
+
+class BIDirectInput2W
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUT2W This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUT2W This);
+  static ULONG WINAPI Release(LPDIRECTINPUT2W This);
+  /*** IDirectInputW methods ***/
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI EnumDevices(LPDIRECTINPUT2W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetDeviceStatus(LPDIRECTINPUT2W This, REFGUID rguidInstance);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUT2W This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUT2W This, HINSTANCE hinst, DWORD dwVersion);
+  /*** IDirectInput2W methods ***/
+  static HRESULT WINAPI FindDevice(LPDIRECTINPUT2W This, REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance);
+
+  BIDirectInput2W(LPDIRECTINPUT2W pNative, VIDirectInput2W const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInput2W();
+
+private:
+  static VIDirectInput2W const vtbl_;
+
+  VIDirectInput2W const * pVtbl_;
+  LPDIRECTINPUT2W pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInput2W : public BIDirectInput2W
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUT2W This);
+  WIDirectInput2W(LPDIRECTINPUT2W pNative);
+
+private:
+  static VIDirectInput2W const vtbl_;
+};
+
+template <class D>
+VIDirectInput2W const WIDirectInput2W<D>::vtbl_ =
+{
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  &D::CreateDevice,
+  &D::EnumDevices,
+  &D::GetDeviceStatus,
+  &D::RunControlPanel,
+  &D::Initialize,
+  &D::FindDevice
+};
+
+template <class D>
+ULONG WINAPI WIDirectInput2W<D>::Release(LPDIRECTINPUT2W This)
+{
+  ULONG r = BIDirectInput2W::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInput2W<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInput2W<D>::WIDirectInput2W(LPDIRECTINPUT2W pNative) : BIDirectInput2W(pNative, &vtbl_, false)
+{}
+
+/* WIDirectInput7W */
+struct VIDirectInput7W
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUT7W This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUT7W This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUT7W This);
+  /*** IDirectInputW methods ***/
+  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *EnumDevices)(LPDIRECTINPUT7W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetDeviceStatus)(LPDIRECTINPUT7W This, REFGUID rguidInstance);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUT7W This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUT7W This, HINSTANCE hinst, DWORD dwVersion);
+  /*** IDirectInput2W methods ***/
+  HRESULT (WINAPI *FindDevice)(LPDIRECTINPUT7W This, REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance);
+  /*** IDirectInput7W methods ***/
+  HRESULT (WINAPI *CreateDeviceEx)(LPDIRECTINPUT7W This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter);
+};
+
+class BIDirectInput7W
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUT7W This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUT7W This);
+  static ULONG WINAPI Release(LPDIRECTINPUT7W This);
+  /*** IDirectInputW methods ***/
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI EnumDevices(LPDIRECTINPUT7W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetDeviceStatus(LPDIRECTINPUT7W This, REFGUID rguidInstance);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUT7W This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUT7W This, HINSTANCE hinst, DWORD dwVersion);
+  /*** IDirectInput2W methods ***/
+  static HRESULT WINAPI FindDevice(LPDIRECTINPUT7W This, REFGUID rguid, LPCWSTR pszName, LPGUID pguidInstance);
+  /*** IDirectInput7W methods ***/
+  static HRESULT WINAPI CreateDeviceEx(LPDIRECTINPUT7W This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter);
+
+  BIDirectInput7W(LPDIRECTINPUT7W pNative, VIDirectInput7W const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInput7W();
+
+private:
+  static VIDirectInput7W const vtbl_;
+
+  VIDirectInput7W const * pVtbl_;
+  LPDIRECTINPUT7W pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInput7W : public BIDirectInput7W
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUT7W This);
+  WIDirectInput7W(LPDIRECTINPUT7W pNative);
+
+private:
+  static VIDirectInput7W const vtbl_;
+};
+
+template <class D>
+VIDirectInput7W const WIDirectInput7W<D>::vtbl_ =
+{
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  &D::CreateDevice,
+  &D::EnumDevices,
+  &D::GetDeviceStatus,
+  &D::RunControlPanel,
+  &D::Initialize,
+  &D::FindDevice,
+  &D::CreateDeviceEx
+};
+
+template <class D>
+ULONG WINAPI WIDirectInput7W<D>::Release(LPDIRECTINPUT7W This)
+{
+  ULONG r = BIDirectInput7W::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInput7W<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInput7W<D>::WIDirectInput7W(LPDIRECTINPUT7W pNative) : BIDirectInput7W(pNative, &vtbl_, false)
+{}
+
 /* WIDirectInput8W */
 struct VIDirectInput8W
 {
