@@ -586,7 +586,7 @@ public:
   typedef FactoryWIDirectInput<B, LPDI, LPDID> that_type;
   typedef B<that_type> base_type;
   typedef std::function<LPDID (REFGUID, LPDID)> device_factory_t;
-  typedef std::function<void (LPDID)> reporter_t;
+  typedef std::function<void (LPVOID)> reporter_t;
 
   static HRESULT WINAPI CreateDevice(LPDI This, REFGUID rguid, LPDID *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
@@ -621,11 +621,12 @@ private:
   reporter_t reporter_;
 };
 
-void print_idid8a_info(LPDIRECTINPUTDEVICE8A pDevice)
+void print_ididxa_info(LPVOID lpDevice)
 {
   DIDEVICEINSTANCEA ddi;
   std::memset(&ddi, 0, sizeof(ddi));
   ddi.dwSize = sizeof(ddi);
+  auto pDevice = reinterpret_cast<LPDIRECTINPUTDEVICEA>(lpDevice);
   HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
   if (ddiResult == S_OK)
   {
@@ -636,11 +637,12 @@ void print_idid8a_info(LPDIRECTINPUTDEVICE8A pDevice)
     log_error("Failed to get device info");
 }
 
-void print_idid8w_info(LPDIRECTINPUTDEVICE8W pDevice)
+void print_ididxw_info(LPVOID lpDevice)
 {
   DIDEVICEINSTANCEW ddi;
   std::memset(&ddi, 0, sizeof(ddi));
   ddi.dwSize = sizeof(ddi);
+  auto pDevice = reinterpret_cast<LPDIRECTINPUTDEVICEW>(lpDevice);
   HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
   if (ddiResult == S_OK)
   {
