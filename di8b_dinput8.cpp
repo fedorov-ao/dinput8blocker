@@ -65,13 +65,11 @@ try {
     di8b::open_and_parse_config();
     di8b::init_log();
     di8b::g_imports.fill();
-    di8b::start_loop();
   }
 
   if (reason == DLL_PROCESS_DETACH)
   {
     di8b::log_info("Dll detached");
-    di8b::stop_loop();
   }
 
   return TRUE;
