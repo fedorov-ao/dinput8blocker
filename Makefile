@@ -9,10 +9,10 @@ OBJECTS = $(SOURCES:%.cpp=%.o)
 OBJECTS_DI = $(SOURCES_DI:%.cpp=%.o)
 OBJECTS_DI8 = $(SOURCES_DI8:%.cpp=%.o)
 #If compiled with -On, dll can not be loaded
-CFLAGS = -std=c++11 -I. -D_WIN32_WINNT=0x0501
-#CFLAGS = -std=c++11 -I. -D_WIN32_WINNT=0x0501 -DNDEBUG -Os -ffunction-sections -fdata-sections
-LDFLAGS = -static-libstdc++ -static-libgcc -shared -Wl,--exclude-all-symbols,--kill-at -ldxguid
-#LDFLAGS = -static-libstdc++ -static-libgcc -shared -s -Wl,--gc-sections,--exclude-all-symbols,--kill-at -ldxguid
+#CFLAGS = -std=c++11 -I. -D_WIN32_WINNT=0x0501
+CFLAGS = -std=c++11 -I. -D_WIN32_WINNT=0x0501 -DNDEBUG -Os -ffunction-sections -fdata-sections
+#LDFLAGS = -static-libstdc++ -static-libgcc -shared -Wl,--exclude-all-symbols,--kill-at -ldxguid
+LDFLAGS = -static-libstdc++ -static-libgcc -shared -s -Wl,--gc-sections,--exclude-all-symbols,--kill-at -ldxguid
 INSTALL_PATH = ~/.wine/drive_c/1946
 
 %.o: %.cpp $(HEADERS)
@@ -33,4 +33,4 @@ uninstall_di8:
 	rm $(INSTALL_PATH)/$(TARGET_DI8) 
 
 clean:
-	rm  *.o *.def *.lib *.dll
+	rm  *.o *.def *.lib *.dll 2>1

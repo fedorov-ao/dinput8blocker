@@ -1,5 +1,16 @@
 #include "di8b.hpp"
 
+extern "C"
+{
+
+DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter);
+DLLEXPORT HRESULT WINAPI DllCanUnloadNow();
+DLLEXPORT HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv);
+DLLEXPORT HRESULT WINAPI DllRegisterServer();
+DLLEXPORT HRESULT WINAPI DllUnregisterServer();
+
+} // extern "C"
+
 namespace di8b
 {
 
@@ -43,6 +54,8 @@ void Imports::fill()
   return;
 }
 
+} //di8b
+
 BOOL WINAPI DllMain(HINSTANCE hInst, DWORD reason,LPVOID v)
 try {
   if (reason == DLL_PROCESS_ATTACH)
@@ -68,7 +81,8 @@ try {
   return FALSE;
 }
 
-extern "C" {
+extern "C"
+{
 
 DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
 {
@@ -124,5 +138,3 @@ DLLEXPORT HRESULT WINAPI DllUnregisterServer()
 }
 
 } // extern "C"
-
-} //di8b
