@@ -1,7 +1,7 @@
 CC = i686-w64-mingw32-g++-win32
 TARGET = dinput8.dll
 HEADERS = di8b_common.hpp di8b_wrappers.hpp di8b.hpp 
-SOURCES = di8b_common.cpp di8b_wrappers.cpp di8b.cpp
+SOURCES = di8b_common.cpp di8b_wrappers.cpp di8b.cpp di8b_dinput8.cpp
 OBJECTS = $(SOURCES:%.cpp=%.o)
 CFLAGS = -std=c++11 -I. -D_WIN32_WINNT=0x0501
 LDFLAGS = -static-libstdc++ -static-libgcc -shared -Wl,--exclude-all-symbols,--kill-at -ldxguid

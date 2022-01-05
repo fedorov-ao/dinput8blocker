@@ -13,6 +13,8 @@
 #include <windows.h>
 #include <olectl.h>
 
+#define DLLEXPORT __declspec(dllexport)
+
 namespace di8b
 {
 
@@ -77,6 +79,14 @@ public:
 private:
   make_callback_t make_callback_;
 };
+
+void open_and_parse_config();
+void init_log();
+
+void start_loop();
+void stop_loop();
+
+LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative);
 
 } //namespace di8b
 
