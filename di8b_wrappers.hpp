@@ -204,6 +204,411 @@ public:
 
 /* Templates */
 /* IDirectInputDevice... */
+/* WIDirectInputDeviceA */
+struct VIDirectInputDeviceA
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUTDEVICEA This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUTDEVICEA This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUTDEVICEA This);
+  /*** IDirectInputDeviceA methods ***/
+  HRESULT (WINAPI *GetCapabilities)(LPDIRECTINPUTDEVICEA This, LPDIDEVCAPS lpDIDevCaps);
+  HRESULT (WINAPI *EnumObjects)(LPDIRECTINPUTDEVICEA This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetProperty)(LPDIRECTINPUTDEVICEA This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  HRESULT (WINAPI *SetProperty)(LPDIRECTINPUTDEVICEA This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  HRESULT (WINAPI *Acquire)(LPDIRECTINPUTDEVICEA This);
+  HRESULT (WINAPI *Unacquire)(LPDIRECTINPUTDEVICEA This);
+  HRESULT (WINAPI *GetDeviceState)(LPDIRECTINPUTDEVICEA This, DWORD cbData, LPVOID lpvData);
+  HRESULT (WINAPI *GetDeviceData)(LPDIRECTINPUTDEVICEA This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  HRESULT (WINAPI *SetDataFormat)(LPDIRECTINPUTDEVICEA This, LPCDIDATAFORMAT lpdf);
+  HRESULT (WINAPI *SetEventNotification)(LPDIRECTINPUTDEVICEA This, HANDLE hEvent);
+  HRESULT (WINAPI *SetCooperativeLevel)(LPDIRECTINPUTDEVICEA This, HWND hwnd, DWORD dwFlags);
+  HRESULT (WINAPI *GetObjectInfo)(LPDIRECTINPUTDEVICEA This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+  HRESULT (WINAPI *GetDeviceInfo)(LPDIRECTINPUTDEVICEA This, LPDIDEVICEINSTANCEA pdidi);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUTDEVICEA This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUTDEVICEA This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+};
+
+class BIDirectInputDeviceA
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUTDEVICEA This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUTDEVICEA This);
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICEA This);
+  /*** IDirectInputDeviceA methods ***/
+  static HRESULT WINAPI GetCapabilities(LPDIRECTINPUTDEVICEA This, LPDIDEVCAPS lpDIDevCaps);
+  static HRESULT WINAPI EnumObjects(LPDIRECTINPUTDEVICEA This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetProperty(LPDIRECTINPUTDEVICEA This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  static HRESULT WINAPI SetProperty(LPDIRECTINPUTDEVICEA This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  static HRESULT WINAPI Acquire(LPDIRECTINPUTDEVICEA This);
+  static HRESULT WINAPI Unacquire(LPDIRECTINPUTDEVICEA This);
+  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICEA This, DWORD cbData, LPVOID lpvData);
+  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICEA This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  static HRESULT WINAPI SetDataFormat(LPDIRECTINPUTDEVICEA This, LPCDIDATAFORMAT lpdf);
+  static HRESULT WINAPI SetEventNotification(LPDIRECTINPUTDEVICEA This, HANDLE hEvent);
+  static HRESULT WINAPI SetCooperativeLevel(LPDIRECTINPUTDEVICEA This, HWND hwnd, DWORD dwFlags);
+  static HRESULT WINAPI GetObjectInfo(LPDIRECTINPUTDEVICEA This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+  static HRESULT WINAPI GetDeviceInfo(LPDIRECTINPUTDEVICEA This, LPDIDEVICEINSTANCEA pdidi);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUTDEVICEA This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUTDEVICEA This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+
+  BIDirectInputDeviceA(LPDIRECTINPUTDEVICEA pNative, VIDirectInputDeviceA const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInputDeviceA();
+
+private:
+  static VIDirectInputDeviceA const vtbl_;
+
+  VIDirectInputDeviceA const * pVtbl_;
+  LPDIRECTINPUTDEVICEA pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInputDeviceA : public BIDirectInputDeviceA
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICEA This);
+  WIDirectInputDeviceA(LPDIRECTINPUTDEVICEA pNative);
+
+private:
+  static VIDirectInputDeviceA const vtbl_;
+};
+
+template <class D>
+VIDirectInputDeviceA const WIDirectInputDeviceA<D>::vtbl_ =
+{
+  /*** IUnknown methods ***/
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  /*** IDirectInputDeviceA methods ***/
+  &D::GetCapabilities,
+  &D::EnumObjects,
+  &D::GetProperty,
+  &D::SetProperty,
+  &D::Acquire,
+  &D::Unacquire,
+  &D::GetDeviceState,
+  &D::GetDeviceData,
+  &D::SetDataFormat,
+  &D::SetEventNotification,
+  &D::SetCooperativeLevel,
+  &D::GetObjectInfo,
+  &D::GetDeviceInfo,
+  &D::RunControlPanel,
+  &D::Initialize
+};
+
+template <class D>
+ULONG WINAPI WIDirectInputDeviceA<D>::Release(LPDIRECTINPUTDEVICEA This)
+{
+  ULONG r = BIDirectInputDeviceA::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInputDeviceA<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInputDeviceA<D>::WIDirectInputDeviceA(LPDIRECTINPUTDEVICEA pNative) : BIDirectInputDeviceA(pNative, &vtbl_, false)
+{}
+
+/* WIDirectInputDevice2A */
+struct VIDirectInputDevice2A
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUTDEVICE2A This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUTDEVICE2A This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUTDEVICE2A This);
+  /*** IDirectInputDeviceA methods ***/
+  HRESULT (WINAPI *GetCapabilities)(LPDIRECTINPUTDEVICE2A This, LPDIDEVCAPS lpDIDevCaps);
+  HRESULT (WINAPI *EnumObjects)(LPDIRECTINPUTDEVICE2A This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetProperty)(LPDIRECTINPUTDEVICE2A This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  HRESULT (WINAPI *SetProperty)(LPDIRECTINPUTDEVICE2A This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  HRESULT (WINAPI *Acquire)(LPDIRECTINPUTDEVICE2A This);
+  HRESULT (WINAPI *Unacquire)(LPDIRECTINPUTDEVICE2A This);
+  HRESULT (WINAPI *GetDeviceState)(LPDIRECTINPUTDEVICE2A This, DWORD cbData, LPVOID lpvData);
+  HRESULT (WINAPI *GetDeviceData)(LPDIRECTINPUTDEVICE2A This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  HRESULT (WINAPI *SetDataFormat)(LPDIRECTINPUTDEVICE2A This, LPCDIDATAFORMAT lpdf);
+  HRESULT (WINAPI *SetEventNotification)(LPDIRECTINPUTDEVICE2A This, HANDLE hEvent);
+  HRESULT (WINAPI *SetCooperativeLevel)(LPDIRECTINPUTDEVICE2A This, HWND hwnd, DWORD dwFlags);
+  HRESULT (WINAPI *GetObjectInfo)(LPDIRECTINPUTDEVICE2A This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+  HRESULT (WINAPI *GetDeviceInfo)(LPDIRECTINPUTDEVICE2A This, LPDIDEVICEINSTANCEA pdidi);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUTDEVICE2A This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUTDEVICE2A This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2A methods ***/
+  HRESULT (WINAPI *CreateEffect)(LPDIRECTINPUTDEVICE2A This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  HRESULT (WINAPI *EnumEffects)(LPDIRECTINPUTDEVICE2A This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType);
+  HRESULT (WINAPI *GetEffectInfo)(LPDIRECTINPUTDEVICE2A This, LPDIEFFECTINFOA pdei, REFGUID rguid);
+  HRESULT (WINAPI *GetForceFeedbackState)(LPDIRECTINPUTDEVICE2A This, LPDWORD pdwOut);
+  HRESULT (WINAPI *SendForceFeedbackCommand)(LPDIRECTINPUTDEVICE2A This, DWORD dwFlags);
+  HRESULT (WINAPI *EnumCreatedEffectObjects)(LPDIRECTINPUTDEVICE2A This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  HRESULT (WINAPI *Escape)(LPDIRECTINPUTDEVICE2A This, LPDIEFFESCAPE pesc);
+  HRESULT (WINAPI *Poll)(LPDIRECTINPUTDEVICE2A This);
+  HRESULT (WINAPI *SendDeviceData)(LPDIRECTINPUTDEVICE2A This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+};
+
+class BIDirectInputDevice2A
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUTDEVICE2A This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUTDEVICE2A This);
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE2A This);
+  /*** IDirectInputDeviceA methods ***/
+  static HRESULT WINAPI GetCapabilities(LPDIRECTINPUTDEVICE2A This, LPDIDEVCAPS lpDIDevCaps);
+  static HRESULT WINAPI EnumObjects(LPDIRECTINPUTDEVICE2A This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetProperty(LPDIRECTINPUTDEVICE2A This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  static HRESULT WINAPI SetProperty(LPDIRECTINPUTDEVICE2A This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  static HRESULT WINAPI Acquire(LPDIRECTINPUTDEVICE2A This);
+  static HRESULT WINAPI Unacquire(LPDIRECTINPUTDEVICE2A This);
+  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICE2A This, DWORD cbData, LPVOID lpvData);
+  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICE2A This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  static HRESULT WINAPI SetDataFormat(LPDIRECTINPUTDEVICE2A This, LPCDIDATAFORMAT lpdf);
+  static HRESULT WINAPI SetEventNotification(LPDIRECTINPUTDEVICE2A This, HANDLE hEvent);
+  static HRESULT WINAPI SetCooperativeLevel(LPDIRECTINPUTDEVICE2A This, HWND hwnd, DWORD dwFlags);
+  static HRESULT WINAPI GetObjectInfo(LPDIRECTINPUTDEVICE2A This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+  static HRESULT WINAPI GetDeviceInfo(LPDIRECTINPUTDEVICE2A This, LPDIDEVICEINSTANCEA pdidi);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUTDEVICE2A This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUTDEVICE2A This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2A methods ***/
+  static HRESULT WINAPI CreateEffect(LPDIRECTINPUTDEVICE2A This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  static HRESULT WINAPI EnumEffects(LPDIRECTINPUTDEVICE2A This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType);
+  static HRESULT WINAPI GetEffectInfo(LPDIRECTINPUTDEVICE2A This, LPDIEFFECTINFOA pdei, REFGUID rguid);
+  static HRESULT WINAPI GetForceFeedbackState(LPDIRECTINPUTDEVICE2A This, LPDWORD pdwOut);
+  static HRESULT WINAPI SendForceFeedbackCommand(LPDIRECTINPUTDEVICE2A This, DWORD dwFlags);
+  static HRESULT WINAPI EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE2A This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  static HRESULT WINAPI Escape(LPDIRECTINPUTDEVICE2A This, LPDIEFFESCAPE pesc);
+  static HRESULT WINAPI Poll(LPDIRECTINPUTDEVICE2A This);
+  static HRESULT WINAPI SendDeviceData(LPDIRECTINPUTDEVICE2A This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+
+  BIDirectInputDevice2A(LPDIRECTINPUTDEVICE2A pNative, VIDirectInputDevice2A const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInputDevice2A();
+
+private:
+  static VIDirectInputDevice2A const vtbl_;
+
+  VIDirectInputDevice2A const * pVtbl_;
+  LPDIRECTINPUTDEVICE2A pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInputDevice2A : public BIDirectInputDevice2A
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE2A This);
+  WIDirectInputDevice2A(LPDIRECTINPUTDEVICE2A pNative);
+
+private:
+  static VIDirectInputDevice2A const vtbl_;
+};
+
+template <class D>
+VIDirectInputDevice2A const WIDirectInputDevice2A<D>::vtbl_ =
+{
+  /*** IUnknown methods ***/
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  /*** IDirectInputDeviceA methods ***/
+  &D::GetCapabilities,
+  &D::EnumObjects,
+  &D::GetProperty,
+  &D::SetProperty,
+  &D::Acquire,
+  &D::Unacquire,
+  &D::GetDeviceState,
+  &D::GetDeviceData,
+  &D::SetDataFormat,
+  &D::SetEventNotification,
+  &D::SetCooperativeLevel,
+  &D::GetObjectInfo,
+  &D::GetDeviceInfo,
+  &D::RunControlPanel,
+  &D::Initialize,
+  /*** IDirectInputDevice2A methods ***/
+  &D::CreateEffect,
+  &D::EnumEffects,
+  &D::GetEffectInfo,
+  &D::GetForceFeedbackState,
+  &D::SendForceFeedbackCommand,
+  &D::EnumCreatedEffectObjects,
+  &D::Escape,
+  &D::Poll,
+  &D::SendDeviceData
+};
+
+template <class D>
+ULONG WINAPI WIDirectInputDevice2A<D>::Release(LPDIRECTINPUTDEVICE2A This)
+{
+  ULONG r = BIDirectInputDevice2A::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInputDevice2A<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInputDevice2A<D>::WIDirectInputDevice2A(LPDIRECTINPUTDEVICE2A pNative) : BIDirectInputDevice2A(pNative, &vtbl_, false)
+{}
+
+/* WIDirectInputDevice7A */
+struct VIDirectInputDevice7A
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUTDEVICE7A This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUTDEVICE7A This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUTDEVICE7A This);
+  /*** IDirectInputDeviceA methods ***/
+  HRESULT (WINAPI *GetCapabilities)(LPDIRECTINPUTDEVICE7A This, LPDIDEVCAPS lpDIDevCaps);
+  HRESULT (WINAPI *EnumObjects)(LPDIRECTINPUTDEVICE7A This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetProperty)(LPDIRECTINPUTDEVICE7A This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  HRESULT (WINAPI *SetProperty)(LPDIRECTINPUTDEVICE7A This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  HRESULT (WINAPI *Acquire)(LPDIRECTINPUTDEVICE7A This);
+  HRESULT (WINAPI *Unacquire)(LPDIRECTINPUTDEVICE7A This);
+  HRESULT (WINAPI *GetDeviceState)(LPDIRECTINPUTDEVICE7A This, DWORD cbData, LPVOID lpvData);
+  HRESULT (WINAPI *GetDeviceData)(LPDIRECTINPUTDEVICE7A This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  HRESULT (WINAPI *SetDataFormat)(LPDIRECTINPUTDEVICE7A This, LPCDIDATAFORMAT lpdf);
+  HRESULT (WINAPI *SetEventNotification)(LPDIRECTINPUTDEVICE7A This, HANDLE hEvent);
+  HRESULT (WINAPI *SetCooperativeLevel)(LPDIRECTINPUTDEVICE7A This, HWND hwnd, DWORD dwFlags);
+  HRESULT (WINAPI *GetObjectInfo)(LPDIRECTINPUTDEVICE7A This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+  HRESULT (WINAPI *GetDeviceInfo)(LPDIRECTINPUTDEVICE7A This, LPDIDEVICEINSTANCEA pdidi);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUTDEVICE7A This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUTDEVICE7A This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2A methods ***/
+  HRESULT (WINAPI *CreateEffect)(LPDIRECTINPUTDEVICE7A This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  HRESULT (WINAPI *EnumEffects)(LPDIRECTINPUTDEVICE7A This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType);
+  HRESULT (WINAPI *GetEffectInfo)(LPDIRECTINPUTDEVICE7A This, LPDIEFFECTINFOA pdei, REFGUID rguid);
+  HRESULT (WINAPI *GetForceFeedbackState)(LPDIRECTINPUTDEVICE7A This, LPDWORD pdwOut);
+  HRESULT (WINAPI *SendForceFeedbackCommand)(LPDIRECTINPUTDEVICE7A This, DWORD dwFlags);
+  HRESULT (WINAPI *EnumCreatedEffectObjects)(LPDIRECTINPUTDEVICE7A This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  HRESULT (WINAPI *Escape)(LPDIRECTINPUTDEVICE7A This, LPDIEFFESCAPE pesc);
+  HRESULT (WINAPI *Poll)(LPDIRECTINPUTDEVICE7A This);
+  HRESULT (WINAPI *SendDeviceData)(LPDIRECTINPUTDEVICE7A This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+  /*** IDirectInputDevice7A methods ***/
+  HRESULT (WINAPI *EnumEffectsInFile)(LPDIRECTINPUTDEVICE7A This, LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags);
+  HRESULT (WINAPI *WriteEffectToFile)(LPDIRECTINPUTDEVICE7A This, LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags);
+};
+
+class BIDirectInputDevice7A
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUTDEVICE7A This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUTDEVICE7A This);
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE7A This);
+  /*** IDirectInputDeviceA methods ***/
+  static HRESULT WINAPI GetCapabilities(LPDIRECTINPUTDEVICE7A This, LPDIDEVCAPS lpDIDevCaps);
+  static HRESULT WINAPI EnumObjects(LPDIRECTINPUTDEVICE7A This, LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetProperty(LPDIRECTINPUTDEVICE7A This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  static HRESULT WINAPI SetProperty(LPDIRECTINPUTDEVICE7A This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  static HRESULT WINAPI Acquire(LPDIRECTINPUTDEVICE7A This);
+  static HRESULT WINAPI Unacquire(LPDIRECTINPUTDEVICE7A This);
+  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICE7A This, DWORD cbData, LPVOID lpvData);
+  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICE7A This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  static HRESULT WINAPI SetDataFormat(LPDIRECTINPUTDEVICE7A This, LPCDIDATAFORMAT lpdf);
+  static HRESULT WINAPI SetEventNotification(LPDIRECTINPUTDEVICE7A This, HANDLE hEvent);
+  static HRESULT WINAPI SetCooperativeLevel(LPDIRECTINPUTDEVICE7A This, HWND hwnd, DWORD dwFlags);
+  static HRESULT WINAPI GetObjectInfo(LPDIRECTINPUTDEVICE7A This, LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow);
+  static HRESULT WINAPI GetDeviceInfo(LPDIRECTINPUTDEVICE7A This, LPDIDEVICEINSTANCEA pdidi);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUTDEVICE7A This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUTDEVICE7A This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2A methods ***/
+  static HRESULT WINAPI CreateEffect(LPDIRECTINPUTDEVICE7A This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  static HRESULT WINAPI EnumEffects(LPDIRECTINPUTDEVICE7A This, LPDIENUMEFFECTSCALLBACKA lpCallback, LPVOID pvRef, DWORD dwEffType);
+  static HRESULT WINAPI GetEffectInfo(LPDIRECTINPUTDEVICE7A This, LPDIEFFECTINFOA pdei, REFGUID rguid);
+  static HRESULT WINAPI GetForceFeedbackState(LPDIRECTINPUTDEVICE7A This, LPDWORD pdwOut);
+  static HRESULT WINAPI SendForceFeedbackCommand(LPDIRECTINPUTDEVICE7A This, DWORD dwFlags);
+  static HRESULT WINAPI EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE7A This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  static HRESULT WINAPI Escape(LPDIRECTINPUTDEVICE7A This, LPDIEFFESCAPE pesc);
+  static HRESULT WINAPI Poll(LPDIRECTINPUTDEVICE7A This);
+  static HRESULT WINAPI SendDeviceData(LPDIRECTINPUTDEVICE7A This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+  /*** IDirectInputDevice7A methods ***/
+  static HRESULT WINAPI EnumEffectsInFile(LPDIRECTINPUTDEVICE7A This, LPCSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags);
+  static HRESULT WINAPI WriteEffectToFile(LPDIRECTINPUTDEVICE7A This, LPCSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags);
+
+  BIDirectInputDevice7A(LPDIRECTINPUTDEVICE7A pNative, VIDirectInputDevice7A const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInputDevice7A();
+
+private:
+  static VIDirectInputDevice7A const vtbl_;
+
+  VIDirectInputDevice7A const * pVtbl_;
+  LPDIRECTINPUTDEVICE7A pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInputDevice7A : public BIDirectInputDevice7A
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE7A This);
+  WIDirectInputDevice7A(LPDIRECTINPUTDEVICE7A pNative);
+
+private:
+  static VIDirectInputDevice7A const vtbl_;
+};
+
+template <class D>
+VIDirectInputDevice7A const WIDirectInputDevice7A<D>::vtbl_ =
+{
+  /*** IUnknown methods ***/
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  /*** IDirectInputDeviceA methods ***/
+  &D::GetCapabilities,
+  &D::EnumObjects,
+  &D::GetProperty,
+  &D::SetProperty,
+  &D::Acquire,
+  &D::Unacquire,
+  &D::GetDeviceState,
+  &D::GetDeviceData,
+  &D::SetDataFormat,
+  &D::SetEventNotification,
+  &D::SetCooperativeLevel,
+  &D::GetObjectInfo,
+  &D::GetDeviceInfo,
+  &D::RunControlPanel,
+  &D::Initialize,
+  /*** IDirectInputDevice2A methods ***/
+  &D::CreateEffect,
+  &D::EnumEffects,
+  &D::GetEffectInfo,
+  &D::GetForceFeedbackState,
+  &D::SendForceFeedbackCommand,
+  &D::EnumCreatedEffectObjects,
+  &D::Escape,
+  &D::Poll,
+  &D::SendDeviceData,
+  /*** IDirectInputDevice7A methods ***/
+  &D::EnumEffectsInFile,
+  &D::WriteEffectToFile
+};
+
+template <class D>
+ULONG WINAPI WIDirectInputDevice7A<D>::Release(LPDIRECTINPUTDEVICE7A This)
+{
+  ULONG r = BIDirectInputDevice7A::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInputDevice7A<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInputDevice7A<D>::WIDirectInputDevice7A(LPDIRECTINPUTDEVICE7A pNative) : BIDirectInputDevice7A(pNative, &vtbl_, false)
+{}
+
 /* WIDirectInputDevice8A */
 struct VIDirectInputDevice8A
 {
@@ -367,6 +772,411 @@ template <class D>
 WIDirectInputDevice8A<D>::WIDirectInputDevice8A(LPDIRECTINPUTDEVICE8A pNative) : BIDirectInputDevice8A(pNative, &vtbl_, false)
 {}
 
+
+/* WIDirectInputDeviceW */
+struct VIDirectInputDeviceW
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUTDEVICEW This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUTDEVICEW This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUTDEVICEW This);
+  /*** IDirectInputDeviceW methods ***/
+  HRESULT (WINAPI *GetCapabilities)(LPDIRECTINPUTDEVICEW This, LPDIDEVCAPS lpDIDevCaps);
+  HRESULT (WINAPI *EnumObjects)(LPDIRECTINPUTDEVICEW This, LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetProperty)(LPDIRECTINPUTDEVICEW This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  HRESULT (WINAPI *SetProperty)(LPDIRECTINPUTDEVICEW This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  HRESULT (WINAPI *Acquire)(LPDIRECTINPUTDEVICEW This);
+  HRESULT (WINAPI *Unacquire)(LPDIRECTINPUTDEVICEW This);
+  HRESULT (WINAPI *GetDeviceState)(LPDIRECTINPUTDEVICEW This, DWORD cbData, LPVOID lpvData);
+  HRESULT (WINAPI *GetDeviceData)(LPDIRECTINPUTDEVICEW This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  HRESULT (WINAPI *SetDataFormat)(LPDIRECTINPUTDEVICEW This, LPCDIDATAFORMAT lpdf);
+  HRESULT (WINAPI *SetEventNotification)(LPDIRECTINPUTDEVICEW This, HANDLE hEvent);
+  HRESULT (WINAPI *SetCooperativeLevel)(LPDIRECTINPUTDEVICEW This, HWND hwnd, DWORD dwFlags);
+  HRESULT (WINAPI *GetObjectInfo)(LPDIRECTINPUTDEVICEW This, LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
+  HRESULT (WINAPI *GetDeviceInfo)(LPDIRECTINPUTDEVICEW This, LPDIDEVICEINSTANCEW pdidi);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUTDEVICEW This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUTDEVICEW This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+};
+
+class BIDirectInputDeviceW
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUTDEVICEW This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUTDEVICEW This);
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICEW This);
+  /*** IDirectInputDeviceW methods ***/
+  static HRESULT WINAPI GetCapabilities(LPDIRECTINPUTDEVICEW This, LPDIDEVCAPS lpDIDevCaps);
+  static HRESULT WINAPI EnumObjects(LPDIRECTINPUTDEVICEW This, LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetProperty(LPDIRECTINPUTDEVICEW This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  static HRESULT WINAPI SetProperty(LPDIRECTINPUTDEVICEW This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  static HRESULT WINAPI Acquire(LPDIRECTINPUTDEVICEW This);
+  static HRESULT WINAPI Unacquire(LPDIRECTINPUTDEVICEW This);
+  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICEW This, DWORD cbData, LPVOID lpvData);
+  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICEW This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  static HRESULT WINAPI SetDataFormat(LPDIRECTINPUTDEVICEW This, LPCDIDATAFORMAT lpdf);
+  static HRESULT WINAPI SetEventNotification(LPDIRECTINPUTDEVICEW This, HANDLE hEvent);
+  static HRESULT WINAPI SetCooperativeLevel(LPDIRECTINPUTDEVICEW This, HWND hwnd, DWORD dwFlags);
+  static HRESULT WINAPI GetObjectInfo(LPDIRECTINPUTDEVICEW This, LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
+  static HRESULT WINAPI GetDeviceInfo(LPDIRECTINPUTDEVICEW This, LPDIDEVICEINSTANCEW pdidi);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUTDEVICEW This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUTDEVICEW This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+
+  BIDirectInputDeviceW(LPDIRECTINPUTDEVICEW pNative, VIDirectInputDeviceW const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInputDeviceW();
+
+private:
+  static VIDirectInputDeviceW const vtbl_;
+
+  VIDirectInputDeviceW const * pVtbl_;
+  LPDIRECTINPUTDEVICEW pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInputDeviceW : public BIDirectInputDeviceW
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICEW This);
+  WIDirectInputDeviceW(LPDIRECTINPUTDEVICEW pNative);
+
+private:
+  static VIDirectInputDeviceW const vtbl_;
+};
+
+template <class D>
+VIDirectInputDeviceW const WIDirectInputDeviceW<D>::vtbl_ =
+{
+  /*** IUnknown methods ***/
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  /*** IDirectInputDeviceW methods ***/
+  &D::GetCapabilities,
+  &D::EnumObjects,
+  &D::GetProperty,
+  &D::SetProperty,
+  &D::Acquire,
+  &D::Unacquire,
+  &D::GetDeviceState,
+  &D::GetDeviceData,
+  &D::SetDataFormat,
+  &D::SetEventNotification,
+  &D::SetCooperativeLevel,
+  &D::GetObjectInfo,
+  &D::GetDeviceInfo,
+  &D::RunControlPanel,
+  &D::Initialize
+};
+
+template <class D>
+ULONG WINAPI WIDirectInputDeviceW<D>::Release(LPDIRECTINPUTDEVICEW This)
+{
+  ULONG r = BIDirectInputDeviceW::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInputDeviceW<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInputDeviceW<D>::WIDirectInputDeviceW(LPDIRECTINPUTDEVICEW pNative) : BIDirectInputDeviceW(pNative, &vtbl_, false)
+{}
+
+/* WIDirectInputDevice2W */
+struct VIDirectInputDevice2W
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUTDEVICE2W This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUTDEVICE2W This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUTDEVICE2W This);
+  /*** IDirectInputDeviceW methods ***/
+  HRESULT (WINAPI *GetCapabilities)(LPDIRECTINPUTDEVICE2W This, LPDIDEVCAPS lpDIDevCaps);
+  HRESULT (WINAPI *EnumObjects)(LPDIRECTINPUTDEVICE2W This, LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetProperty)(LPDIRECTINPUTDEVICE2W This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  HRESULT (WINAPI *SetProperty)(LPDIRECTINPUTDEVICE2W This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  HRESULT (WINAPI *Acquire)(LPDIRECTINPUTDEVICE2W This);
+  HRESULT (WINAPI *Unacquire)(LPDIRECTINPUTDEVICE2W This);
+  HRESULT (WINAPI *GetDeviceState)(LPDIRECTINPUTDEVICE2W This, DWORD cbData, LPVOID lpvData);
+  HRESULT (WINAPI *GetDeviceData)(LPDIRECTINPUTDEVICE2W This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  HRESULT (WINAPI *SetDataFormat)(LPDIRECTINPUTDEVICE2W This, LPCDIDATAFORMAT lpdf);
+  HRESULT (WINAPI *SetEventNotification)(LPDIRECTINPUTDEVICE2W This, HANDLE hEvent);
+  HRESULT (WINAPI *SetCooperativeLevel)(LPDIRECTINPUTDEVICE2W This, HWND hwnd, DWORD dwFlags);
+  HRESULT (WINAPI *GetObjectInfo)(LPDIRECTINPUTDEVICE2W This, LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
+  HRESULT (WINAPI *GetDeviceInfo)(LPDIRECTINPUTDEVICE2W This, LPDIDEVICEINSTANCEW pdidi);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUTDEVICE2W This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUTDEVICE2W This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2W methods ***/
+  HRESULT (WINAPI *CreateEffect)(LPDIRECTINPUTDEVICE2W This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  HRESULT (WINAPI *EnumEffects)(LPDIRECTINPUTDEVICE2W This, LPDIENUMEFFECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwEffType);
+  HRESULT (WINAPI *GetEffectInfo)(LPDIRECTINPUTDEVICE2W This, LPDIEFFECTINFOW pdei, REFGUID rguid);
+  HRESULT (WINAPI *GetForceFeedbackState)(LPDIRECTINPUTDEVICE2W This, LPDWORD pdwOut);
+  HRESULT (WINAPI *SendForceFeedbackCommand)(LPDIRECTINPUTDEVICE2W This, DWORD dwFlags);
+  HRESULT (WINAPI *EnumCreatedEffectObjects)(LPDIRECTINPUTDEVICE2W This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  HRESULT (WINAPI *Escape)(LPDIRECTINPUTDEVICE2W This, LPDIEFFESCAPE pesc);
+  HRESULT (WINAPI *Poll)(LPDIRECTINPUTDEVICE2W This);
+  HRESULT (WINAPI *SendDeviceData)(LPDIRECTINPUTDEVICE2W This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+};
+
+class BIDirectInputDevice2W
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUTDEVICE2W This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUTDEVICE2W This);
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE2W This);
+  /*** IDirectInputDeviceW methods ***/
+  static HRESULT WINAPI GetCapabilities(LPDIRECTINPUTDEVICE2W This, LPDIDEVCAPS lpDIDevCaps);
+  static HRESULT WINAPI EnumObjects(LPDIRECTINPUTDEVICE2W This, LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetProperty(LPDIRECTINPUTDEVICE2W This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  static HRESULT WINAPI SetProperty(LPDIRECTINPUTDEVICE2W This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  static HRESULT WINAPI Acquire(LPDIRECTINPUTDEVICE2W This);
+  static HRESULT WINAPI Unacquire(LPDIRECTINPUTDEVICE2W This);
+  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICE2W This, DWORD cbData, LPVOID lpvData);
+  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICE2W This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  static HRESULT WINAPI SetDataFormat(LPDIRECTINPUTDEVICE2W This, LPCDIDATAFORMAT lpdf);
+  static HRESULT WINAPI SetEventNotification(LPDIRECTINPUTDEVICE2W This, HANDLE hEvent);
+  static HRESULT WINAPI SetCooperativeLevel(LPDIRECTINPUTDEVICE2W This, HWND hwnd, DWORD dwFlags);
+  static HRESULT WINAPI GetObjectInfo(LPDIRECTINPUTDEVICE2W This, LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
+  static HRESULT WINAPI GetDeviceInfo(LPDIRECTINPUTDEVICE2W This, LPDIDEVICEINSTANCEW pdidi);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUTDEVICE2W This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUTDEVICE2W This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2W methods ***/
+  static HRESULT WINAPI CreateEffect(LPDIRECTINPUTDEVICE2W This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  static HRESULT WINAPI EnumEffects(LPDIRECTINPUTDEVICE2W This, LPDIENUMEFFECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwEffType);
+  static HRESULT WINAPI GetEffectInfo(LPDIRECTINPUTDEVICE2W This, LPDIEFFECTINFOW pdei, REFGUID rguid);
+  static HRESULT WINAPI GetForceFeedbackState(LPDIRECTINPUTDEVICE2W This, LPDWORD pdwOut);
+  static HRESULT WINAPI SendForceFeedbackCommand(LPDIRECTINPUTDEVICE2W This, DWORD dwFlags);
+  static HRESULT WINAPI EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE2W This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  static HRESULT WINAPI Escape(LPDIRECTINPUTDEVICE2W This, LPDIEFFESCAPE pesc);
+  static HRESULT WINAPI Poll(LPDIRECTINPUTDEVICE2W This);
+  static HRESULT WINAPI SendDeviceData(LPDIRECTINPUTDEVICE2W This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+
+  BIDirectInputDevice2W(LPDIRECTINPUTDEVICE2W pNative, VIDirectInputDevice2W const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInputDevice2W();
+
+private:
+  static VIDirectInputDevice2W const vtbl_;
+
+  VIDirectInputDevice2W const * pVtbl_;
+  LPDIRECTINPUTDEVICE2W pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInputDevice2W : public BIDirectInputDevice2W
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE2W This);
+  WIDirectInputDevice2W(LPDIRECTINPUTDEVICE2W pNative);
+
+private:
+  static VIDirectInputDevice2W const vtbl_;
+};
+
+template <class D>
+VIDirectInputDevice2W const WIDirectInputDevice2W<D>::vtbl_ =
+{
+  /*** IUnknown methods ***/
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  /*** IDirectInputDeviceW methods ***/
+  &D::GetCapabilities,
+  &D::EnumObjects,
+  &D::GetProperty,
+  &D::SetProperty,
+  &D::Acquire,
+  &D::Unacquire,
+  &D::GetDeviceState,
+  &D::GetDeviceData,
+  &D::SetDataFormat,
+  &D::SetEventNotification,
+  &D::SetCooperativeLevel,
+  &D::GetObjectInfo,
+  &D::GetDeviceInfo,
+  &D::RunControlPanel,
+  &D::Initialize,
+  /*** IDirectInputDevice2W methods ***/
+  &D::CreateEffect,
+  &D::EnumEffects,
+  &D::GetEffectInfo,
+  &D::GetForceFeedbackState,
+  &D::SendForceFeedbackCommand,
+  &D::EnumCreatedEffectObjects,
+  &D::Escape,
+  &D::Poll,
+  &D::SendDeviceData
+};
+
+template <class D>
+ULONG WINAPI WIDirectInputDevice2W<D>::Release(LPDIRECTINPUTDEVICE2W This)
+{
+  ULONG r = BIDirectInputDevice2W::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInputDevice2W<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInputDevice2W<D>::WIDirectInputDevice2W(LPDIRECTINPUTDEVICE2W pNative) : BIDirectInputDevice2W(pNative, &vtbl_, false)
+{}
+
+/* WIDirectInputDevice7W */
+struct VIDirectInputDevice7W
+{
+  /*** IUnknown methods ***/
+  HRESULT (WINAPI *QueryInterface)(LPDIRECTINPUTDEVICE7W This, REFIID riid, void** ppvObject);
+  ULONG (WINAPI *AddRef)(LPDIRECTINPUTDEVICE7W This);
+  ULONG (WINAPI *Release)(LPDIRECTINPUTDEVICE7W This);
+  /*** IDirectInputDeviceW methods ***/
+  HRESULT (WINAPI *GetCapabilities)(LPDIRECTINPUTDEVICE7W This, LPDIDEVCAPS lpDIDevCaps);
+  HRESULT (WINAPI *EnumObjects)(LPDIRECTINPUTDEVICE7W This, LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  HRESULT (WINAPI *GetProperty)(LPDIRECTINPUTDEVICE7W This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  HRESULT (WINAPI *SetProperty)(LPDIRECTINPUTDEVICE7W This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  HRESULT (WINAPI *Acquire)(LPDIRECTINPUTDEVICE7W This);
+  HRESULT (WINAPI *Unacquire)(LPDIRECTINPUTDEVICE7W This);
+  HRESULT (WINAPI *GetDeviceState)(LPDIRECTINPUTDEVICE7W This, DWORD cbData, LPVOID lpvData);
+  HRESULT (WINAPI *GetDeviceData)(LPDIRECTINPUTDEVICE7W This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  HRESULT (WINAPI *SetDataFormat)(LPDIRECTINPUTDEVICE7W This, LPCDIDATAFORMAT lpdf);
+  HRESULT (WINAPI *SetEventNotification)(LPDIRECTINPUTDEVICE7W This, HANDLE hEvent);
+  HRESULT (WINAPI *SetCooperativeLevel)(LPDIRECTINPUTDEVICE7W This, HWND hwnd, DWORD dwFlags);
+  HRESULT (WINAPI *GetObjectInfo)(LPDIRECTINPUTDEVICE7W This, LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
+  HRESULT (WINAPI *GetDeviceInfo)(LPDIRECTINPUTDEVICE7W This, LPDIDEVICEINSTANCEW pdidi);
+  HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUTDEVICE7W This, HWND hwndOwner, DWORD dwFlags);
+  HRESULT (WINAPI *Initialize)(LPDIRECTINPUTDEVICE7W This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2W methods ***/
+  HRESULT (WINAPI *CreateEffect)(LPDIRECTINPUTDEVICE7W This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  HRESULT (WINAPI *EnumEffects)(LPDIRECTINPUTDEVICE7W This, LPDIENUMEFFECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwEffType);
+  HRESULT (WINAPI *GetEffectInfo)(LPDIRECTINPUTDEVICE7W This, LPDIEFFECTINFOW pdei, REFGUID rguid);
+  HRESULT (WINAPI *GetForceFeedbackState)(LPDIRECTINPUTDEVICE7W This, LPDWORD pdwOut);
+  HRESULT (WINAPI *SendForceFeedbackCommand)(LPDIRECTINPUTDEVICE7W This, DWORD dwFlags);
+  HRESULT (WINAPI *EnumCreatedEffectObjects)(LPDIRECTINPUTDEVICE7W This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  HRESULT (WINAPI *Escape)(LPDIRECTINPUTDEVICE7W This, LPDIEFFESCAPE pesc);
+  HRESULT (WINAPI *Poll)(LPDIRECTINPUTDEVICE7W This);
+  HRESULT (WINAPI *SendDeviceData)(LPDIRECTINPUTDEVICE7W This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+  /*** IDirectInputDevice7W methods ***/
+  HRESULT (WINAPI *EnumEffectsInFile)(LPDIRECTINPUTDEVICE7W This, LPCWSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags);
+  HRESULT (WINAPI *WriteEffectToFile)(LPDIRECTINPUTDEVICE7W This, LPCWSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags);
+};
+
+class BIDirectInputDevice7W
+{
+public:
+  /*** IUnknown methods ***/
+  static HRESULT WINAPI QueryInterface(LPDIRECTINPUTDEVICE7W This, REFIID riid, void** ppvObject);
+  static ULONG WINAPI AddRef(LPDIRECTINPUTDEVICE7W This);
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE7W This);
+  /*** IDirectInputDeviceW methods ***/
+  static HRESULT WINAPI GetCapabilities(LPDIRECTINPUTDEVICE7W This, LPDIDEVCAPS lpDIDevCaps);
+  static HRESULT WINAPI EnumObjects(LPDIRECTINPUTDEVICE7W This, LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
+  static HRESULT WINAPI GetProperty(LPDIRECTINPUTDEVICE7W This, REFGUID rguidProp, LPDIPROPHEADER pdiph);
+  static HRESULT WINAPI SetProperty(LPDIRECTINPUTDEVICE7W This, REFGUID rguidProp, LPCDIPROPHEADER pdiph);
+  static HRESULT WINAPI Acquire(LPDIRECTINPUTDEVICE7W This);
+  static HRESULT WINAPI Unacquire(LPDIRECTINPUTDEVICE7W This);
+  static HRESULT WINAPI GetDeviceState(LPDIRECTINPUTDEVICE7W This, DWORD cbData, LPVOID lpvData);
+  static HRESULT WINAPI GetDeviceData(LPDIRECTINPUTDEVICE7W This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags);
+  static HRESULT WINAPI SetDataFormat(LPDIRECTINPUTDEVICE7W This, LPCDIDATAFORMAT lpdf);
+  static HRESULT WINAPI SetEventNotification(LPDIRECTINPUTDEVICE7W This, HANDLE hEvent);
+  static HRESULT WINAPI SetCooperativeLevel(LPDIRECTINPUTDEVICE7W This, HWND hwnd, DWORD dwFlags);
+  static HRESULT WINAPI GetObjectInfo(LPDIRECTINPUTDEVICE7W This, LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow);
+  static HRESULT WINAPI GetDeviceInfo(LPDIRECTINPUTDEVICE7W This, LPDIDEVICEINSTANCEW pdidi);
+  static HRESULT WINAPI RunControlPanel(LPDIRECTINPUTDEVICE7W This, HWND hwndOwner, DWORD dwFlags);
+  static HRESULT WINAPI Initialize(LPDIRECTINPUTDEVICE7W This, HINSTANCE hinst, DWORD dwVersion, REFGUID rguid);
+  /*** IDirectInputDevice2W methods ***/
+  static HRESULT WINAPI CreateEffect(LPDIRECTINPUTDEVICE7W This, REFGUID rguid, LPCDIEFFECT lpeff, LPDIRECTINPUTEFFECT *ppdeff, LPUNKNOWN punkOuter);
+  static HRESULT WINAPI EnumEffects(LPDIRECTINPUTDEVICE7W This, LPDIENUMEFFECTSCALLBACKW lpCallback, LPVOID pvRef, DWORD dwEffType);
+  static HRESULT WINAPI GetEffectInfo(LPDIRECTINPUTDEVICE7W This, LPDIEFFECTINFOW pdei, REFGUID rguid);
+  static HRESULT WINAPI GetForceFeedbackState(LPDIRECTINPUTDEVICE7W This, LPDWORD pdwOut);
+  static HRESULT WINAPI SendForceFeedbackCommand(LPDIRECTINPUTDEVICE7W This, DWORD dwFlags);
+  static HRESULT WINAPI EnumCreatedEffectObjects(LPDIRECTINPUTDEVICE7W This, LPDIENUMCREATEDEFFECTOBJECTSCALLBACK lpCallback, LPVOID pvRef, DWORD fl);
+  static HRESULT WINAPI Escape(LPDIRECTINPUTDEVICE7W This, LPDIEFFESCAPE pesc);
+  static HRESULT WINAPI Poll(LPDIRECTINPUTDEVICE7W This);
+  static HRESULT WINAPI SendDeviceData(LPDIRECTINPUTDEVICE7W This, DWORD cbObjectData, LPCDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD fl);
+  /*** IDirectInputDevice7W methods ***/
+  static HRESULT WINAPI EnumEffectsInFile(LPDIRECTINPUTDEVICE7W This, LPCWSTR lpszFileName,LPDIENUMEFFECTSINFILECALLBACK pec,LPVOID pvRef,DWORD dwFlags);
+  static HRESULT WINAPI WriteEffectToFile(LPDIRECTINPUTDEVICE7W This, LPCWSTR lpszFileName,DWORD dwEntries,LPDIFILEEFFECT rgDiFileEft,DWORD dwFlags);
+
+  BIDirectInputDevice7W(LPDIRECTINPUTDEVICE7W pNative, VIDirectInputDevice7W const * pVtbl=nullptr, bool deleteSelf=false);
+  ~BIDirectInputDevice7W();
+
+private:
+  static VIDirectInputDevice7W const vtbl_;
+
+  VIDirectInputDevice7W const * pVtbl_;
+  LPDIRECTINPUTDEVICE7W pNative_;
+  bool deleteSelf_;
+};
+
+template <class D> class WIDirectInputDevice7W : public BIDirectInputDevice7W
+{
+public:
+  static ULONG WINAPI Release(LPDIRECTINPUTDEVICE7W This);
+  WIDirectInputDevice7W(LPDIRECTINPUTDEVICE7W pNative);
+
+private:
+  static VIDirectInputDevice7W const vtbl_;
+};
+
+template <class D>
+VIDirectInputDevice7W const WIDirectInputDevice7W<D>::vtbl_ =
+{
+  /*** IUnknown methods ***/
+  &D::QueryInterface,
+  &D::AddRef,
+  &D::Release,
+  /*** IDirectInputDeviceW methods ***/
+  &D::GetCapabilities,
+  &D::EnumObjects,
+  &D::GetProperty,
+  &D::SetProperty,
+  &D::Acquire,
+  &D::Unacquire,
+  &D::GetDeviceState,
+  &D::GetDeviceData,
+  &D::SetDataFormat,
+  &D::SetEventNotification,
+  &D::SetCooperativeLevel,
+  &D::GetObjectInfo,
+  &D::GetDeviceInfo,
+  &D::RunControlPanel,
+  &D::Initialize,
+  /*** IDirectInputDevice2W methods ***/
+  &D::CreateEffect,
+  &D::EnumEffects,
+  &D::GetEffectInfo,
+  &D::GetForceFeedbackState,
+  &D::SendForceFeedbackCommand,
+  &D::EnumCreatedEffectObjects,
+  &D::Escape,
+  &D::Poll,
+  &D::SendDeviceData,
+  /*** IDirectInputDevice7W methods ***/
+  &D::EnumEffectsInFile,
+  &D::WriteEffectToFile
+};
+
+template <class D>
+ULONG WINAPI WIDirectInputDevice7W<D>::Release(LPDIRECTINPUTDEVICE7W This)
+{
+  ULONG r = BIDirectInputDevice7W::Release(This);
+  if (r == 0)
+  {
+    auto That = reinterpret_cast<D*>(This);
+    log_debug("WIDirectInputDevice7W<D>::Release(%p): deleting self", That);
+    delete That;
+  }
+  return r;
+}
+
+template <class D>
+WIDirectInputDevice7W<D>::WIDirectInputDevice7W(LPDIRECTINPUTDEVICE7W pNative) : BIDirectInputDevice7W(pNative, &vtbl_, false)
+{}
 
 /* WIDirectInputDevice8W */
 struct VIDirectInputDevice8W
