@@ -568,6 +568,12 @@ private:
   std::shared_ptr<Flag> spFlag_;
 };
 
+typedef BlockingWIDirectInputDevice<WIDirectInputDeviceA, LPDIRECTINPUTDEVICEA> BlockingWIDirectInputDeviceA;
+typedef BlockingWIDirectInputDevice<WIDirectInputDeviceW, LPDIRECTINPUTDEVICEW> BlockingWIDirectInputDeviceW;
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice2A, LPDIRECTINPUTDEVICE2A> BlockingWIDirectInputDevice2A;
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice2W, LPDIRECTINPUTDEVICE2W> BlockingWIDirectInputDevice2W;
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice7A, LPDIRECTINPUTDEVICE7A> BlockingWIDirectInputDevice7A;
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice7W, LPDIRECTINPUTDEVICE7W> BlockingWIDirectInputDevice7W;
 typedef BlockingWIDirectInputDevice<WIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A> BlockingWIDirectInputDevice8A;
 typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W> BlockingWIDirectInputDevice8W;
 
@@ -646,7 +652,9 @@ void print_idid8w_info(LPDIRECTINPUTDEVICE8W pDevice)
 }
 
 typedef FactoryWIDirectInput<WIDirectInputA, LPDIRECTINPUTA, LPDIRECTINPUTDEVICEA> FactoryWIDirectInputA;
+typedef FactoryWIDirectInput<WIDirectInputW, LPDIRECTINPUTW, LPDIRECTINPUTDEVICEW> FactoryWIDirectInputW;
 typedef FactoryWIDirectInput<WIDirectInput2A, LPDIRECTINPUT2A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput2A;
+typedef FactoryWIDirectInput<WIDirectInput2W, LPDIRECTINPUT2W, LPDIRECTINPUTDEVICEW> FactoryWIDirectInput2W;
 typedef FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput7A;
 typedef FactoryWIDirectInput<WIDirectInput7W, LPDIRECTINPUT7W, LPDIRECTINPUTDEVICEW> FactoryWIDirectInput7W;
 typedef FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A> FactoryWIDirectInput8A;
