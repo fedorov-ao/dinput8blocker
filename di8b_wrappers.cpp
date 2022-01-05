@@ -2483,10 +2483,10 @@ ULONG WINAPI BIDirectInput2A::Release(LPDIRECTINPUT2A This)
   return r;
 }
 
-HRESULT WINAPI BIDirectInput2A::CreateDevice(LPDIRECTINPUT2A This, REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+HRESULT WINAPI BIDirectInput2A::CreateDevice(LPDIRECTINPUT2A This, REFGUID rguid, LPDIRECTINPUTDEVICE2A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
   log_debug("BIDirectInput2A::CreateDevice(%p)", THAT);
-  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, lplpDirectInputDevice, pUnkOuter);
+  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, reinterpret_cast<LPDIRECTINPUTDEVICEA*>(lplpDirectInputDevice), pUnkOuter);
 }
 
 HRESULT WINAPI BIDirectInput2A::EnumDevices(LPDIRECTINPUT2A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
@@ -2578,10 +2578,10 @@ ULONG WINAPI BIDirectInput7A::Release(LPDIRECTINPUT7A This)
   return r;
 }
 
-HRESULT WINAPI BIDirectInput7A::CreateDevice(LPDIRECTINPUT7A This, REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+HRESULT WINAPI BIDirectInput7A::CreateDevice(LPDIRECTINPUT7A This, REFGUID rguid, LPDIRECTINPUTDEVICE7A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
   log_debug("BIDirectInput7A::CreateDevice(%p)", THAT);
-  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, lplpDirectInputDevice, pUnkOuter);
+  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, reinterpret_cast<LPDIRECTINPUTDEVICEA*>(lplpDirectInputDevice), pUnkOuter);
 }
 
 HRESULT WINAPI BIDirectInput7A::EnumDevices(LPDIRECTINPUT7A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
@@ -2876,10 +2876,10 @@ ULONG WINAPI BIDirectInput2W::Release(LPDIRECTINPUT2W This)
   return r;
 }
 
-HRESULT WINAPI BIDirectInput2W::CreateDevice(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+HRESULT WINAPI BIDirectInput2W::CreateDevice(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICE2W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
   log_debug("BIDirectInput2W::CreateDevice(%p)", THAT);
-  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, lplpDirectInputDevice, pUnkOuter);
+  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, reinterpret_cast<LPDIRECTINPUTDEVICEW*>(lplpDirectInputDevice), pUnkOuter);
 }
 
 HRESULT WINAPI BIDirectInput2W::EnumDevices(LPDIRECTINPUT2W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags)
@@ -2970,10 +2970,10 @@ ULONG WINAPI BIDirectInput7W::Release(LPDIRECTINPUT7W This)
   return r;
 }
 
-HRESULT WINAPI BIDirectInput7W::CreateDevice(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+HRESULT WINAPI BIDirectInput7W::CreateDevice(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICE7W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
 {
   log_debug("BIDirectInput7W::CreateDevice(%p)", THAT);
-  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, lplpDirectInputDevice, pUnkOuter);
+  return CALL_NATIVE(CreateDevice)(NATIVE, rguid, reinterpret_cast<LPDIRECTINPUTDEVICEW*>(lplpDirectInputDevice), pUnkOuter);
 }
 
 HRESULT WINAPI BIDirectInput7W::EnumDevices(LPDIRECTINPUT7W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags)

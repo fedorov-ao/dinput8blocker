@@ -1431,7 +1431,7 @@ struct VIDirectInput2A
   ULONG (WINAPI *AddRef)(LPDIRECTINPUT2A This);
   ULONG (WINAPI *Release)(LPDIRECTINPUT2A This);
   /*** IDirectInputA methods ***/
-  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT2A This, REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT2A This, REFGUID rguid, LPDIRECTINPUTDEVICE2A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   HRESULT (WINAPI *EnumDevices)(LPDIRECTINPUT2A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
   HRESULT (WINAPI *GetDeviceStatus)(LPDIRECTINPUT2A This, REFGUID rguidInstance);
   HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUT2A This, HWND hwndOwner, DWORD dwFlags);
@@ -1448,7 +1448,7 @@ public:
   static ULONG WINAPI AddRef(LPDIRECTINPUT2A This);
   static ULONG WINAPI Release(LPDIRECTINPUT2A This);
   /*** IDirectInputA methods ***/
-  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT2A This, REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT2A This, REFGUID rguid, LPDIRECTINPUTDEVICE2A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   static HRESULT WINAPI EnumDevices(LPDIRECTINPUT2A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
   static HRESULT WINAPI GetDeviceStatus(LPDIRECTINPUT2A This, REFGUID rguidInstance);
   static HRESULT WINAPI RunControlPanel(LPDIRECTINPUT2A This, HWND hwndOwner, DWORD dwFlags);
@@ -1516,7 +1516,7 @@ struct VIDirectInput7A
   ULONG (WINAPI *AddRef)(LPDIRECTINPUT7A This);
   ULONG (WINAPI *Release)(LPDIRECTINPUT7A This);
   /*** IDirectInputA methods ***/
-  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT7A This, REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT7A This, REFGUID rguid, LPDIRECTINPUTDEVICE7A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   HRESULT (WINAPI *EnumDevices)(LPDIRECTINPUT7A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
   HRESULT (WINAPI *GetDeviceStatus)(LPDIRECTINPUT7A This, REFGUID rguidInstance);
   HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUT7A This, HWND hwndOwner, DWORD dwFlags);
@@ -1535,7 +1535,7 @@ public:
   static ULONG WINAPI AddRef(LPDIRECTINPUT7A This);
   static ULONG WINAPI Release(LPDIRECTINPUT7A This);
   /*** IDirectInputA methods ***/
-  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT7A This, REFGUID rguid, LPDIRECTINPUTDEVICEA *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT7A This, REFGUID rguid, LPDIRECTINPUTDEVICE7A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   static HRESULT WINAPI EnumDevices(LPDIRECTINPUT7A This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags);
   static HRESULT WINAPI GetDeviceStatus(LPDIRECTINPUT7A This, REFGUID rguidInstance);
   static HRESULT WINAPI RunControlPanel(LPDIRECTINPUT7A This, HWND hwndOwner, DWORD dwFlags);
@@ -1774,7 +1774,7 @@ struct VIDirectInput2W
   ULONG (WINAPI *AddRef)(LPDIRECTINPUT2W This);
   ULONG (WINAPI *Release)(LPDIRECTINPUT2W This);
   /*** IDirectInputW methods ***/
-  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICE2W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   HRESULT (WINAPI *EnumDevices)(LPDIRECTINPUT2W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
   HRESULT (WINAPI *GetDeviceStatus)(LPDIRECTINPUT2W This, REFGUID rguidInstance);
   HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUT2W This, HWND hwndOwner, DWORD dwFlags);
@@ -1791,7 +1791,7 @@ public:
   static ULONG WINAPI AddRef(LPDIRECTINPUT2W This);
   static ULONG WINAPI Release(LPDIRECTINPUT2W This);
   /*** IDirectInputW methods ***/
-  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT2W This, REFGUID rguid, LPDIRECTINPUTDEVICE2W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   static HRESULT WINAPI EnumDevices(LPDIRECTINPUT2W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
   static HRESULT WINAPI GetDeviceStatus(LPDIRECTINPUT2W This, REFGUID rguidInstance);
   static HRESULT WINAPI RunControlPanel(LPDIRECTINPUT2W This, HWND hwndOwner, DWORD dwFlags);
@@ -1859,7 +1859,7 @@ struct VIDirectInput7W
   ULONG (WINAPI *AddRef)(LPDIRECTINPUT7W This);
   ULONG (WINAPI *Release)(LPDIRECTINPUT7W This);
   /*** IDirectInputW methods ***/
-  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  HRESULT (WINAPI *CreateDevice)(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICE7W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   HRESULT (WINAPI *EnumDevices)(LPDIRECTINPUT7W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
   HRESULT (WINAPI *GetDeviceStatus)(LPDIRECTINPUT7W This, REFGUID rguidInstance);
   HRESULT (WINAPI *RunControlPanel)(LPDIRECTINPUT7W This, HWND hwndOwner, DWORD dwFlags);
@@ -1878,7 +1878,7 @@ public:
   static ULONG WINAPI AddRef(LPDIRECTINPUT7W This);
   static ULONG WINAPI Release(LPDIRECTINPUT7W This);
   /*** IDirectInputW methods ***/
-  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICEW *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
+  static HRESULT WINAPI CreateDevice(LPDIRECTINPUT7W This, REFGUID rguid, LPDIRECTINPUTDEVICE7W *lplpDirectInputDevice, LPUNKNOWN pUnkOuter);
   static HRESULT WINAPI EnumDevices(LPDIRECTINPUT7W This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags);
   static HRESULT WINAPI GetDeviceStatus(LPDIRECTINPUT7W This, REFGUID rguidInstance);
   static HRESULT WINAPI RunControlPanel(LPDIRECTINPUT7W This, HWND hwndOwner, DWORD dwFlags);
