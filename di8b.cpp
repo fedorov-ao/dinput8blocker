@@ -655,10 +655,10 @@ void print_ididxw_info(LPVOID lpDevice)
 
 typedef FactoryWIDirectInput<WIDirectInputA, LPDIRECTINPUTA, LPDIRECTINPUTDEVICEA> FactoryWIDirectInputA;
 typedef FactoryWIDirectInput<WIDirectInputW, LPDIRECTINPUTW, LPDIRECTINPUTDEVICEW> FactoryWIDirectInputW;
-typedef FactoryWIDirectInput<WIDirectInput2A, LPDIRECTINPUT2A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput2A;
-typedef FactoryWIDirectInput<WIDirectInput2W, LPDIRECTINPUT2W, LPDIRECTINPUTDEVICEW> FactoryWIDirectInput2W;
-typedef FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICEA> FactoryWIDirectInput7A;
-typedef FactoryWIDirectInput<WIDirectInput7W, LPDIRECTINPUT7W, LPDIRECTINPUTDEVICEW> FactoryWIDirectInput7W;
+typedef FactoryWIDirectInput<WIDirectInput2A, LPDIRECTINPUT2A, LPDIRECTINPUTDEVICE2A> FactoryWIDirectInput2A;
+typedef FactoryWIDirectInput<WIDirectInput2W, LPDIRECTINPUT2W, LPDIRECTINPUTDEVICE2W> FactoryWIDirectInput2W;
+typedef FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICE7A> FactoryWIDirectInput7A;
+typedef FactoryWIDirectInput<WIDirectInput7W, LPDIRECTINPUT7W, LPDIRECTINPUTDEVICE7W> FactoryWIDirectInput7W;
 typedef FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A> FactoryWIDirectInput8A;
 typedef FactoryWIDirectInput<WIDirectInput8W, LPDIRECTINPUT8W, LPDIRECTINPUTDEVICE8W> FactoryWIDirectInput8W;
 
@@ -709,15 +709,82 @@ LPDID make_device_wrapper(REFGUID rguid, LPDID pDID)
   return pWrapper;
 }
 
-LPDIRECTINPUTDEVICE8A make_idid8a_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8A pIDirectInput8Device8A)
+LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 {
-  return make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A>(rguid, pIDirectInput8Device8A);
+  LPVOID pWrapper = nullptr;
+  if (IsEqualGUID(riidltf, IID_IDirectInputA))
+  {
+    pWrapper = new FactoryWIDirectInputA(
+      reinterpret_cast<LPDIRECTINPUTA>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDeviceA, LPDIRECTINPUTDEVICEA>,
+      print_ididxa_info
+    );
+  }
+  else if (IsEqualGUID(riidltf, IID_IDirectInput2A))
+  {
+    pWrapper = new FactoryWIDirectInput2A(
+      reinterpret_cast<LPDIRECTINPUT2A>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDevice2A, LPDIRECTINPUTDEVICE2A>,
+      print_ididxa_info
+    );
+  }
+  else if (IsEqualGUID(riidltf, IID_IDirectInput7A))
+  {
+    pWrapper = new FactoryWIDirectInput7A(
+      reinterpret_cast<LPDIRECTINPUT7A>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDevice7A, LPDIRECTINPUTDEVICE7A>,
+      print_ididxa_info
+    );
+  }
+  else if (IsEqualGUID(riidltf, IID_IDirectInput8A))
+  {
+    pWrapper = new FactoryWIDirectInput8A(
+      reinterpret_cast<LPDIRECTINPUT8A>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A>,
+      print_ididxa_info
+    );
+  }
+  else if (IsEqualGUID(riidltf, IID_IDirectInputW))
+  {
+    pWrapper = new FactoryWIDirectInputW(
+      reinterpret_cast<LPDIRECTINPUTW>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDeviceW, LPDIRECTINPUTDEVICEW>,
+      print_ididxw_info
+    );
+  }
+  else if (IsEqualGUID(riidltf, IID_IDirectInput2W))
+  {
+    pWrapper = new FactoryWIDirectInput2W(
+      reinterpret_cast<LPDIRECTINPUT2W>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDevice2W, LPDIRECTINPUTDEVICE2W>,
+      print_ididxw_info
+    );
+  }
+  else if (IsEqualGUID(riidltf, IID_IDirectInput7W))
+  {
+    pWrapper = new FactoryWIDirectInput7W(
+      reinterpret_cast<LPDIRECTINPUT7W>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDevice7W, LPDIRECTINPUTDEVICE7W>,
+      print_ididxw_info
+    );
+  }
+  else if (IsEqualGUID(riidltf, IID_IDirectInput8W))
+  {
+    pWrapper = new FactoryWIDirectInput8W(
+      reinterpret_cast<LPDIRECTINPUT8W>(lpNative),
+      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W>,
+      print_ididxw_info
+    );
+  }
+  else
+    log_debug("make_dinputxx_wrapper(): unknown GUID: %s", guid2str(riidltf).data());
+  if (pWrapper)
+    log_debug("make_dinputxx_wrapper(): created wrapper: %p", pWrapper);
+  else
+    log_debug("make_dinputxx_wrapper(): could not create wrapper for: %p", lpNative);
+  return pWrapper;
 }
 
-LPDIRECTINPUTDEVICE8W make_idid8w_wrapper(REFGUID rguid, LPDIRECTINPUTDEVICE8W pIDirectInput8Device8W)
-{
-  return make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W>(rguid, pIDirectInput8Device8W);
-}
 
 /* config */
 config_t parse_config(std::istream & configStream, char const * configName)
@@ -1038,40 +1105,28 @@ extern "C" {
 DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
 {
   di8b::log_debug("DirectInput8Create()");
-  void* pOut = nullptr;
-  HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, &pOut, punkOuter);
+  HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
   if (result == S_OK)
   {
-    if (IsEqualGUID(riidltf, IID_IDirectInput8A))
+    di8b::log_debug("DirectInput8Create(): created native device: %p", *ppvOut);
+    try
     {
-      IDirectInput8A* pIDirectInput8A = reinterpret_cast<IDirectInput8A*>(pOut);
-      di8b::log_debug("DirectInput8Create(): created native device: %p", pIDirectInput8A);
-      try {
-        auto pWrapper = new di8b::FactoryWIDirectInput8A(pIDirectInput8A, di8b::make_idid8a_wrapper, di8b::print_idid8a_info);
-        *ppvOut = pWrapper;
+      LPVOID pWrapper = di8b::make_dinputxx_wrapper(riidltf, *ppvOut);
+      if (pWrapper)
+      {
         di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
-      } catch (...) {
-        di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8A, releasing native");
-        pIDirectInput8A->lpVtbl->Release(pIDirectInput8A);
-        throw;
+        *ppvOut = pWrapper;
       }
+      else
+        di8b::log_debug("DirectInput8Create(): could not create wrapper for: %p, using native", *ppvOut);
     }
-    else if (IsEqualGUID(riidltf, IID_IDirectInput8W))
+    catch (...)
     {
-      IDirectInput8W* pIDirectInput8W = reinterpret_cast<IDirectInput8W*>(pOut);
-      di8b::log_debug("DirectInput8Create(): created native device: %p", pIDirectInput8W);
-      try {
-        auto pWrapper = new di8b::FactoryWIDirectInput8W(pIDirectInput8W, di8b::make_idid8w_wrapper, di8b::print_idid8w_info);
-        *ppvOut = pWrapper;
-        di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
-      } catch (...) {
-        di8b::log_error("Exception while creating di8b::FactoryWIDirectInput8W, releasing native");
-        pIDirectInput8W->lpVtbl->Release(pIDirectInput8W);
-        throw;
-      }
+      di8b::log_error("Exception while creating wrapper, releasing native");
+      auto pUnknown = reinterpret_cast<LPUNKNOWN>(*ppvOut);
+      pUnknown->lpVtbl->Release(pUnknown);
+      throw;
     }
-    else
-      di8b::log_debug("DirectInput8Create(): unknown GUID: %s", di8b::guid2str(riidltf).data());
   }
   return result;
 }
