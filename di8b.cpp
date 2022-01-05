@@ -592,7 +592,7 @@ public:
     auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
     if (hr == S_OK)
-    { 
+    {
       if (That->reporter_)
         That->reporter_(*lplpDirectInputDevice);
       if (That->deviceFactory_)
@@ -602,13 +602,42 @@ public:
           log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
           *lplpDirectInputDevice = pDevice;
         } catch (...) {
-          log_error("FactoryWIDirectInput::CreateDevice(%p): exception, releasing native device %p", *lplpDirectInputDevice);
+          log_error("FactoryWIDirectInput::CreateDevice(%p): exception, releasing native device %p", This, *lplpDirectInputDevice);
           (*lplpDirectInputDevice)->lpVtbl->Release(*lplpDirectInputDevice);
+          throw;
+        }
+    }
+    return hr;
+  }
+
+  static HRESULT WINAPI CreateDeviceEx(LPDI This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter)
+  {
+    log_debug("FactoryWIDirectInput::CreateDeviceEx(%p, %s, %s, %p, %p)", This, guid2str(rguid).data(), guid2str(riid).data(), pvOut, lpUnknownOuter);
+    auto That = reinterpret_cast<that_type*>(This);
+    auto hr = base_type::CreateDeviceEx(This, rguid, riid, pvOut, lpUnknownOuter);
+    if (hr == S_OK)
+    {
+      if (That->reporter_)
+        That->reporter_(*pvOut);
+      if (That->deviceFactory_)
+        try {
+          log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, *pvOut);
+          auto pDevice = That->deviceFactory_(rguid, reinterpret_cast<LPDID>(*pvOut));
+          log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
+          *pvOut = pDevice;
+        } catch (...) {
+          log_error(
+            "FactoryWIDirectInput::CreateDeviceEx(%p, %s, %s, %p, %p): exception, releasing native device %p",
+            This, guid2str(rguid).data(), guid2str(riid).data(), pvOut, lpUnknownOuter, *pvOut
+          );
+          auto pNative = reinterpret_cast<LPUNKNOWN>(*pvOut);
+          pNative->lpVtbl->Release(pNative);
           throw;
         }
     }
     return hr; 
   }
+
 
   FactoryWIDirectInput(LPDI pNative, device_factory_t const & deviceFactory, reporter_t const & reporter=reporter_t())
     : base_type(pNative), deviceFactory_(deviceFactory), reporter_(reporter)
