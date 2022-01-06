@@ -584,7 +584,7 @@ public:
   typedef FactoryWIDirectInput<B, LPDI, LPDID> that_type;
   typedef B<that_type> base_type;
   typedef std::function<LPDID (REFGUID, LPDID)> device_factory_t;
-  typedef std::function<void (LPVOID)> reporter_t;
+  typedef std::function<void (LPVOID, int)> reporter_t;
 
   static HRESULT WINAPI CreateDevice(LPDI This, REFGUID rguid, LPDID *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
@@ -593,18 +593,29 @@ public:
     auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
     if (hr == S_OK)
     {
+      auto pNative = reinterpret_cast<LPDID>(*lplpDirectInputDevice);
       if (That->reporter_)
-        That->reporter_(*lplpDirectInputDevice);
+        That->reporter_(pNative, 0);
       if (That->deviceFactory_)
         try {
-          log_debug("FactoryWIDirectInput::CreateDevice(%p): created native device: %p", This, *lplpDirectInputDevice);
-          auto pDevice = That->deviceFactory_(rguid, *lplpDirectInputDevice);
-          log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
-          *lplpDirectInputDevice = pDevice;
+          log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, pNative);
+          auto pDevice = That->deviceFactory_(rguid, pNative);
+          if (pDevice)
+          {
+            log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
+            *lplpDirectInputDevice = pDevice;
+            if (That->reporter_)
+              That->reporter_(pNative, 1);
+          }
+          else
+          {
+            log_debug("FactoryWIDirectInput::CreateDevice(%p): did not create wrapper for native device: %p", This, pNative);
+            if (That->reporter_)
+              That->reporter_(pNative, 2);
+          }
         } catch (...) {
-          log_error("FactoryWIDirectInput::CreateDevice(%p): exception, releasing native device %p", This, *lplpDirectInputDevice);
-          (*lplpDirectInputDevice)->lpVtbl->Release(*lplpDirectInputDevice);
-          throw;
+          log_error("FactoryWIDirectInput::CreateDevice(%p): exception, releasing native device %p", This, pNative);
+          pNative->lpVtbl->Release(pNative);
         }
     }
     return hr;
@@ -617,20 +628,31 @@ public:
     auto hr = base_type::CreateDeviceEx(This, rguid, riid, pvOut, lpUnknownOuter);
     if (hr == S_OK)
     {
+      auto pNative = reinterpret_cast<LPDID>(*pvOut);
       if (That->reporter_)
-        That->reporter_(*pvOut);
+        That->reporter_(pNative, 0);
       if (That->deviceFactory_)
         try {
-          log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, *pvOut);
-          auto pDevice = That->deviceFactory_(rguid, reinterpret_cast<LPDID>(*pvOut));
-          log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
-          *pvOut = pDevice;
+          log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, pNative);
+          auto pDevice = That->deviceFactory_(rguid, pNative);
+          if (pDevice)
+          {
+            log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
+            *pvOut = pDevice;
+            if (That->reporter_)
+              That->reporter_(pNative, 1);
+          }
+          else
+          {
+            log_debug("FactoryWIDirectInput::CreateDevice(%p): did not create wrapper for native device: %p", This, pNative);
+            if (That->reporter_)
+              That->reporter_(pNative, 2);
+          }
         } catch (...) {
           log_error(
             "FactoryWIDirectInput::CreateDeviceEx(%p, %s, %s, %p, %p): exception, releasing native device %p",
             This, guid2str(rguid).data(), guid2str(riid).data(), pvOut, lpUnknownOuter, *pvOut
           );
-          auto pNative = reinterpret_cast<LPUNKNOWN>(*pvOut);
           pNative->lpVtbl->Release(pNative);
           throw;
         }
@@ -648,7 +670,7 @@ private:
   reporter_t reporter_;
 };
 
-void print_ididxa_info(LPVOID lpDevice)
+void print_ididxa_info(LPVOID lpDevice, int msg)
 {
   DIDEVICEINSTANCEA ddi;
   std::memset(&ddi, 0, sizeof(ddi));
@@ -657,14 +679,33 @@ void print_ididxa_info(LPVOID lpDevice)
   HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
   if (ddiResult == S_OK)
   {
-    static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %s; product name: %s; type: 0x%x; usage page: 0x%x; usage: 0x%x";
-    log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
+    switch (msg)
+    {
+      case 0:
+      {
+        static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %s; product name: %s; type: 0x%x; usage page: 0x%x; usage: 0x%x";
+        log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
+        break;
+      }
+      case 1:
+      {
+        static char const * fmt = "Created wrapper for device: instance GUID: %s; instance name: %s";
+        log_info(fmt, guid2str(ddi.guidInstance).data(), ddi.tszInstanceName);
+        break;
+      }
+      case 2:
+      {
+        static char const * fmt = "Did not create wrapper for device: instance GUID: %s; instance name: %s";
+        log_info(fmt, guid2str(ddi.guidInstance).data(), ddi.tszInstanceName);
+        break;
+      }
+    }
   }
   else
     log_error("Failed to get device info");
 }
 
-void print_ididxw_info(LPVOID lpDevice)
+void print_ididxw_info(LPVOID lpDevice, int msg)
 {
   DIDEVICEINSTANCEW ddi;
   std::memset(&ddi, 0, sizeof(ddi));
@@ -673,8 +714,27 @@ void print_ididxw_info(LPVOID lpDevice)
   HRESULT ddiResult = pDevice->lpVtbl->GetDeviceInfo(pDevice, &ddi);
   if (ddiResult == S_OK)
   {
-    static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %ls; product name: %ls; type: 0x%x; usage page: 0x%x; usage: 0x%x";
-    log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
+    switch (msg)
+    {
+      case 0:
+      {
+        static char const * fmt = "Created device: instance GUID: %s; product GUID: %s; instance name: %ls; product name: %ls; type: 0x%x; usage page: 0x%x; usage: 0x%x";
+        log_info(fmt, guid2str(ddi.guidInstance).data(), guid2str(ddi.guidProduct).data(), ddi.tszInstanceName, ddi.tszProductName, ddi.wUsagePage, ddi.wUsage);
+        break;
+      }
+      case 1:
+      {
+        static char const * fmt = "Created wrapper for device: instance GUID: %s; instance name: %ls";
+        log_info(fmt, guid2str(ddi.guidInstance).data(), ddi.tszInstanceName);
+        break;
+      }
+      case 2:
+      {
+        static char const * fmt = "Could not create wrapper for device: instance GUID: %s; instance name: %ls";
+        log_info(fmt, guid2str(ddi.guidInstance).data(), ddi.tszInstanceName);
+        break;
+      }
+    }
   }
   else
     log_error("Failed to get device info");
@@ -730,7 +790,7 @@ LPDID make_device_wrapper(REFGUID rguid, LPDID pDID)
   log_debug("make_device_wrapper(%s, %p)", guid2str(rguid).data(), pDID);
   auto spFlag = make_flag(rguid);
   if (!spFlag)
-    return pDID;
+    return nullptr;
   auto pWrapper = reinterpret_cast<LPDID>(new DeviceWrapper(pDID, spFlag));
   log_debug("make_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
   return pWrapper;
