@@ -12,8 +12,10 @@ namespace di8b
 HRESULT WINAPI BIDirectInputDevice8A::QueryInterface(BIDirectInputDevice8A* This, REFIID riid, void** ppvObject)
 {
   log_debug("BIDirectInputDevice8A::QueryInterface(%p)", This);
-  /* TODO Apparently should return pointer to wrapper. */
-  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  auto hr = CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  if ((hr == S_OK) && (*ppvObject == This->pNative_))
+    *ppvObject = This;
+  return hr;
 }
 
 ULONG WINAPI BIDirectInputDevice8A::AddRef(BIDirectInputDevice8A* This)
@@ -276,8 +278,10 @@ VIDirectInputDevice8A const BIDirectInputDevice8A::vtbl_ =
 HRESULT WINAPI BIDirectInputDevice8W::QueryInterface(BIDirectInputDevice8W* This, REFIID riid, void** ppvObject)
 {
   log_debug("BIDirectInputDevice8W::QueryInterface(%p)", This);
-  /* TODO Apparently should return pointer to wrapper. */
-  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  auto hr = CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  if ((hr == S_OK) && (*ppvObject == This->pNative_))
+    *ppvObject = This;
+  return hr;
 }
 
 ULONG WINAPI BIDirectInputDevice8W::AddRef(BIDirectInputDevice8W* This)
@@ -539,8 +543,10 @@ VIDirectInputDevice8W const BIDirectInputDevice8W::vtbl_ =
 HRESULT WINAPI BIDirectInput7A::QueryInterface(BIDirectInput7A* This, REFIID riid, void** ppvObject)
 {
   log_debug("BIDirectInput7A::QueryInterface(%p)", This);
-  /* TODO Apparently should return pointer to wrapper. */
-  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  auto hr = CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  if ((hr == S_OK) && (*ppvObject == This->pNative_))
+    *ppvObject = This;
+  return hr;
 }
 
 ULONG WINAPI BIDirectInput7A::AddRef(BIDirectInput7A* This)
@@ -624,8 +630,10 @@ BIDirectInput7A::~BIDirectInput7A()
 HRESULT WINAPI BIDirectInput8A::QueryInterface(BIDirectInput8A* This, REFIID riid, void** ppvObject)
 {
   log_debug("BIDirectInput8A::QueryInterface(%p)", This);
-  /* TODO Apparently should return pointer to wrapper. */
-  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  auto hr = CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  if ((hr == S_OK) && (*ppvObject == This->pNative_))
+    *ppvObject = This;
+  return hr;
 }
 
 ULONG WINAPI BIDirectInput8A::AddRef(BIDirectInput8A* This)
@@ -715,8 +723,10 @@ BIDirectInput8A::~BIDirectInput8A()
 HRESULT WINAPI BIDirectInput7W::QueryInterface(BIDirectInput7W* This, REFIID riid, void** ppvObject)
 {
   log_debug("BIDirectInput7W::QueryInterface(%p)", This);
-  /* TODO Apparently should return pointer to wrapper. */
-  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  auto hr = CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  if ((hr == S_OK) && (*ppvObject == This->pNative_))
+    *ppvObject = This;
+  return hr;
 }
 
 ULONG WINAPI BIDirectInput7W::AddRef(BIDirectInput7W* This)
@@ -800,8 +810,10 @@ BIDirectInput7W::~BIDirectInput7W()
 HRESULT WINAPI BIDirectInput8W::QueryInterface(BIDirectInput8W* This, REFIID riid, void** ppvObject)
 {
   log_debug("BIDirectInput8W::QueryInterface(%p)", This);
-  /* TODO Apparently should return pointer to wrapper. */
-  return CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  auto hr = CALL_NATIVE(QueryInterface)(NATIVE, riid, ppvObject);
+  if ((hr == S_OK) && (*ppvObject == This->pNative_))
+    *ppvObject = This;
+  return hr;
 }
 
 ULONG WINAPI BIDirectInput8W::AddRef(BIDirectInput8W* This)
