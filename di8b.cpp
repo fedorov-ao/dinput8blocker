@@ -341,185 +341,12 @@ private:
 };
 
 
-/* BlockingCIDirectInputDevice8 */
-HRESULT BlockingCIDirectInputDevice8::GetDeviceState(LPDIRECTINPUTDEVICE8 This, DWORD cbData, LPVOID lpvData)
-{
-  log_debug("BlockingCIDirectInputDevice8::GetDeviceState(%p)", This);
-  auto result = This->lpVtbl->GetDeviceState(This, cbData, lpvData);
-
-  if (result == DI_OK && spFlag_->get() == false)
-  {
-    /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
-    std::memset(lpvData, 0, cbData);
-  }
-
-  return result;
-}
-
-HRESULT BlockingCIDirectInputDevice8::GetDeviceData(LPDIRECTINPUTDEVICE8 This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
-{
-  log_debug("BlockingCIDirectInputDevice8::GetDeviceData(%p)", This);
-  auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
-
-  if (result == DI_OK && spFlag_->get() == false)
-  {
-    *pdwInOut = 0;
-  }
-
-  return result;
-}
-
-BlockingCIDirectInputDevice8::BlockingCIDirectInputDevice8(std::shared_ptr<Flag> const & spFlag)
-  : spFlag_(spFlag)
-{}
-
-
-/* BoundBlockingCIDirectInputDevice8 */
-HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceState(LPDIRECTINPUTDEVICE8 This, DWORD cbData, LPVOID lpvData)
-{
-  log_debug("BoundBlockingCIDirectInputDevice8::GetDeviceState(%p)", This);
-  auto result = This->lpVtbl->GetDeviceState(This, cbData, lpvData);
-
-  if (result == DI_OK && state_ == false)
-  {
-    /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
-    std::memset(lpvData, 0, cbData);
-  }
-
-  return result;
-}
-
-HRESULT BoundBlockingCIDirectInputDevice8::GetDeviceData(LPDIRECTINPUTDEVICE8 This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
-{
-  log_debug("BoundBlockingCIDirectInputDevice8::GetDeviceData(%p)", This);
-
-  /* Setting dwFlags to 0 to read all messages in supplied buffer and thus definitely clear dinput message queue. */
-  if (state_ == false)
-    dwFlags = 0;
-  /* Setting rgdod to nullptr leaves messages in internal dinput queue, so have to read them into supplied buffer. */
-  auto const num = *pdwInOut;
-  auto result = This->lpVtbl->GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
-  if (state_ == false)
-  {
-    if (clearBuffer_ == true)
-      std::memset(rgdod, 0, num*cbObjectData);
-    *pdwInOut = 0;
-  }
-
-  return result;
-}
-
-void BoundBlockingCIDirectInputDevice8::set_state(bool s)
-{
-  state_ = s;
-}
-
-bool BoundBlockingCIDirectInputDevice8::get_state() const
-{
-  return state_;
-}
-
-BoundBlockingCIDirectInputDevice8::BoundBlockingCIDirectInputDevice8(bool state, bool clearBuffer, BoundBlockingCIDirectInputDevice8::on_destroy_t const & onDestroy)
-  : state_(state), clearBuffer_(clearBuffer), onDestroy_(onDestroy)
-{}
-
-BoundBlockingCIDirectInputDevice8::~BoundBlockingCIDirectInputDevice8()
-{
-  if (onDestroy_) onDestroy_();
-}
-
-
-/* WrappingCIDirectInput8 */
-HRESULT WrappingCIDirectInput8::CreateDevice(LPDIRECTINPUT8 This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
-{
-  auto result = CIDirectInput8::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
-  if (result == S_OK)
-  {
-    auto upDeviceCallback = std::unique_ptr<CIDirectInputDevice8>(new CIDirectInputDevice8);
-    auto upDeviceWrapper = std::unique_ptr<WIDirectInputDevice8>(new WIDirectInputDevice8(*lplpDirectInputDevice, upDeviceCallback.get()));
-    *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(upDeviceWrapper.release());
-    upDeviceCallback.release();
-  }
-  return result;
-}
-
-WrappingCIDirectInput8::~WrappingCIDirectInput8() {}
-
-
-DeviceKind get_device_kind(REFGUID rguid)
-{
-  if (IsEqualGUID(rguid, GUID_SysKeyboard))
-    return DeviceKind::keyboard;
-  else if (IsEqualGUID(rguid, GUID_SysMouse))
-    return DeviceKind::mouse;
-  else if (IsEqualGUID(rguid, GUID_Joystick))
-    return DeviceKind::joystick;
-  else
-    return DeviceKind::other;
-}
-
-
-/* FactoryCIDirectInput8 */
-HRESULT FactoryCIDirectInput8::CreateDevice(LPDIRECTINPUT8 This, REFGUID rguid, LPDIRECTINPUTDEVICE8A *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
-{
-  char csGuid [37];
-  guid2cstr(csGuid, sizeof(csGuid), rguid);
-  log_debug("Creating device for GUID: %s", csGuid);
-  HRESULT result = CIDirectInput8::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
-  if (result == S_OK)
-  {
-    DIDEVICEINSTANCE ddi;
-    std::memset(&ddi, 0, sizeof(ddi));
-    ddi.dwSize = sizeof(ddi);
-    HRESULT ddiResult = (*lplpDirectInputDevice)->lpVtbl->GetDeviceInfo(*lplpDirectInputDevice, &ddi);
-    if (ddiResult == S_OK)
-    {
-      log_debug("Created device: GUID: %s; name: %s", csGuid, ddi.tszInstanceName);
-    }
-
-    auto upDeviceCallback = make_callback_(rguid);
-    auto upDeviceWrapper = std::unique_ptr<WIDirectInputDevice8>(new WIDirectInputDevice8(*lplpDirectInputDevice, upDeviceCallback.get()));
-    *lplpDirectInputDevice = reinterpret_cast<LPDIRECTINPUTDEVICE8A>(upDeviceWrapper.release());
-    upDeviceCallback.release();
-  }
-  return result;
-}
-
-FactoryCIDirectInput8::FactoryCIDirectInput8(FactoryCIDirectInput8::make_callback_t const & make_callback)
-  : make_callback_(make_callback)
-{}
-
-
-typedef std::map<std::string, std::map<std::string, std::string> > config_t;
-config_t g_config;
-
-typedef std::unique_ptr<CIDirectInputDevice8> device_callback_ptr_t;
-std::function<device_callback_ptr_t(std::map<std::string,std::string> const &)> g_device_callback_factory;
-
-device_callback_ptr_t g_make_device_callback(REFGUID rguid)
-{
-  auto itBindings = g_config.find(guid2str(rguid));
-  if (itBindings == g_config.end())
-  {
-    auto s = preset_guid2str(rguid);
-    if (s != "")
-      itBindings = g_config.find(preset_guid2str(rguid));
-  }
-
-  auto upDevice =
-    itBindings == g_config.end() ?
-    device_callback_ptr_t(new CIDirectInputDevice8) :
-    g_device_callback_factory(itBindings->second);
-  return upDevice;
-}
-
-
 /* Template-based implementations. */
-template <template <class> class B, class LPDID>
-class BlockingWIDirectInputDevice : public B<BlockingWIDirectInputDevice<B, LPDID> >
+template <template <class> class B>
+class BlockingWIDirectInputDevice : public B<BlockingWIDirectInputDevice<B> >
 {
 public:
-  typedef BlockingWIDirectInputDevice<B, LPDID> this_type;
+  typedef BlockingWIDirectInputDevice<B> this_type;
   typedef B<this_type> base_type;
 
   static HRESULT WINAPI GetDeviceState(this_type* This, DWORD cbData, LPVOID lpvData)
@@ -564,8 +391,8 @@ private:
   std::shared_ptr<Flag> spFlag_;
 };
 
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A> BlockingWIDirectInputDevice8A;
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W> BlockingWIDirectInputDevice8W;
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice8A> BlockingWIDirectInputDevice8A;
+typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W> BlockingWIDirectInputDevice8W;
 
 
 /** Makes device using external factory method */
@@ -573,37 +400,36 @@ template <template <class> class B, class LPDI, class LPDID>
 class FactoryWIDirectInput : public B<FactoryWIDirectInput<B, LPDI, LPDID> >
 {
 public:
-  typedef FactoryWIDirectInput<B, LPDI, LPDID> that_type;
-  typedef B<that_type> base_type;
+  typedef FactoryWIDirectInput<B, LPDI, LPDID> this_type;
+  typedef B<this_type> base_type;
   typedef std::function<LPDID (REFGUID, LPDID)> device_factory_t;
   typedef std::function<void (LPVOID, int)> reporter_t;
 
-  static HRESULT WINAPI CreateDevice(LPDI This, REFGUID rguid, LPDID *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+  static HRESULT WINAPI CreateDevice(this_type* This, REFGUID rguid, LPDID *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
     log_debug("FactoryWIDirectInput::CreateDevice(%p)", This);
-    auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
     if (hr == S_OK)
     {
       auto pNative = reinterpret_cast<LPDID>(*lplpDirectInputDevice);
-      if (That->reporter_)
-        That->reporter_(pNative, 0);
-      if (That->deviceFactory_)
+      if (This->reporter_)
+        This->reporter_(pNative, 0);
+      if (This->deviceFactory_)
         try {
           log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, pNative);
-          auto pDevice = That->deviceFactory_(rguid, pNative);
+          auto pDevice = This->deviceFactory_(rguid, pNative);
           if (pDevice)
           {
             log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
             *lplpDirectInputDevice = pDevice;
-            if (That->reporter_)
-              That->reporter_(pNative, 1);
+            if (This->reporter_)
+              This->reporter_(pNative, 1);
           }
           else
           {
             log_debug("FactoryWIDirectInput::CreateDevice(%p): did not create wrapper for native device: %p", This, pNative);
-            if (That->reporter_)
-              That->reporter_(pNative, 2);
+            if (This->reporter_)
+              This->reporter_(pNative, 2);
           }
         } catch (...) {
           log_error("FactoryWIDirectInput::CreateDevice(%p): exception, releasing native device %p", This, pNative);
@@ -613,32 +439,31 @@ public:
     return hr;
   }
 
-  static HRESULT WINAPI CreateDeviceEx(LPDI This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter)
+  static HRESULT WINAPI CreateDeviceEx(this_type* This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter)
   {
     log_debug("FactoryWIDirectInput::CreateDeviceEx(%p, %s, %s, %p, %p)", This, guid2str(rguid).data(), guid2str(riid).data(), pvOut, lpUnknownOuter);
-    auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::CreateDeviceEx(This, rguid, riid, pvOut, lpUnknownOuter);
     if (hr == S_OK)
     {
       auto pNative = reinterpret_cast<LPDID>(*pvOut);
-      if (That->reporter_)
-        That->reporter_(pNative, 0);
-      if (That->deviceFactory_)
+      if (This->reporter_)
+        This->reporter_(pNative, 0);
+      if (This->deviceFactory_)
         try {
           log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, pNative);
-          auto pDevice = That->deviceFactory_(rguid, pNative);
+          auto pDevice = This->deviceFactory_(rguid, pNative);
           if (pDevice)
           {
             log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
             *pvOut = pDevice;
-            if (That->reporter_)
-              That->reporter_(pNative, 1);
+            if (This->reporter_)
+              This->reporter_(pNative, 1);
           }
           else
           {
             log_debug("FactoryWIDirectInput::CreateDevice(%p): did not create wrapper for native device: %p", This, pNative);
-            if (That->reporter_)
-              That->reporter_(pNative, 2);
+            if (This->reporter_)
+              This->reporter_(pNative, 2);
           }
         } catch (...) {
           log_error(
@@ -732,15 +557,8 @@ void print_ididxw_info(LPVOID lpDevice, int msg)
     log_error("Failed to get device info");
 }
 
-typedef FactoryWIDirectInput<WIDirectInputA, LPDIRECTINPUTA, LPDIRECTINPUTDEVICEA> FactoryWIDirectInputA;
-typedef FactoryWIDirectInput<WIDirectInputW, LPDIRECTINPUTW, LPDIRECTINPUTDEVICEW> FactoryWIDirectInputW;
-typedef FactoryWIDirectInput<WIDirectInput2A, LPDIRECTINPUT2A, LPDIRECTINPUTDEVICE2A> FactoryWIDirectInput2A;
-typedef FactoryWIDirectInput<WIDirectInput2W, LPDIRECTINPUT2W, LPDIRECTINPUTDEVICE2W> FactoryWIDirectInput2W;
-typedef FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICE7A> FactoryWIDirectInput7A;
-typedef FactoryWIDirectInput<WIDirectInput7W, LPDIRECTINPUT7W, LPDIRECTINPUTDEVICE7W> FactoryWIDirectInput7W;
-typedef FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A> FactoryWIDirectInput8A;
-typedef FactoryWIDirectInput<WIDirectInput8W, LPDIRECTINPUT8W, LPDIRECTINPUTDEVICE8W> FactoryWIDirectInput8W;
-
+typedef std::map<std::string, std::map<std::string, std::string> > config_t;
+config_t g_config;
 
 std::shared_ptr<Flag> make_flag(REFGUID rguid)
 {
@@ -791,76 +609,56 @@ LPDID make_device_wrapper(REFGUID rguid, LPDID pDID)
 LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 {
   LPVOID pWrapper = nullptr;
-  if (IsEqualGUID(riidltf, IID_IDirectInputA))
+
+  GUID guidsa[] = { IID_IDirectInputA, IID_IDirectInput2A, IID_IDirectInput7A };
+  for (auto const & guid : guidsa)
   {
-    pWrapper = new FactoryWIDirectInputA(
-      reinterpret_cast<LPDIRECTINPUTA>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICEA>,
-      print_ididxa_info
-    );
+    if (IsEqualGUID(riidltf, guid))
+    {
+      pWrapper = new FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICEA>(
+        reinterpret_cast<LPDIRECTINPUT7A>(lpNative),
+        make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICEA>,
+        print_ididxa_info
+      );
+    }
   }
-  else if (IsEqualGUID(riidltf, IID_IDirectInput2A))
+
+  if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8A))
   {
-    pWrapper = new FactoryWIDirectInput2A(
-      reinterpret_cast<LPDIRECTINPUT2A>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE2A>,
-      print_ididxa_info
-    );
-  }
-  else if (IsEqualGUID(riidltf, IID_IDirectInput7A))
-  {
-    pWrapper = new FactoryWIDirectInput7A(
-      reinterpret_cast<LPDIRECTINPUT7A>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE7A>,
-      print_ididxa_info
-    );
-  }
-  else if (IsEqualGUID(riidltf, IID_IDirectInput8A))
-  {
-    pWrapper = new FactoryWIDirectInput8A(
+    pWrapper = new FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A>(
       reinterpret_cast<LPDIRECTINPUT8A>(lpNative),
       make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A>,
       print_ididxa_info
     );
   }
-  else if (IsEqualGUID(riidltf, IID_IDirectInputW))
+
+  GUID guidsw[] = { IID_IDirectInputW, IID_IDirectInput2W, IID_IDirectInput7W };
+  for (auto const & guid : guidsw)
   {
-    pWrapper = new FactoryWIDirectInputW(
-      reinterpret_cast<LPDIRECTINPUTW>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICEW>,
-      print_ididxw_info
-    );
+    if (IsEqualGUID(riidltf, guid))
+    {
+      pWrapper = new FactoryWIDirectInput<WIDirectInput7W, LPDIRECTINPUT7W, LPDIRECTINPUTDEVICEW>(
+        reinterpret_cast<LPDIRECTINPUT7W>(lpNative),
+        make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICEW>,
+        print_ididxw_info
+      );
+    }
   }
-  else if (IsEqualGUID(riidltf, IID_IDirectInput2W))
+
+  if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8W))
   {
-    pWrapper = new FactoryWIDirectInput2W(
-      reinterpret_cast<LPDIRECTINPUT2W>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE2W>,
-      print_ididxw_info
-    );
-  }
-  else if (IsEqualGUID(riidltf, IID_IDirectInput7W))
-  {
-    pWrapper = new FactoryWIDirectInput7W(
-      reinterpret_cast<LPDIRECTINPUT7W>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE7W>,
-      print_ididxw_info
-    );
-  }
-  else if (IsEqualGUID(riidltf, IID_IDirectInput8W))
-  {
-    pWrapper = new FactoryWIDirectInput8W(
+    pWrapper = new FactoryWIDirectInput<WIDirectInput8W, LPDIRECTINPUT8W, LPDIRECTINPUTDEVICE8W>(
       reinterpret_cast<LPDIRECTINPUT8W>(lpNative),
       make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W>,
       print_ididxw_info
     );
   }
-  else
-    log_debug("make_dinputxx_wrapper(): unknown GUID: %s", guid2str(riidltf).data());
+
   if (pWrapper)
     log_debug("make_dinputxx_wrapper(): created wrapper: %p", pWrapper);
   else
     log_debug("make_dinputxx_wrapper(): could not create wrapper for: %p", lpNative);
+
   return pWrapper;
 }
 
@@ -1084,6 +882,7 @@ void start_loop()
 {
   g_pLoop = new Loop (10);
 
+#if(0)
   g_device_callback_factory = [](std::map<std::string,std::string> const & bindings)
   {
     auto spCompositeFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
@@ -1130,6 +929,7 @@ void start_loop()
     g_pLoop->add_tick(spCompositeTick);
     return upDevice;
   };
+#endif
 
   std::thread t (&Loop::operator(), g_pLoop);
   t.detach();
