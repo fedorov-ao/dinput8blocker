@@ -519,15 +519,14 @@ template <template <class> class B, class LPDID>
 class BlockingWIDirectInputDevice : public B<BlockingWIDirectInputDevice<B, LPDID> >
 {
 public:
-  typedef BlockingWIDirectInputDevice<B, LPDID> that_type;
-  typedef B<that_type> base_type;
+  typedef BlockingWIDirectInputDevice<B, LPDID> this_type;
+  typedef B<this_type> base_type;
 
-  static HRESULT WINAPI GetDeviceState(LPDID This, DWORD cbData, LPVOID lpvData)
+  static HRESULT WINAPI GetDeviceState(this_type* This, DWORD cbData, LPVOID lpvData)
   {
     log_debug("BlockingWIDirectInputDevice:GetDeviceState(%p)", This);
-    auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::GetDeviceState(This, cbData, lpvData);
-    auto flag = That->spFlag_->get();
+    auto flag = This->spFlag_->get();
     if ((hr == DI_OK) && !flag)
     {
       /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
@@ -537,12 +536,11 @@ public:
     return hr;
   }
 
-  static HRESULT WINAPI GetDeviceData(LPDID This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+  static HRESULT WINAPI GetDeviceData(this_type* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
   {
     log_debug("BlockingWIDirectInputDevice::GetDeviceData(%p)", This);
-    auto That = reinterpret_cast<that_type*>(This);
     auto hr = base_type::GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
-    auto flag = That->spFlag_->get();
+    auto flag = This->spFlag_->get();
     if ((hr == DI_OK) && !flag)
     {
       log_debug("BlockingWIDirectInputDevice:GetDeviceData(%p): erasing data", This);
@@ -551,7 +549,7 @@ public:
     return hr;
   }
 
-  BlockingWIDirectInputDevice(LPDID pNative, std::shared_ptr<Flag> const & spFlag)
+  BlockingWIDirectInputDevice(LPVOID pNative, std::shared_ptr<Flag> const & spFlag)
     : base_type(pNative), spFlag_(spFlag)
   {
     log_debug("BlockingWIDirectInputDevice::BlockingWIDirectInputDevice(%p)", this);
@@ -566,12 +564,6 @@ private:
   std::shared_ptr<Flag> spFlag_;
 };
 
-typedef BlockingWIDirectInputDevice<WIDirectInputDeviceA, LPDIRECTINPUTDEVICEA> BlockingWIDirectInputDeviceA;
-typedef BlockingWIDirectInputDevice<WIDirectInputDeviceW, LPDIRECTINPUTDEVICEW> BlockingWIDirectInputDeviceW;
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice2A, LPDIRECTINPUTDEVICE2A> BlockingWIDirectInputDevice2A;
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice2W, LPDIRECTINPUTDEVICE2W> BlockingWIDirectInputDevice2W;
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice7A, LPDIRECTINPUTDEVICE7A> BlockingWIDirectInputDevice7A;
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice7W, LPDIRECTINPUTDEVICE7W> BlockingWIDirectInputDevice7W;
 typedef BlockingWIDirectInputDevice<WIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A> BlockingWIDirectInputDevice8A;
 typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W> BlockingWIDirectInputDevice8W;
 
@@ -803,7 +795,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     pWrapper = new FactoryWIDirectInputA(
       reinterpret_cast<LPDIRECTINPUTA>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDeviceA, LPDIRECTINPUTDEVICEA>,
+      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICEA>,
       print_ididxa_info
     );
   }
@@ -811,7 +803,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     pWrapper = new FactoryWIDirectInput2A(
       reinterpret_cast<LPDIRECTINPUT2A>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice2A, LPDIRECTINPUTDEVICE2A>,
+      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE2A>,
       print_ididxa_info
     );
   }
@@ -819,7 +811,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     pWrapper = new FactoryWIDirectInput7A(
       reinterpret_cast<LPDIRECTINPUT7A>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice7A, LPDIRECTINPUTDEVICE7A>,
+      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE7A>,
       print_ididxa_info
     );
   }
@@ -835,7 +827,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     pWrapper = new FactoryWIDirectInputW(
       reinterpret_cast<LPDIRECTINPUTW>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDeviceW, LPDIRECTINPUTDEVICEW>,
+      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICEW>,
       print_ididxw_info
     );
   }
@@ -843,7 +835,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     pWrapper = new FactoryWIDirectInput2W(
       reinterpret_cast<LPDIRECTINPUT2W>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice2W, LPDIRECTINPUTDEVICE2W>,
+      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE2W>,
       print_ididxw_info
     );
   }
@@ -851,7 +843,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     pWrapper = new FactoryWIDirectInput7W(
       reinterpret_cast<LPDIRECTINPUT7W>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice7W, LPDIRECTINPUTDEVICE7W>,
+      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE7W>,
       print_ididxw_info
     );
   }
