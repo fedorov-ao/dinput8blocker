@@ -30,13 +30,18 @@ enum class DeviceKind { mouse, keyboard, joystick, other };
 
 class Flag;
 
+typedef std::map<std::string, std::map<std::string, std::string> > config_t;
+extern config_t g_config;
 void open_and_parse_config();
+
 void init_log();
 
 void start_loop();
 void stop_loop();
 
 LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative);
+
+HMODULE get_next_handle(LPCSTR dllName);
 
 } //namespace di8b
 

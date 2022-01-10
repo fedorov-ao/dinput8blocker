@@ -557,7 +557,6 @@ void print_ididxw_info(LPVOID lpDevice, int msg)
     log_error("Failed to get device info");
 }
 
-typedef std::map<std::string, std::map<std::string, std::string> > config_t;
 config_t g_config;
 
 std::shared_ptr<Flag> make_flag(REFGUID rguid)
@@ -741,13 +740,15 @@ void write_sample_config(std::ofstream& sampleConfigFileStream)
   sampleConfigFileStream 
     << "#Sample configuration file for DirectInput/DirectInput8 blocker\n"
     << "#Comments start with \"#\"\n"
-    << "#Log level (available levels: NOTSET, TRACE, DEBUG, INFO, WARNING, ERROR):\n"
+    << "#Log level (available levels: NOTSET, TRACE, DEBUG, INFO, WARNING, ERROR).\n"
     << "#logLevel=level\n"
+    << "#Path to next dll. If not specified, will try to load dll from system directory.\n"
+    << "#next=pathToNextDll\n"
     << "#Section with key bindings for a device is an instance guid (i.e. 6F1D2B60-D5A0-11CF-BFC7-444553540000). Instance guids of created devices are included in device info written to log as INFO-level messages\n"
     << "#[device instance guid]\n"
-    << "#Key to toggle device blocking:\n"
+    << "#Key to toggle device blocking.\n"
     << "#toggleKey=keyName\n"
-    << "#Key to press to unblock a blocked device:\n"
+    << "#Key to press to unblock a blocked device.\n"
     << "#unblockKey=keyName\n"
     << "#available keys are: ";
     bool first = true;
@@ -938,6 +939,34 @@ void start_loop()
 void stop_loop()
 {
   g_pLoop->exit();
+}
+
+HMODULE get_next_handle(LPCSTR dllName)
+{
+  auto const & mainSection = g_config[""];
+  auto const itNext = mainSection.find("next");
+
+  char path[MAX_PATH];
+  if (itNext != mainSection.end())
+    strcpy(path, itNext->second.data());
+  else
+  {
+    if (!GetSystemDirectory(path, sizeof(path)))
+      throw std::runtime_error("Failed to get system directory path");
+    strcat(path, "\\");
+    strcat(path, dllName);
+  }
+
+  log_info("Loading next %s from %s", dllName, path);
+  HMODULE hNext = LoadLibrary(path);
+  if (!hNext)
+  {
+    char msg[MAX_PATH+100];
+    snprintf(msg, sizeof(msg), "Failed to load next %s from %s", dllName, path);
+    throw std::runtime_error(msg);
+  }
+
+  return hNext;
 }
 
 } // namespace di8b 

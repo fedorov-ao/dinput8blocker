@@ -33,25 +33,17 @@ struct Imports
 void Imports::fill()
 {
   log_debug("Filling imports");
-  char szPath[MAX_PATH];
 
-  if (!GetSystemDirectory(szPath, sizeof(szPath)))
-    throw std::runtime_error("Failed to get system directory path");
+  LPCSTR dllName = "dinput8.dll";
+  HMODULE hNext = get_next_handle(dllName);
 
-  strcat(szPath, "\\dinput8.dll");
-  HMODULE hNativeDinput8Dll = LoadLibrary(szPath);
-
-  if (!hNativeDinput8Dll)
-    throw std::runtime_error("Failed to get native dinput8.dll handle");
-
-  dinput8.DirectInput8Create = reinterpret_cast<decltype(::DirectInput8Create) *>(GetProcAddress(hNativeDinput8Dll,"DirectInput8Create"));
-  dinput8.DllCanUnloadNow = reinterpret_cast<decltype(::DllCanUnloadNow) *>(GetProcAddress(hNativeDinput8Dll,"DllCanUnloadNow"));
-  dinput8.DllGetClassObject = reinterpret_cast<decltype(::DllGetClassObject) *>(GetProcAddress(hNativeDinput8Dll,"DllGetClassObject"));
-  dinput8.DllRegisterServer = reinterpret_cast<decltype(::DllRegisterServer) *>(GetProcAddress(hNativeDinput8Dll,"DllRegisterServer"));
-  dinput8.DllUnregisterServer = reinterpret_cast<decltype(::DllUnregisterServer) *>(GetProcAddress(hNativeDinput8Dll,"DllUnregisterServer"));
+  dinput8.DirectInput8Create = reinterpret_cast<decltype(::DirectInput8Create) *>(GetProcAddress(hNext,"DirectInput8Create"));
+  dinput8.DllCanUnloadNow = reinterpret_cast<decltype(::DllCanUnloadNow) *>(GetProcAddress(hNext,"DllCanUnloadNow"));
+  dinput8.DllGetClassObject = reinterpret_cast<decltype(::DllGetClassObject) *>(GetProcAddress(hNext,"DllGetClassObject"));
+  dinput8.DllRegisterServer = reinterpret_cast<decltype(::DllRegisterServer) *>(GetProcAddress(hNext,"DllRegisterServer"));
+  dinput8.DllUnregisterServer = reinterpret_cast<decltype(::DllUnregisterServer) *>(GetProcAddress(hNext,"DllUnregisterServer"));
 
   log_debug("Filled imports");
-  return;
 }
 
 } //di8b

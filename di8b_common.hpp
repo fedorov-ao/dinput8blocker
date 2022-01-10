@@ -20,6 +20,14 @@ void log_debug(char const * fmt, ...);
 void log_info(char const * fmt, ...);
 void log_error(char const * fmt, ...);
 
+template <class M>
+typename M::value_type& get_or(M& m, typename M::key_type& key, typename M::value_type& dfault)
+{
+  auto it = m.find(key);
+  return it == m.end() ? dfault : it->second;
+}
+
+
 } //di8b
 
 #endif 
