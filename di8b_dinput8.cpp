@@ -75,27 +75,31 @@ extern "C"
 
 DLLEXPORT HRESULT WINAPI DirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID * ppvOut, LPUNKNOWN punkOuter)
 {
-  di8b::log_debug("DirectInput8Create()");
-  HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
+  di8b::log_debug("DirectInput8Create(%p, 0x%x, %s, %p, %p)", hinst, dwVersion, di8b::guid2str(riidltf).data(), ppvOut, punkOuter);
+  LPVOID pvNative = nullptr;
+  HRESULT result = di8b::g_imports.dinput8.DirectInput8Create(hinst, dwVersion, riidltf, &pvNative, punkOuter);
   if (result == S_OK)
   {
-    di8b::log_debug("DirectInput8Create(): created native device: %p", *ppvOut);
+    di8b::log_debug("DirectInput8Create(): created native device: %p", pvNative);
     try
     {
-      LPVOID pWrapper = di8b::make_dinputxx_wrapper(riidltf, *ppvOut);
+      di8b::release_unique_ptr<IUnknown> upNative (reinterpret_cast<IUnknown*>(pvNative));
+      LPVOID pWrapper = di8b::make_dinputxx_wrapper(riidltf, pvNative);
       if (pWrapper)
       {
-        di8b::log_debug("DirectInput8Create(): created wrapper: %p", *ppvOut);
+        di8b::log_debug("DirectInput8Create(): created wrapper: %p", pWrapper);
         *ppvOut = pWrapper;
       }
       else
-        di8b::log_debug("DirectInput8Create(): could not create wrapper for: %p, using native", *ppvOut);
+      {
+        di8b::log_debug("DirectInput8Create(): could not create wrapper for: %p, using native", pvNative);
+        *ppvOut = pvNative;
+      }
+      upNative.release();
     }
     catch (...)
     {
-      di8b::log_error("Exception while creating wrapper, releasing native");
-      auto pUnknown = reinterpret_cast<LPUNKNOWN>(*ppvOut);
-      pUnknown->lpVtbl->Release(pUnknown);
+      di8b::log_error("DirectInput8Create(): Exception while creating wrapper, releasing native");
       throw;
     }
   }

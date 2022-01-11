@@ -41,6 +41,20 @@ void stop_loop();
 
 LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative);
 
+template <class T>
+struct release_deleter
+{
+  void operator()(T* pt) const
+  {
+    if (pt == nullptr)
+      return;
+    pt->lpVtbl->Release(pt);
+  }
+};
+
+template <class T>
+using release_unique_ptr = std::unique_ptr<T, release_deleter<T> >;
+
 HMODULE get_next_handle(LPCSTR dllName);
 
 } //namespace di8b
