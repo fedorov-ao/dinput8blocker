@@ -396,45 +396,49 @@ typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W> BlockingWIDirectInput
 
 
 /** Makes device using external factory method */
-template <template <class> class B, class LPDI, class LPDID>
-class FactoryWIDirectInput : public B<FactoryWIDirectInput<B, LPDI, LPDID> >
+template <template <class> class B, class IDI, class IDID>
+class FactoryWIDirectInput : public B<FactoryWIDirectInput<B, IDI, IDID> >
 {
 public:
-  typedef FactoryWIDirectInput<B, LPDI, LPDID> this_type;
+  typedef FactoryWIDirectInput<B, IDI, IDID> this_type;
   typedef B<this_type> base_type;
-  typedef std::function<LPDID (REFGUID, LPDID)> device_factory_t;
+  typedef std::function<IDID* (REFGUID, IDID*)> device_factory_t;
   typedef std::function<void (LPVOID, int)> reporter_t;
 
-  static HRESULT WINAPI CreateDevice(this_type* This, REFGUID rguid, LPDID *lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+  static HRESULT WINAPI CreateDevice(this_type* This, REFGUID rguid, IDID** lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
   {
     log_debug("FactoryWIDirectInput::CreateDevice(%p)", This);
-    auto hr = base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
+    IDID* pNative = nullptr;
+    auto hr = base_type::CreateDevice(This, rguid, &pNative, pUnkOuter);
     if (hr == S_OK)
     {
-      auto pNative = reinterpret_cast<LPDID>(*lplpDirectInputDevice);
+      log_debug("FactoryWIDirectInput::CreateDevice(%p): created native device: %p", This, pNative);
       if (This->reporter_)
         This->reporter_(pNative, 0);
       if (This->deviceFactory_)
         try {
-          log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, pNative);
+          release_unique_ptr<IDID> upNative (pNative);
           auto pDevice = This->deviceFactory_(rguid, pNative);
           if (pDevice)
           {
             log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
-            *lplpDirectInputDevice = pDevice;
             if (This->reporter_)
               This->reporter_(pNative, 1);
+            *lplpDirectInputDevice = pDevice;
           }
           else
           {
             log_debug("FactoryWIDirectInput::CreateDevice(%p): did not create wrapper for native device: %p", This, pNative);
             if (This->reporter_)
               This->reporter_(pNative, 2);
+            *lplpDirectInputDevice = pNative;
           }
+          upNative.release();
         } catch (...) {
           log_error("FactoryWIDirectInput::CreateDevice(%p): exception, releasing native device %p", This, pNative);
-          pNative->lpVtbl->Release(pNative);
         }
+      else
+        *lplpDirectInputDevice = pNative;
     }
     return hr;
   }
@@ -442,43 +446,43 @@ public:
   static HRESULT WINAPI CreateDeviceEx(this_type* This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter)
   {
     log_debug("FactoryWIDirectInput::CreateDeviceEx(%p, %s, %s, %p, %p)", This, guid2str(rguid).data(), guid2str(riid).data(), pvOut, lpUnknownOuter);
-    auto hr = base_type::CreateDeviceEx(This, rguid, riid, pvOut, lpUnknownOuter);
+    IDID* pNative = nullptr;
+    auto hr = base_type::CreateDeviceEx(This, rguid, riid, reinterpret_cast<LPVOID*>(&pNative), lpUnknownOuter);
     if (hr == S_OK)
     {
-      auto pNative = reinterpret_cast<LPDID>(*pvOut);
+      log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, pNative);
       if (This->reporter_)
         This->reporter_(pNative, 0);
       if (This->deviceFactory_)
         try {
-          log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created native device: %p", This, pNative);
+          release_unique_ptr<IDID> upNative (pNative);
           auto pDevice = This->deviceFactory_(rguid, pNative);
           if (pDevice)
           {
-            log_debug("FactoryWIDirectInput::CreateDevice(%p): created wrapper device: %p", This, pDevice);
-            *pvOut = pDevice;
+            log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): created wrapper device: %p", This, pDevice);
             if (This->reporter_)
               This->reporter_(pNative, 1);
+            *pvOut = pDevice;
           }
           else
           {
-            log_debug("FactoryWIDirectInput::CreateDevice(%p): did not create wrapper for native device: %p", This, pNative);
+            log_debug("FactoryWIDirectInput::CreateDeviceEx(%p): did not create wrapper for native device: %p", This, pNative);
             if (This->reporter_)
               This->reporter_(pNative, 2);
+            *pvOut = pNative;
           }
+          upNative.release();
         } catch (...) {
-          log_error(
-            "FactoryWIDirectInput::CreateDeviceEx(%p, %s, %s, %p, %p): exception, releasing native device %p",
-            This, guid2str(rguid).data(), guid2str(riid).data(), pvOut, lpUnknownOuter, *pvOut
-          );
-          pNative->lpVtbl->Release(pNative);
-          throw;
+          log_error("FactoryWIDirectInput::CreateDeviceEx(%p): exception, releasing native device %p", This, pNative);
         }
+      else
+        *pvOut = pNative;
     }
     return hr; 
   }
 
 
-  FactoryWIDirectInput(LPDI pNative, device_factory_t const & deviceFactory, reporter_t const & reporter=reporter_t())
+  FactoryWIDirectInput(IDI* pNative, device_factory_t const & deviceFactory, reporter_t const & reporter=reporter_t())
     : base_type(pNative), deviceFactory_(deviceFactory), reporter_(reporter)
   {}
 
@@ -593,14 +597,14 @@ std::shared_ptr<Flag> make_flag(REFGUID rguid)
   return spFlag;
 }
 
-template <class DeviceWrapper, class LPDID>
-LPDID make_device_wrapper(REFGUID rguid, LPDID pDID)
+template <class DeviceWrapper, class IDID>
+IDID* make_device_wrapper(REFGUID rguid, IDID* pDID)
 {
   log_debug("make_device_wrapper(%s, %p)", guid2str(rguid).data(), pDID);
   auto spFlag = make_flag(rguid);
   if (!spFlag)
     return nullptr;
-  auto pWrapper = reinterpret_cast<LPDID>(new DeviceWrapper(pDID, spFlag));
+  auto pWrapper = reinterpret_cast<IDID*>(new DeviceWrapper(pDID, spFlag));
   log_debug("make_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
   return pWrapper;
 }
@@ -614,9 +618,9 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     if (IsEqualGUID(riidltf, guid))
     {
-      pWrapper = new FactoryWIDirectInput<WIDirectInput7A, LPDIRECTINPUT7A, LPDIRECTINPUTDEVICEA>(
+      pWrapper = new FactoryWIDirectInput<WIDirectInput7A, IDirectInput7A, IDirectInputDeviceA>(
         reinterpret_cast<LPDIRECTINPUT7A>(lpNative),
-        make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICEA>,
+        make_device_wrapper<BlockingWIDirectInputDevice8A, IDirectInputDeviceA>,
         print_ididxa_info
       );
     }
@@ -624,9 +628,9 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 
   if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8A))
   {
-    pWrapper = new FactoryWIDirectInput<WIDirectInput8A, LPDIRECTINPUT8A, LPDIRECTINPUTDEVICE8A>(
+    pWrapper = new FactoryWIDirectInput<WIDirectInput8A, IDirectInput8A, IDirectInputDevice8A>(
       reinterpret_cast<LPDIRECTINPUT8A>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8A, LPDIRECTINPUTDEVICE8A>,
+      make_device_wrapper<BlockingWIDirectInputDevice8A, IDirectInputDevice8A>,
       print_ididxa_info
     );
   }
@@ -636,9 +640,9 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     if (IsEqualGUID(riidltf, guid))
     {
-      pWrapper = new FactoryWIDirectInput<WIDirectInput7W, LPDIRECTINPUT7W, LPDIRECTINPUTDEVICEW>(
+      pWrapper = new FactoryWIDirectInput<WIDirectInput7W, IDirectInput7W, IDirectInputDeviceW>(
         reinterpret_cast<LPDIRECTINPUT7W>(lpNative),
-        make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICEW>,
+        make_device_wrapper<BlockingWIDirectInputDevice8W, IDirectInputDeviceW>,
         print_ididxw_info
       );
     }
@@ -646,9 +650,9 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 
   if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8W))
   {
-    pWrapper = new FactoryWIDirectInput<WIDirectInput8W, LPDIRECTINPUT8W, LPDIRECTINPUTDEVICE8W>(
+    pWrapper = new FactoryWIDirectInput<WIDirectInput8W, IDirectInput8W, IDirectInputDevice8W>(
       reinterpret_cast<LPDIRECTINPUT8W>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8W, LPDIRECTINPUTDEVICE8W>,
+      make_device_wrapper<BlockingWIDirectInputDevice8W, IDirectInputDevice8W>,
       print_ididxw_info
     );
   }
