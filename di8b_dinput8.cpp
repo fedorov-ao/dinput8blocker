@@ -25,18 +25,17 @@ struct Imports
     decltype(::DllRegisterServer) * DllRegisterServer;
     decltype(::DllUnregisterServer) * DllUnregisterServer;
   } dinput8;
-
-  void fill();
 } g_imports;
 
 
-void Imports::fill()
+void fill_imports()
 {
   log_debug("Filling imports");
 
   LPCSTR dllName = "dinput8.dll";
   HMODULE hNext = get_next_handle(dllName);
 
+  auto & dinput8 = g_imports.dinput8;
   dinput8.DirectInput8Create = reinterpret_cast<decltype(::DirectInput8Create) *>(GetProcAddress(hNext,"DirectInput8Create"));
   dinput8.DllCanUnloadNow = reinterpret_cast<decltype(::DllCanUnloadNow) *>(GetProcAddress(hNext,"DllCanUnloadNow"));
   dinput8.DllGetClassObject = reinterpret_cast<decltype(::DllGetClassObject) *>(GetProcAddress(hNext,"DllGetClassObject"));
@@ -56,7 +55,7 @@ try {
     di8b::log_info("Dll attached");
     di8b::open_and_parse_config();
     di8b::init_log();
-    di8b::g_imports.fill();
+    di8b::fill_imports();
   }
 
   if (reason == DLL_PROCESS_DETACH)
