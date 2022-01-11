@@ -396,12 +396,12 @@ typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W> BlockingWIDirectInput
 
 
 /** Makes device using external factory method */
-template <template <class> class B, class IDI, class IDID>
-class FactoryWIDirectInput : public B<FactoryWIDirectInput<B, IDI, IDID> >
+template <class B, class IDI, class IDID>
+class FactoryWIDirectInput : public B
 {
 public:
   typedef FactoryWIDirectInput<B, IDI, IDID> this_type;
-  typedef B<this_type> base_type;
+  typedef B base_type;
   typedef std::function<IDID* (REFGUID, IDID*)> device_factory_t;
   typedef std::function<void (LPVOID, int)> reporter_t;
 
@@ -481,9 +481,9 @@ public:
     return hr; 
   }
 
-
-  FactoryWIDirectInput(IDI* pNative, device_factory_t const & deviceFactory, reporter_t const & reporter=reporter_t())
-    : base_type(pNative), deviceFactory_(deviceFactory), reporter_(reporter)
+  template <class T>
+  FactoryWIDirectInput(T const & t)
+    : base_type(t), deviceFactory_(t.deviceFactory), reporter_(t.reporter)
   {}
 
 private:
@@ -618,21 +618,31 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     if (IsEqualGUID(riidltf, guid))
     {
-      pWrapper = new FactoryWIDirectInput<WIDirectInput7A, IDirectInput7A, IDirectInputDeviceA>(
-        reinterpret_cast<LPDIRECTINPUT7A>(lpNative),
-        make_device_wrapper<BlockingWIDirectInputDevice8A, IDirectInputDeviceA>,
-        print_ididxa_info
-      );
+      typedef WIDirectInput7A<
+        FactoryWIDirectInput<BIDirectInput7A, IDirectInput7A, IDirectInputDeviceA>
+      > dinput_wrapper_t;
+      struct T
+      {
+        LPVOID pNative;
+        dinput_wrapper_t::device_factory_t deviceFactory;
+        dinput_wrapper_t::reporter_t reporter;
+      } t = { lpNative, make_device_wrapper<BlockingWIDirectInputDevice8A, IDirectInputDeviceA>, print_ididxa_info };
+      pWrapper = new dinput_wrapper_t(t);
     }
   }
 
   if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8A))
   {
-    pWrapper = new FactoryWIDirectInput<WIDirectInput8A, IDirectInput8A, IDirectInputDevice8A>(
-      reinterpret_cast<LPDIRECTINPUT8A>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8A, IDirectInputDevice8A>,
-      print_ididxa_info
-    );
+    typedef WIDirectInput8A<
+      FactoryWIDirectInput<BIDirectInput8A, IDirectInput8A, IDirectInputDevice8A>
+    > dinput_wrapper_t;
+    struct T
+    {
+      LPVOID pNative;
+      dinput_wrapper_t::device_factory_t deviceFactory;
+      dinput_wrapper_t::reporter_t reporter;
+    } t = { lpNative, make_device_wrapper<BlockingWIDirectInputDevice8A, IDirectInputDevice8A>, print_ididxa_info };
+    pWrapper = new dinput_wrapper_t(t);
   }
 
   GUID guidsw[] = { IID_IDirectInputW, IID_IDirectInput2W, IID_IDirectInput7W };
@@ -640,21 +650,31 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   {
     if (IsEqualGUID(riidltf, guid))
     {
-      pWrapper = new FactoryWIDirectInput<WIDirectInput7W, IDirectInput7W, IDirectInputDeviceW>(
-        reinterpret_cast<LPDIRECTINPUT7W>(lpNative),
-        make_device_wrapper<BlockingWIDirectInputDevice8W, IDirectInputDeviceW>,
-        print_ididxw_info
-      );
-    }
+      typedef WIDirectInput7W<
+        FactoryWIDirectInput<BIDirectInput7W, IDirectInput7W, IDirectInputDeviceW>
+      > dinput_wrapper_t;
+      struct T
+      {
+        LPVOID pNative;
+        dinput_wrapper_t::device_factory_t deviceFactory;
+        dinput_wrapper_t::reporter_t reporter;
+      } t = { lpNative, make_device_wrapper<BlockingWIDirectInputDevice8W, IDirectInputDeviceW>, print_ididxw_info };
+      pWrapper = new dinput_wrapper_t(t);
+   }
   }
 
   if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8W))
   {
-    pWrapper = new FactoryWIDirectInput<WIDirectInput8W, IDirectInput8W, IDirectInputDevice8W>(
-      reinterpret_cast<LPDIRECTINPUT8W>(lpNative),
-      make_device_wrapper<BlockingWIDirectInputDevice8W, IDirectInputDevice8W>,
-      print_ididxw_info
-    );
+    typedef WIDirectInput8W<
+      FactoryWIDirectInput<BIDirectInput8W, IDirectInput8W, IDirectInputDevice8W>
+    > dinput_wrapper_t;
+    struct T
+    {
+      LPVOID pNative;
+      dinput_wrapper_t::device_factory_t deviceFactory;
+      dinput_wrapper_t::reporter_t reporter;
+    } t = { lpNative, make_device_wrapper<BlockingWIDirectInputDevice8W, IDirectInputDevice8W>, print_ididxw_info };
+    pWrapper = new dinput_wrapper_t(t);
   }
 
   if (pWrapper)

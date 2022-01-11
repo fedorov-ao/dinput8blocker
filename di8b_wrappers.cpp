@@ -559,11 +559,6 @@ ULONG WINAPI BIDirectInput7A::Release(BIDirectInput7A* This)
 {
   log_debug("BIDirectInput7A::Release(%p)", This);
   ULONG r = CALL_NATIVE(Release)(NATIVE);
-  if ((r == 0) && (This->deleteSelf_))
-  {
-    log_debug("BIDirectInput7A::Release(%p): deleting self", This);
-    delete This;
-  }
   return r;
 }
 
@@ -611,13 +606,6 @@ HRESULT WINAPI BIDirectInput7A::CreateDeviceEx(BIDirectInput7A* This, REFGUID rg
 #undef CALL_NATIVE
 #undef NATIVE
 
-BIDirectInput7A::BIDirectInput7A(LPVOID pNative, VIDirectInput7A const * pVtbl, bool deleteSelf)
-  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
-{
-  log_debug("BIDirectInput7A::BIDirectInput7A(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
-  assert(pVtbl_ != nullptr);
-}
-
 BIDirectInput7A::~BIDirectInput7A()
 {
   log_debug("BIDirectInput7A::~BIDirectInput7A(%p)", this);
@@ -646,11 +634,6 @@ ULONG WINAPI BIDirectInput8A::Release(BIDirectInput8A* This)
 {
   log_debug("BIDirectInput8A::Release(%p)", This);
   ULONG r = CALL_NATIVE(Release)(NATIVE);
-  if ((r == 0) && (This->deleteSelf_))
-  {
-    log_debug("BIDirectInput8A::Release(%p): deleting self", This);
-    delete This;
-  }
   return r;
 }
 
@@ -704,13 +687,6 @@ HRESULT WINAPI BIDirectInput8A::ConfigureDevices(BIDirectInput8A* This, LPDICONF
 #undef CALL_NATIVE
 #undef NATIVE
 
-BIDirectInput8A::BIDirectInput8A(LPVOID pNative, VIDirectInput8A const * pVtbl, bool deleteSelf)
-  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
-{
-  log_debug("BIDirectInput8A::BIDirectInput8A(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
-  assert (pVtbl_ != nullptr);
-}
-
 BIDirectInput8A::~BIDirectInput8A()
 {
   log_debug("BIDirectInput8A::~BIDirectInput8A(%p)", this);
@@ -739,11 +715,6 @@ ULONG WINAPI BIDirectInput7W::Release(BIDirectInput7W* This)
 {
   log_debug("BIDirectInput7W::Release(%p)", This);
   ULONG r = CALL_NATIVE(Release)(NATIVE);
-  if ((r == 0) && (This->deleteSelf_))
-  {
-    log_debug("BIDirectInput7W::Release(%p): deleting self", This);
-    delete This;
-  }
   return r;
 }
 
@@ -791,13 +762,6 @@ HRESULT WINAPI BIDirectInput7W::CreateDeviceEx(BIDirectInput7W* This, REFGUID rg
 #undef CALL_NATIVE
 #undef NATIVE
 
-BIDirectInput7W::BIDirectInput7W(LPVOID pNative, VIDirectInput7W const * pVtbl, bool deleteSelf)
-  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
-{
-  log_debug("BIDirectInput7W::BIDirectInput7W(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
-  assert (pVtbl_ != nullptr);
-}
-
 BIDirectInput7W::~BIDirectInput7W()
 {
   log_debug("BIDirectInput7W::~BIDirectInput7W(%p)", this);
@@ -826,11 +790,6 @@ ULONG WINAPI BIDirectInput8W::Release(BIDirectInput8W* This)
 {
   log_debug("BIDirectInput8W::Release(%p)", This);
   ULONG r = CALL_NATIVE(Release)(NATIVE);
-  if ((r == 0) && (This->deleteSelf_))
-  {
-    log_debug("BIDirectInput8W::Release(%p): deleting self", This);
-    delete This;
-  }
   return r;
 }
 
@@ -883,13 +842,6 @@ HRESULT WINAPI BIDirectInput8W::ConfigureDevices(BIDirectInput8W* This, LPDICONF
 }
 #undef CALL_NATIVE
 #undef NATIVE
-
-BIDirectInput8W::BIDirectInput8W(LPVOID pNative, VIDirectInput8W const * pVtbl, bool deleteSelf)
-  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
-{
-  log_debug("BIDirectInput8W::BIDirectInput8W(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
-  assert (pVtbl_ != nullptr);
-}
 
 BIDirectInput8W::~BIDirectInput8W()
 {

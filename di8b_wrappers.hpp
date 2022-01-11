@@ -379,55 +379,67 @@ public:
   /*** IDirectInput7A methods ***/
   static HRESULT WINAPI CreateDeviceEx(BIDirectInput7A* This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter);
 
-  BIDirectInput7A(LPVOID pNative, VIDirectInput7A const * pVtbl=nullptr, bool deleteSelf=false);
+  template <class T>
+  BIDirectInput7A(T const & t);
   ~BIDirectInput7A();
 
-private:
+protected:
   VIDirectInput7A const * pVtbl_;
+
+private:
   LPVOID pNative_;
-  bool deleteSelf_;
 };
 
-template <class D> class WIDirectInput7A : public BIDirectInput7A
+template <class T>
+BIDirectInput7A::BIDirectInput7A(T const & t) : pNative_(t.pNative)
+{
+  log_debug("BIDirectInput7A::BIDirectInput7A(%p)", this);
+}
+
+template <class B> class WIDirectInput7A : public B
 {
 public:
-  static ULONG WINAPI Release(D* This);
-  WIDirectInput7A(LPVOID pNative);
+  static ULONG WINAPI Release(WIDirectInput7A* This);
+  template <class T>
+  WIDirectInput7A(T const & t);
 
 private:
   static VIDirectInput7A const vtbl_;
 };
 
-template <class D>
-VIDirectInput7A const WIDirectInput7A<D>::vtbl_ =
+template <class B>
+VIDirectInput7A const WIDirectInput7A<B>::vtbl_ =
 {
-  reinterpret_cast<decltype(VIDirectInput7A::QueryInterface)>(&D::QueryInterface),
-  reinterpret_cast<decltype(VIDirectInput7A::AddRef)>(&D::AddRef),
-  reinterpret_cast<decltype(VIDirectInput7A::Release)>(&D::Release),
-  reinterpret_cast<decltype(VIDirectInput7A::CreateDevice)>(&D::CreateDevice),
-  reinterpret_cast<decltype(VIDirectInput7A::EnumDevices)>(&D::EnumDevices),
-  reinterpret_cast<decltype(VIDirectInput7A::GetDeviceStatus)>(&D::GetDeviceStatus),
-  reinterpret_cast<decltype(VIDirectInput7A::RunControlPanel)>(&D::RunControlPanel),
-  reinterpret_cast<decltype(VIDirectInput7A::Initialize)>(&D::Initialize),
-  reinterpret_cast<decltype(VIDirectInput7A::FindDevice)>(&D::FindDevice),
-  reinterpret_cast<decltype(VIDirectInput7A::CreateDeviceEx)>(&D::CreateDeviceEx)
+  reinterpret_cast<decltype(VIDirectInput7A::QueryInterface)>(&WIDirectInput7A<B>::QueryInterface),
+  reinterpret_cast<decltype(VIDirectInput7A::AddRef)>(&WIDirectInput7A<B>::AddRef),
+  reinterpret_cast<decltype(VIDirectInput7A::Release)>(&WIDirectInput7A<B>::Release),
+  reinterpret_cast<decltype(VIDirectInput7A::CreateDevice)>(&WIDirectInput7A<B>::CreateDevice),
+  reinterpret_cast<decltype(VIDirectInput7A::EnumDevices)>(&WIDirectInput7A<B>::EnumDevices),
+  reinterpret_cast<decltype(VIDirectInput7A::GetDeviceStatus)>(&WIDirectInput7A<B>::GetDeviceStatus),
+  reinterpret_cast<decltype(VIDirectInput7A::RunControlPanel)>(&WIDirectInput7A<B>::RunControlPanel),
+  reinterpret_cast<decltype(VIDirectInput7A::Initialize)>(&WIDirectInput7A<B>::Initialize),
+  reinterpret_cast<decltype(VIDirectInput7A::FindDevice)>(&WIDirectInput7A<B>::FindDevice),
+  reinterpret_cast<decltype(VIDirectInput7A::CreateDeviceEx)>(&WIDirectInput7A<B>::CreateDeviceEx)
 };
 
-template <class D>
-ULONG WINAPI WIDirectInput7A<D>::Release(D* This)
+template <class B>
+ULONG WINAPI WIDirectInput7A<B>::Release(WIDirectInput7A* This)
 {
-  ULONG r = BIDirectInput7A::Release(This);
+  ULONG r = B::Release(This);
   if (r == 0)
   {
-    log_debug("WIDirectInput7A<D>::Release(%p): deleting self", This);
+    log_debug("WIDirectInput7A<B>::Release(%p): deleting self", This);
     delete This;
   }
   return r;
 }
 
-template <class D>
-WIDirectInput7A<D>::WIDirectInput7A(LPVOID pNative) : BIDirectInput7A(pNative, &vtbl_, false)
-{}
+template <class B>
+template <class T>
+WIDirectInput7A<B>::WIDirectInput7A(T const & t) : B(t)
+{
+  this->pVtbl_ = &vtbl_;
+}
 
 /* WIDirectInput8A */
 class BIDirectInput8A;
@@ -463,56 +475,68 @@ public:
   static HRESULT WINAPI EnumDevicesBySemantics(BIDirectInput8A* This, LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags);
   static HRESULT WINAPI ConfigureDevices(BIDirectInput8A* This, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSA lpdiCDParams, DWORD dwFlags, LPVOID pvRefData);
 
-  BIDirectInput8A(LPVOID pNative, VIDirectInput8A const * pVtbl=nullptr, bool deleteSelf=false);
+  template <class T>
+  BIDirectInput8A(T const & t);
   ~BIDirectInput8A();
 
-private:
+protected:
   VIDirectInput8A const * pVtbl_;
+
+private:
   LPVOID pNative_;
-  bool deleteSelf_;
 };
 
-template <class D> class WIDirectInput8A : public BIDirectInput8A
+template <class T>
+BIDirectInput8A::BIDirectInput8A(T const & t) : pNative_(t.pNative)
+{
+  log_debug("BIDirectInput8A::BIDirectInput8A(%p)", this);
+}
+
+template <class B> class WIDirectInput8A : public B
 {
 public:
-  static ULONG WINAPI Release(D* This);
-  WIDirectInput8A(LPVOID pNative);
+  static ULONG WINAPI Release(WIDirectInput8A* This);
+  template <class T>
+  WIDirectInput8A(T const & t);
 
 private:
   static VIDirectInput8A const vtbl_;
 };
 
-template <class D>
-VIDirectInput8A const WIDirectInput8A<D>::vtbl_ =
+template <class B>
+VIDirectInput8A const WIDirectInput8A<B>::vtbl_ =
 {
-  reinterpret_cast<decltype(VIDirectInput8A::QueryInterface)>(&D::QueryInterface),
-  reinterpret_cast<decltype(VIDirectInput8A::AddRef)>(&D::AddRef),
-  reinterpret_cast<decltype(VIDirectInput8A::Release)>(&D::Release),
-  reinterpret_cast<decltype(VIDirectInput8A::CreateDevice)>(&D::CreateDevice),
-  reinterpret_cast<decltype(VIDirectInput8A::EnumDevices)>(&D::EnumDevices),
-  reinterpret_cast<decltype(VIDirectInput8A::GetDeviceStatus)>(&D::GetDeviceStatus),
-  reinterpret_cast<decltype(VIDirectInput8A::RunControlPanel)>(&D::RunControlPanel),
-  reinterpret_cast<decltype(VIDirectInput8A::Initialize)>(&D::Initialize),
-  reinterpret_cast<decltype(VIDirectInput8A::FindDevice)>(&D::FindDevice),
-  reinterpret_cast<decltype(VIDirectInput8A::EnumDevicesBySemantics)>(&D::EnumDevicesBySemantics),
-  reinterpret_cast<decltype(VIDirectInput8A::ConfigureDevices)>(&D::ConfigureDevices)
+  reinterpret_cast<decltype(VIDirectInput8A::QueryInterface)>(&WIDirectInput8A<B>::QueryInterface),
+  reinterpret_cast<decltype(VIDirectInput8A::AddRef)>(&WIDirectInput8A<B>::AddRef),
+  reinterpret_cast<decltype(VIDirectInput8A::Release)>(&WIDirectInput8A<B>::Release),
+  reinterpret_cast<decltype(VIDirectInput8A::CreateDevice)>(&WIDirectInput8A<B>::CreateDevice),
+  reinterpret_cast<decltype(VIDirectInput8A::EnumDevices)>(&WIDirectInput8A<B>::EnumDevices),
+  reinterpret_cast<decltype(VIDirectInput8A::GetDeviceStatus)>(&WIDirectInput8A<B>::GetDeviceStatus),
+  reinterpret_cast<decltype(VIDirectInput8A::RunControlPanel)>(&WIDirectInput8A<B>::RunControlPanel),
+  reinterpret_cast<decltype(VIDirectInput8A::Initialize)>(&WIDirectInput8A<B>::Initialize),
+  reinterpret_cast<decltype(VIDirectInput8A::FindDevice)>(&WIDirectInput8A<B>::FindDevice),
+  reinterpret_cast<decltype(VIDirectInput8A::EnumDevicesBySemantics)>(&WIDirectInput8A<B>::EnumDevicesBySemantics),
+  reinterpret_cast<decltype(VIDirectInput8A::ConfigureDevices)>(&WIDirectInput8A<B>::ConfigureDevices)
 };
 
-template <class D>
-ULONG WINAPI WIDirectInput8A<D>::Release(D* This)
+template <class B>
+ULONG WINAPI WIDirectInput8A<B>::Release(WIDirectInput8A<B>* This)
 {
-  ULONG r = BIDirectInput8A::Release(This);
+  ULONG r = B::Release(This);
   if (r == 0)
   {
-    log_debug("WIDirectInput8A<D>::Release(%p): deleting self", This);
+    log_debug("WIDirectInput8A<B>::Release(%p): deleting self", This);
     delete This;
   }
   return r;
 }
 
-template <class D>
-WIDirectInput8A<D>::WIDirectInput8A(LPVOID pNative) : BIDirectInput8A(pNative, &vtbl_, false)
-{}
+template <class B>
+template <class T>
+WIDirectInput8A<B>::WIDirectInput8A(T const & t) : B(t)
+{
+  this->pVtbl_ = &vtbl_;
+}
 
 
 /* WIDirectInput7W */
@@ -553,55 +577,67 @@ public:
   /*** IDirectInput7W methods ***/
   static HRESULT WINAPI CreateDeviceEx(BIDirectInput7W* This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter);
 
-  BIDirectInput7W(LPVOID pNative, VIDirectInput7W const * pVtbl=nullptr, bool deleteSelf=false);
+  template <class T>
+  BIDirectInput7W(T const & t);
   ~BIDirectInput7W();
 
-private:
+protected:
   VIDirectInput7W const * pVtbl_;
+
+private:
   LPVOID pNative_;
-  bool deleteSelf_;
 };
 
-template <class D> class WIDirectInput7W : public BIDirectInput7W
+template <class T>
+BIDirectInput7W::BIDirectInput7W(T const & t) : pNative_(t.pNative)
+{
+  log_debug("BIDirectInput7W::BIDirectInput7W(%p)", this);
+}
+
+template <class B> class WIDirectInput7W : public B
 {
 public:
-  static ULONG WINAPI Release(D* This);
-  WIDirectInput7W(LPVOID pNative);
+  static ULONG WINAPI Release(WIDirectInput7W* This);
+  template <class T>
+  WIDirectInput7W(T const & t);
 
 private:
   static VIDirectInput7W const vtbl_;
 };
 
-template <class D>
-VIDirectInput7W const WIDirectInput7W<D>::vtbl_ =
+template <class B>
+VIDirectInput7W const WIDirectInput7W<B>::vtbl_ =
 {
-  reinterpret_cast<decltype(VIDirectInput7W::QueryInterface)>(&D::QueryInterface),
-  reinterpret_cast<decltype(VIDirectInput7W::AddRef)>(&D::AddRef),
-  reinterpret_cast<decltype(VIDirectInput7W::Release)>(&D::Release),
-  reinterpret_cast<decltype(VIDirectInput7W::CreateDevice)>(&D::CreateDevice),
-  reinterpret_cast<decltype(VIDirectInput7W::EnumDevices)>(&D::EnumDevices),
-  reinterpret_cast<decltype(VIDirectInput7W::GetDeviceStatus)>(&D::GetDeviceStatus),
-  reinterpret_cast<decltype(VIDirectInput7W::RunControlPanel)>(&D::RunControlPanel),
-  reinterpret_cast<decltype(VIDirectInput7W::Initialize)>(&D::Initialize),
-  reinterpret_cast<decltype(VIDirectInput7W::FindDevice)>(&D::FindDevice),
-  reinterpret_cast<decltype(VIDirectInput7W::CreateDeviceEx)>(&D::CreateDeviceEx)
+  reinterpret_cast<decltype(VIDirectInput7W::QueryInterface)>(&WIDirectInput7W<B>::QueryInterface),
+  reinterpret_cast<decltype(VIDirectInput7W::AddRef)>(&WIDirectInput7W<B>::AddRef),
+  reinterpret_cast<decltype(VIDirectInput7W::Release)>(&WIDirectInput7W<B>::Release),
+  reinterpret_cast<decltype(VIDirectInput7W::CreateDevice)>(&WIDirectInput7W<B>::CreateDevice),
+  reinterpret_cast<decltype(VIDirectInput7W::EnumDevices)>(&WIDirectInput7W<B>::EnumDevices),
+  reinterpret_cast<decltype(VIDirectInput7W::GetDeviceStatus)>(&WIDirectInput7W<B>::GetDeviceStatus),
+  reinterpret_cast<decltype(VIDirectInput7W::RunControlPanel)>(&WIDirectInput7W<B>::RunControlPanel),
+  reinterpret_cast<decltype(VIDirectInput7W::Initialize)>(&WIDirectInput7W<B>::Initialize),
+  reinterpret_cast<decltype(VIDirectInput7W::FindDevice)>(&WIDirectInput7W<B>::FindDevice),
+  reinterpret_cast<decltype(VIDirectInput7W::CreateDeviceEx)>(&WIDirectInput7W<B>::CreateDeviceEx)
 };
 
-template <class D>
-ULONG WINAPI WIDirectInput7W<D>::Release(D* This)
+template <class B>
+ULONG WINAPI WIDirectInput7W<B>::Release(WIDirectInput7W* This)
 {
-  ULONG r = BIDirectInput7W::Release(This);
+  ULONG r = B::Release(This);
   if (r == 0)
   {
-    log_debug("WIDirectInput7W<D>::Release(%p): deleting self", This);
+    log_debug("WIDirectInput7W<B>::Release(%p): deleting self", This);
     delete This;
   }
   return r;
 }
 
-template <class D>
-WIDirectInput7W<D>::WIDirectInput7W(LPVOID pNative) : BIDirectInput7W(pNative, &vtbl_, false)
-{}
+template <class B>
+template <class T>
+WIDirectInput7W<B>::WIDirectInput7W(T const & t) : B(t)
+{
+  this->pVtbl_ = &vtbl_;
+}
 
 /* WIDirectInput8W */
 class BIDirectInput8W;
@@ -637,56 +673,68 @@ public:
   static HRESULT WINAPI EnumDevicesBySemantics(BIDirectInput8W* This, LPCWSTR ptszUserName, LPDIACTIONFORMATW lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBW lpCallback, LPVOID pvRef, DWORD dwFlags);
   static HRESULT WINAPI ConfigureDevices(BIDirectInput8W* This, LPDICONFIGUREDEVICESCALLBACK lpdiCallback, LPDICONFIGUREDEVICESPARAMSW lpdiCDParams, DWORD dwFlags, LPVOID pvRefData);
 
-  BIDirectInput8W(LPVOID pNative, VIDirectInput8W const * pVtbl=nullptr, bool deleteSelf=false);
+  template <class T>
+  BIDirectInput8W(T const & t);
   ~BIDirectInput8W();
 
-private:
+protected:
   VIDirectInput8W const * pVtbl_;
+
+private:
   LPVOID pNative_;
-  bool deleteSelf_;
 };
 
-template <class D> class WIDirectInput8W : public BIDirectInput8W
+template <class T>
+BIDirectInput8W::BIDirectInput8W(T const & t) : pNative_(t.pNative)
+{
+  log_debug("BIDirectInput8W::BIDirectInput8W(%p)", this);
+}
+
+template <class B> class WIDirectInput8W : public B
 {
 public:
-  static ULONG WINAPI Release(D* This);
-  WIDirectInput8W(LPVOID pNative);
+  static ULONG WINAPI Release(WIDirectInput8W* This);
+  template <class T>
+  WIDirectInput8W(T const & t);
 
 private:
   static VIDirectInput8W const vtbl_;
 };
 
-template <class D>
-VIDirectInput8W const WIDirectInput8W<D>::vtbl_ =
+template <class B>
+VIDirectInput8W const WIDirectInput8W<B>::vtbl_ =
 {
-  reinterpret_cast<decltype(VIDirectInput8W::QueryInterface)>(&D::QueryInterface),
-  reinterpret_cast<decltype(VIDirectInput8W::AddRef)>(&D::AddRef),
-  reinterpret_cast<decltype(VIDirectInput8W::Release)>(&D::Release),
-  reinterpret_cast<decltype(VIDirectInput8W::CreateDevice)>(&D::CreateDevice),
-  reinterpret_cast<decltype(VIDirectInput8W::EnumDevices)>(&D::EnumDevices),
-  reinterpret_cast<decltype(VIDirectInput8W::GetDeviceStatus)>(&D::GetDeviceStatus),
-  reinterpret_cast<decltype(VIDirectInput8W::RunControlPanel)>(&D::RunControlPanel),
-  reinterpret_cast<decltype(VIDirectInput8W::Initialize)>(&D::Initialize),
-  reinterpret_cast<decltype(VIDirectInput8W::FindDevice)>(&D::FindDevice),
-  reinterpret_cast<decltype(VIDirectInput8W::EnumDevicesBySemantics)>(&D::EnumDevicesBySemantics),
-  reinterpret_cast<decltype(VIDirectInput8W::ConfigureDevices)>(&D::ConfigureDevices)
+  reinterpret_cast<decltype(VIDirectInput8W::QueryInterface)>(&WIDirectInput8W<B>::QueryInterface),
+  reinterpret_cast<decltype(VIDirectInput8W::AddRef)>(&WIDirectInput8W<B>::AddRef),
+  reinterpret_cast<decltype(VIDirectInput8W::Release)>(&WIDirectInput8W<B>::Release),
+  reinterpret_cast<decltype(VIDirectInput8W::CreateDevice)>(&WIDirectInput8W<B>::CreateDevice),
+  reinterpret_cast<decltype(VIDirectInput8W::EnumDevices)>(&WIDirectInput8W<B>::EnumDevices),
+  reinterpret_cast<decltype(VIDirectInput8W::GetDeviceStatus)>(&WIDirectInput8W<B>::GetDeviceStatus),
+  reinterpret_cast<decltype(VIDirectInput8W::RunControlPanel)>(&WIDirectInput8W<B>::RunControlPanel),
+  reinterpret_cast<decltype(VIDirectInput8W::Initialize)>(&WIDirectInput8W<B>::Initialize),
+  reinterpret_cast<decltype(VIDirectInput8W::FindDevice)>(&WIDirectInput8W<B>::FindDevice),
+  reinterpret_cast<decltype(VIDirectInput8W::EnumDevicesBySemantics)>(&WIDirectInput8W<B>::EnumDevicesBySemantics),
+  reinterpret_cast<decltype(VIDirectInput8W::ConfigureDevices)>(&WIDirectInput8W<B>::ConfigureDevices)
 };
 
-template <class D>
-ULONG WINAPI WIDirectInput8W<D>::Release(D* This)
+template <class B>
+ULONG WINAPI WIDirectInput8W<B>::Release(WIDirectInput8W<B>* This)
 {
-  ULONG r = BIDirectInput8W::Release(This);
+  ULONG r = B::Release(This);
   if (r == 0)
   {
-    log_debug("WIDirectInput8W<D>::Release(%p): deleting self", This);
+    log_debug("WIDirectInput8W<B>::Release(%p): deleting self", This);
     delete This;
   }
   return r;
 }
 
-template <class D>
-WIDirectInput8W<D>::WIDirectInput8W(LPVOID pNative) : BIDirectInput8W(pNative, &vtbl_, false)
-{}
+template <class B>
+template <class T>
+WIDirectInput8W<B>::WIDirectInput8W(T const & t) : B(t)
+{
+  this->pVtbl_ = &vtbl_;
+}
 
 } //namespace di8b
 
