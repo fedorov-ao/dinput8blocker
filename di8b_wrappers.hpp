@@ -96,84 +96,95 @@ public:
   static HRESULT WINAPI SetActionMap(BIDirectInputDevice8A* This, LPDIACTIONFORMATA lpdiaf, LPCSTR lpszUserName, DWORD dwFlags);
   static HRESULT WINAPI GetImageInfo(BIDirectInputDevice8A* This, LPDIDEVICEIMAGEINFOHEADERA lpdiDevImageInfoHeader);
 
-  BIDirectInputDevice8A(LPVOID pNative, VIDirectInputDevice8A const * pVtbl=nullptr, bool deleteSelf=false);
+  template <class T>
+  BIDirectInputDevice8A(T const & t);
   ~BIDirectInputDevice8A();
 
-private:
-  static VIDirectInputDevice8A const vtbl_;
-
+protected:
   VIDirectInputDevice8A const * pVtbl_;
+
+private:
   LPVOID pNative_;
-  bool deleteSelf_;
 };
 
-template <class D> class WIDirectInputDevice8A : public BIDirectInputDevice8A
+template <class T>
+BIDirectInputDevice8A::BIDirectInputDevice8A(T const & t) : pNative_(t.pNative)
+{
+  log_debug("BIDirectInputDevice8A::BIDirectInputDevice8A(%p)", this);
+}
+
+template <class B> class WIDirectInputDevice8A : public B
 {
 public:
-  static ULONG WINAPI Release(D* This);
-  WIDirectInputDevice8A(LPVOID pNative);
+  static ULONG WINAPI Release(WIDirectInputDevice8A* This);
+
+  template <class T>
+  WIDirectInputDevice8A(T const & t);
 
 private:
   static VIDirectInputDevice8A const vtbl_;
 };
 
-template <class D>
-VIDirectInputDevice8A const WIDirectInputDevice8A<D>::vtbl_ =
+template <class B>
+VIDirectInputDevice8A const WIDirectInputDevice8A<B>::vtbl_ =
 {
   /*** IUnknown methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8A::QueryInterface)>(&D::QueryInterface),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::AddRef)>(&D::AddRef),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::Release)>(&D::Release),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::QueryInterface)>(&WIDirectInputDevice8A::QueryInterface),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::AddRef)>(&WIDirectInputDevice8A::AddRef),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::Release)>(&WIDirectInputDevice8A::Release),
   /*** IDirectInputDeviceA methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetCapabilities)>(&D::GetCapabilities),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumObjects)>(&D::EnumObjects),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetProperty)>(&D::GetProperty),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::SetProperty)>(&D::SetProperty),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::Acquire)>(&D::Acquire),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::Unacquire)>(&D::Unacquire),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetDeviceState)>(&D::GetDeviceState),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetDeviceData)>(&D::GetDeviceData),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::SetDataFormat)>(&D::SetDataFormat),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::SetEventNotification)>(&D::SetEventNotification),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::SetCooperativeLevel)>(&D::SetCooperativeLevel),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetObjectInfo)>(&D::GetObjectInfo),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetDeviceInfo)>(&D::GetDeviceInfo),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::RunControlPanel)>(&D::RunControlPanel),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::Initialize)>(&D::Initialize),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetCapabilities)>(&WIDirectInputDevice8A::GetCapabilities),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumObjects)>(&WIDirectInputDevice8A::EnumObjects),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetProperty)>(&WIDirectInputDevice8A::GetProperty),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::SetProperty)>(&WIDirectInputDevice8A::SetProperty),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::Acquire)>(&WIDirectInputDevice8A::Acquire),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::Unacquire)>(&WIDirectInputDevice8A::Unacquire),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetDeviceState)>(&WIDirectInputDevice8A::GetDeviceState),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetDeviceData)>(&WIDirectInputDevice8A::GetDeviceData),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::SetDataFormat)>(&WIDirectInputDevice8A::SetDataFormat),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::SetEventNotification)>(&WIDirectInputDevice8A::SetEventNotification),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::SetCooperativeLevel)>(&WIDirectInputDevice8A::SetCooperativeLevel),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetObjectInfo)>(&WIDirectInputDevice8A::GetObjectInfo),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetDeviceInfo)>(&WIDirectInputDevice8A::GetDeviceInfo),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::RunControlPanel)>(&WIDirectInputDevice8A::RunControlPanel),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::Initialize)>(&WIDirectInputDevice8A::Initialize),
   /*** IDirectInputDevice2A methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8A::CreateEffect)>(&D::CreateEffect),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumEffects)>(&D::EnumEffects),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetEffectInfo)>(&D::GetEffectInfo),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetForceFeedbackState)>(&D::GetForceFeedbackState),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::SendForceFeedbackCommand)>(&D::SendForceFeedbackCommand),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumCreatedEffectObjects)>(&D::EnumCreatedEffectObjects),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::Escape)>(&D::Escape),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::Poll)>(&D::Poll),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::SendDeviceData)>(&D::SendDeviceData),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::CreateEffect)>(&WIDirectInputDevice8A::CreateEffect),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumEffects)>(&WIDirectInputDevice8A::EnumEffects),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetEffectInfo)>(&WIDirectInputDevice8A::GetEffectInfo),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetForceFeedbackState)>(&WIDirectInputDevice8A::GetForceFeedbackState),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::SendForceFeedbackCommand)>(&WIDirectInputDevice8A::SendForceFeedbackCommand),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumCreatedEffectObjects)>(&WIDirectInputDevice8A::EnumCreatedEffectObjects),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::Escape)>(&WIDirectInputDevice8A::Escape),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::Poll)>(&WIDirectInputDevice8A::Poll),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::SendDeviceData)>(&WIDirectInputDevice8A::SendDeviceData),
   /*** IDirectInputDevice7A methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumEffectsInFile)>(&D::EnumEffectsInFile),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::WriteEffectToFile)>(&D::WriteEffectToFile),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::EnumEffectsInFile)>(&WIDirectInputDevice8A::EnumEffectsInFile),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::WriteEffectToFile)>(&WIDirectInputDevice8A::WriteEffectToFile),
   /*** IDirectInputDevice8A methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8A::BuildActionMap)>(&D::BuildActionMap),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::SetActionMap)>(&D::SetActionMap),
-  reinterpret_cast<decltype(VIDirectInputDevice8A::GetImageInfo)>(&D::GetImageInfo)
+  reinterpret_cast<decltype(VIDirectInputDevice8A::BuildActionMap)>(&WIDirectInputDevice8A::BuildActionMap),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::SetActionMap)>(&WIDirectInputDevice8A::SetActionMap),
+  reinterpret_cast<decltype(VIDirectInputDevice8A::GetImageInfo)>(&WIDirectInputDevice8A::GetImageInfo)
 };
 
-template <class D>
-ULONG WINAPI WIDirectInputDevice8A<D>::Release(D* This)
+template <class B>
+ULONG WINAPI WIDirectInputDevice8A<B>::Release(WIDirectInputDevice8A* This)
 {
-  ULONG r = BIDirectInputDevice8A::Release(This);
+  ULONG r = B::Release(This);
   if (r == 0)
   {
-    log_debug("WIDirectInputDevice8A<D>::Release(%p): deleting self", This);
+    log_debug("WIDirectInputDevice8A<B>::Release(%p): deleting self", This);
     delete This;
   }
   return r;
 }
 
-template <class D>
-WIDirectInputDevice8A<D>::WIDirectInputDevice8A(LPVOID pNative) : BIDirectInputDevice8A(pNative, &vtbl_, false)
-{}
+template <class B>
+template <class T>
+WIDirectInputDevice8A<B>::WIDirectInputDevice8A(T const & t) : B(t)
+{
+  this->pVtbl_ = &vtbl_;
+}
 
 
 /* WIDirectInputDevice8W */
@@ -260,84 +271,95 @@ public:
   static HRESULT WINAPI SetActionMap(BIDirectInputDevice8W* This, LPDIACTIONFORMATW lpdiaf, LPCWSTR lpszUserName, DWORD dwFlags);
   static HRESULT WINAPI GetImageInfo(BIDirectInputDevice8W* This, LPDIDEVICEIMAGEINFOHEADERW lpdiDevImageInfoHeader);
 
-  BIDirectInputDevice8W(LPVOID pNative, VIDirectInputDevice8W const * pVtbl=nullptr, bool deleteSelf=false);
+  template <class T>
+  BIDirectInputDevice8W(T const & t);
   ~BIDirectInputDevice8W();
 
-private:
-  static VIDirectInputDevice8W const vtbl_;
-
+protected:
   VIDirectInputDevice8W const * pVtbl_;
+
+private:
   LPVOID pNative_;
-  bool deleteSelf_;
 };
 
-template <class D> class WIDirectInputDevice8W : public BIDirectInputDevice8W
+template <class T>
+BIDirectInputDevice8W::BIDirectInputDevice8W(T const & t) : pNative_(t.pNative)
+{
+  log_debug("BIDirectInputDevice8W::BIDirectInputDevice8W(%p)", this);
+}
+
+template <class B> class WIDirectInputDevice8W : public B
 {
 public:
-  static ULONG WINAPI Release(D* This);
-  WIDirectInputDevice8W(LPVOID pNative);
+  static ULONG WINAPI Release(WIDirectInputDevice8W* This);
+
+  template <class T>
+  WIDirectInputDevice8W(T const & t);
 
 private:
   static VIDirectInputDevice8W const vtbl_;
 };
 
-template <class D>
-VIDirectInputDevice8W const WIDirectInputDevice8W<D>::vtbl_ =
+template <class B>
+VIDirectInputDevice8W const WIDirectInputDevice8W<B>::vtbl_ =
 {
   /*** IUnknown methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8W::QueryInterface)>(&D::QueryInterface),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::AddRef)>(&D::AddRef),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::Release)>(&D::Release),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::QueryInterface)>(&WIDirectInputDevice8W::QueryInterface),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::AddRef)>(&WIDirectInputDevice8W::AddRef),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::Release)>(&WIDirectInputDevice8W::Release),
   /*** IDirectInputDeviceA methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetCapabilities)>(&D::GetCapabilities),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumObjects)>(&D::EnumObjects),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetProperty)>(&D::GetProperty),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::SetProperty)>(&D::SetProperty),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::Acquire)>(&D::Acquire),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::Unacquire)>(&D::Unacquire),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetDeviceState)>(&D::GetDeviceState),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetDeviceData)>(&D::GetDeviceData),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::SetDataFormat)>(&D::SetDataFormat),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::SetEventNotification)>(&D::SetEventNotification),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::SetCooperativeLevel)>(&D::SetCooperativeLevel),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetObjectInfo)>(&D::GetObjectInfo),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetDeviceInfo)>(&D::GetDeviceInfo),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::RunControlPanel)>(&D::RunControlPanel),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::Initialize)>(&D::Initialize),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetCapabilities)>(&WIDirectInputDevice8W::GetCapabilities),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumObjects)>(&WIDirectInputDevice8W::EnumObjects),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetProperty)>(&WIDirectInputDevice8W::GetProperty),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::SetProperty)>(&WIDirectInputDevice8W::SetProperty),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::Acquire)>(&WIDirectInputDevice8W::Acquire),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::Unacquire)>(&WIDirectInputDevice8W::Unacquire),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetDeviceState)>(&WIDirectInputDevice8W::GetDeviceState),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetDeviceData)>(&WIDirectInputDevice8W::GetDeviceData),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::SetDataFormat)>(&WIDirectInputDevice8W::SetDataFormat),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::SetEventNotification)>(&WIDirectInputDevice8W::SetEventNotification),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::SetCooperativeLevel)>(&WIDirectInputDevice8W::SetCooperativeLevel),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetObjectInfo)>(&WIDirectInputDevice8W::GetObjectInfo),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetDeviceInfo)>(&WIDirectInputDevice8W::GetDeviceInfo),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::RunControlPanel)>(&WIDirectInputDevice8W::RunControlPanel),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::Initialize)>(&WIDirectInputDevice8W::Initialize),
   /*** IDirectInputDevice2A methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8W::CreateEffect)>(&D::CreateEffect),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumEffects)>(&D::EnumEffects),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetEffectInfo)>(&D::GetEffectInfo),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetForceFeedbackState)>(&D::GetForceFeedbackState),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::SendForceFeedbackCommand)>(&D::SendForceFeedbackCommand),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumCreatedEffectObjects)>(&D::EnumCreatedEffectObjects),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::Escape)>(&D::Escape),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::Poll)>(&D::Poll),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::SendDeviceData)>(&D::SendDeviceData),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::CreateEffect)>(&WIDirectInputDevice8W::CreateEffect),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumEffects)>(&WIDirectInputDevice8W::EnumEffects),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetEffectInfo)>(&WIDirectInputDevice8W::GetEffectInfo),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetForceFeedbackState)>(&WIDirectInputDevice8W::GetForceFeedbackState),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::SendForceFeedbackCommand)>(&WIDirectInputDevice8W::SendForceFeedbackCommand),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumCreatedEffectObjects)>(&WIDirectInputDevice8W::EnumCreatedEffectObjects),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::Escape)>(&WIDirectInputDevice8W::Escape),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::Poll)>(&WIDirectInputDevice8W::Poll),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::SendDeviceData)>(&WIDirectInputDevice8W::SendDeviceData),
   /*** IDirectInputDevice7A methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumEffectsInFile)>(&D::EnumEffectsInFile),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::WriteEffectToFile)>(&D::WriteEffectToFile),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::EnumEffectsInFile)>(&WIDirectInputDevice8W::EnumEffectsInFile),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::WriteEffectToFile)>(&WIDirectInputDevice8W::WriteEffectToFile),
   /*** IDirectInputDevice8W methods ***/
-  reinterpret_cast<decltype(VIDirectInputDevice8W::BuildActionMap)>(&D::BuildActionMap),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::SetActionMap)>(&D::SetActionMap),
-  reinterpret_cast<decltype(VIDirectInputDevice8W::GetImageInfo)>(&D::GetImageInfo)
+  reinterpret_cast<decltype(VIDirectInputDevice8W::BuildActionMap)>(&WIDirectInputDevice8W::BuildActionMap),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::SetActionMap)>(&WIDirectInputDevice8W::SetActionMap),
+  reinterpret_cast<decltype(VIDirectInputDevice8W::GetImageInfo)>(&WIDirectInputDevice8W::GetImageInfo)
 };
 
-template <class D>
-ULONG WINAPI WIDirectInputDevice8W<D>::Release(D* This)
+template <class B>
+ULONG WINAPI WIDirectInputDevice8W<B>::Release(WIDirectInputDevice8W* This)
 {
-  ULONG r = BIDirectInputDevice8W::Release(This);
+  ULONG r = B::Release(This);
   if (r == 0)
   {
-    log_debug("WIDirectInputDevice8W<D>::Release(%p): deleting self", This);
+    log_debug("WIDirectInputDevice8W<B>::Release(%p): deleting self", This);
     delete This;
   }
   return r;
 }
 
-template <class D>
-WIDirectInputDevice8W<D>::WIDirectInputDevice8W(LPVOID pNative) : BIDirectInputDevice8W(pNative, &vtbl_, false)
-{}
+template <class B>
+template <class T>
+WIDirectInputDevice8W<B>::WIDirectInputDevice8W(T const & t) : B(t)
+{
+  this->pVtbl_ = &vtbl_;
+}
 
 
 /* IDirectInput... */
@@ -400,6 +422,7 @@ template <class B> class WIDirectInput7A : public B
 {
 public:
   static ULONG WINAPI Release(WIDirectInput7A* This);
+
   template <class T>
   WIDirectInput7A(T const & t);
 

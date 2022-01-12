@@ -342,12 +342,12 @@ private:
 
 
 /* Template-based implementations. */
-template <template <class> class B>
-class BlockingWIDirectInputDevice : public B<BlockingWIDirectInputDevice<B> >
+template <class B>
+class BlockingWIDirectInputDevice : public B
 {
 public:
   typedef BlockingWIDirectInputDevice<B> this_type;
-  typedef B<this_type> base_type;
+  typedef B base_type;
 
   static HRESULT WINAPI GetDeviceState(this_type* This, DWORD cbData, LPVOID lpvData)
   {
@@ -376,8 +376,9 @@ public:
     return hr;
   }
 
-  BlockingWIDirectInputDevice(LPVOID pNative, std::shared_ptr<Flag> const & spFlag)
-    : base_type(pNative), spFlag_(spFlag)
+  template <class T>
+  BlockingWIDirectInputDevice(T const & t)
+    : base_type(t), spFlag_(t.spFlag)
   {
     log_debug("BlockingWIDirectInputDevice::BlockingWIDirectInputDevice(%p)", this);
   }
@@ -391,8 +392,8 @@ private:
   std::shared_ptr<Flag> spFlag_;
 };
 
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice8A> BlockingWIDirectInputDevice8A;
-typedef BlockingWIDirectInputDevice<WIDirectInputDevice8W> BlockingWIDirectInputDevice8W;
+typedef WIDirectInputDevice8A<BlockingWIDirectInputDevice<BIDirectInputDevice8A> > BlockingWIDirectInputDevice8A;
+typedef WIDirectInputDevice8W<BlockingWIDirectInputDevice<BIDirectInputDevice8W> > BlockingWIDirectInputDevice8W;
 
 
 /** Makes device using external factory method */
@@ -604,7 +605,12 @@ IDID* make_device_wrapper(REFGUID rguid, IDID* pDID)
   auto spFlag = make_flag(rguid);
   if (!spFlag)
     return nullptr;
-  auto pWrapper = reinterpret_cast<IDID*>(new DeviceWrapper(pDID, spFlag));
+  struct T
+  {
+    std::shared_ptr<Flag> spFlag;
+    LPVOID pNative;
+  } t = { spFlag, pDID };
+  auto pWrapper = reinterpret_cast<IDID*>(new DeviceWrapper(t));
   log_debug("make_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
   return pWrapper;
 }

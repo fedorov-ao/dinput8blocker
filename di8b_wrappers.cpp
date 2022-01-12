@@ -28,11 +28,6 @@ ULONG WINAPI BIDirectInputDevice8A::Release(BIDirectInputDevice8A* This)
 {
   log_debug("BIDirectInputDevice8A::Release(%p)", This);
   ULONG r = CALL_NATIVE(Release)(NATIVE);
-  if ((r == 0) && (This->deleteSelf_))
-  {
-    log_debug("BIDirectInputDevice8A::Release(%p): deleting self", This);
-    delete This;
-  }
   return r;
 }
 
@@ -216,59 +211,10 @@ HRESULT WINAPI BIDirectInputDevice8A::GetImageInfo(BIDirectInputDevice8A* This, 
 #undef CALL_NATIVE
 #undef NATIVE
 
-BIDirectInputDevice8A::BIDirectInputDevice8A(LPVOID pNative, VIDirectInputDevice8A const * pVtbl, bool deleteSelf)
-  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
-{
-  log_debug("BIDirectInputDevice8A::BIDirectInputDevice8A(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
-  if (pVtbl_ == nullptr)
-    pVtbl_ = &vtbl_;
-}
-
 BIDirectInputDevice8A::~BIDirectInputDevice8A()
 {
   log_debug("BIDirectInputDevice8A::~BIDirectInputDevice8A(%p)", this);
 }
-
-VIDirectInputDevice8A const BIDirectInputDevice8A::vtbl_ =
-{
-  /*** IUnknown methods ***/
-  &BIDirectInputDevice8A::QueryInterface,
-  &BIDirectInputDevice8A::AddRef,
-  &BIDirectInputDevice8A::Release,
-  /*** IDirectInputDeviceA methods ***/
-  &BIDirectInputDevice8A::GetCapabilities,
-  &BIDirectInputDevice8A::EnumObjects,
-  &BIDirectInputDevice8A::GetProperty,
-  &BIDirectInputDevice8A::SetProperty,
-  &BIDirectInputDevice8A::Acquire,
-  &BIDirectInputDevice8A::Unacquire,
-  &BIDirectInputDevice8A::GetDeviceState,
-  &BIDirectInputDevice8A::GetDeviceData,
-  &BIDirectInputDevice8A::SetDataFormat,
-  &BIDirectInputDevice8A::SetEventNotification,
-  &BIDirectInputDevice8A::SetCooperativeLevel,
-  &BIDirectInputDevice8A::GetObjectInfo,
-  &BIDirectInputDevice8A::GetDeviceInfo,
-  &BIDirectInputDevice8A::RunControlPanel,
-  &BIDirectInputDevice8A::Initialize,
-  /*** IDirectInputDevice2A methods ***/
-  &BIDirectInputDevice8A::CreateEffect,
-  &BIDirectInputDevice8A::EnumEffects,
-  &BIDirectInputDevice8A::GetEffectInfo,
-  &BIDirectInputDevice8A::GetForceFeedbackState,
-  &BIDirectInputDevice8A::SendForceFeedbackCommand,
-  &BIDirectInputDevice8A::EnumCreatedEffectObjects,
-  &BIDirectInputDevice8A::Escape,
-  &BIDirectInputDevice8A::Poll,
-  &BIDirectInputDevice8A::SendDeviceData,
-  /*** IDirectInputDevice7A methods ***/
-  &BIDirectInputDevice8A::EnumEffectsInFile,
-  &BIDirectInputDevice8A::WriteEffectToFile,
-  /*** IDirectInputDevice8A methods ***/
-  &BIDirectInputDevice8A::BuildActionMap,
-  &BIDirectInputDevice8A::SetActionMap,
-  &BIDirectInputDevice8A::GetImageInfo
-};
 
 
 /* WIDirectInputDevice8W */
@@ -294,11 +240,6 @@ ULONG WINAPI BIDirectInputDevice8W::Release(BIDirectInputDevice8W* This)
 {
   log_debug("BIDirectInputDevice8W::Release(%p)", This);
   ULONG r = CALL_NATIVE(Release)(NATIVE);
-  if ((r == 0) && (This->deleteSelf_))
-  {
-    log_debug("BIDirectInputDevice8W::Release(%p): deleting self", This);
-    delete This;
-  }
   return r;
 }
 
@@ -482,59 +423,10 @@ HRESULT WINAPI BIDirectInputDevice8W::GetImageInfo(BIDirectInputDevice8W* This, 
 #undef CALL_NATIVE
 #undef NATIVE
 
-BIDirectInputDevice8W::BIDirectInputDevice8W(LPVOID pNative, VIDirectInputDevice8W const * pVtbl, bool deleteSelf)
-  : pVtbl_(pVtbl), pNative_(pNative), deleteSelf_(deleteSelf)
-{
-  log_debug("BIDirectInputDevice8W::BIDirectInputDevice8W(%p, %p, %p, %d)", this, pVtbl, pNative, deleteSelf);
-  if (pVtbl_ == nullptr)
-    pVtbl_ = &vtbl_;
-}
-
 BIDirectInputDevice8W::~BIDirectInputDevice8W()
 {
   log_debug("BIDirectInputDevice8W::~BIDirectInputDevice8W(%p)", this);
 }
-
-VIDirectInputDevice8W const BIDirectInputDevice8W::vtbl_ =
-{
-  /*** IUnknown methods ***/
-  &BIDirectInputDevice8W::QueryInterface,
-  &BIDirectInputDevice8W::AddRef,
-  &BIDirectInputDevice8W::Release,
-  /*** IDirectInputDeviceW methods ***/
-  &BIDirectInputDevice8W::GetCapabilities,
-  &BIDirectInputDevice8W::EnumObjects,
-  &BIDirectInputDevice8W::GetProperty,
-  &BIDirectInputDevice8W::SetProperty,
-  &BIDirectInputDevice8W::Acquire,
-  &BIDirectInputDevice8W::Unacquire,
-  &BIDirectInputDevice8W::GetDeviceState,
-  &BIDirectInputDevice8W::GetDeviceData,
-  &BIDirectInputDevice8W::SetDataFormat,
-  &BIDirectInputDevice8W::SetEventNotification,
-  &BIDirectInputDevice8W::SetCooperativeLevel,
-  &BIDirectInputDevice8W::GetObjectInfo,
-  &BIDirectInputDevice8W::GetDeviceInfo,
-  &BIDirectInputDevice8W::RunControlPanel,
-  &BIDirectInputDevice8W::Initialize,
-  /*** IDirectInputDevice2W methods ***/
-  &BIDirectInputDevice8W::CreateEffect,
-  &BIDirectInputDevice8W::EnumEffects,
-  &BIDirectInputDevice8W::GetEffectInfo,
-  &BIDirectInputDevice8W::GetForceFeedbackState,
-  &BIDirectInputDevice8W::SendForceFeedbackCommand,
-  &BIDirectInputDevice8W::EnumCreatedEffectObjects,
-  &BIDirectInputDevice8W::Escape,
-  &BIDirectInputDevice8W::Poll,
-  &BIDirectInputDevice8W::SendDeviceData,
-  /*** IDirectInputDevice7W methods ***/
-  &BIDirectInputDevice8W::EnumEffectsInFile,
-  &BIDirectInputDevice8W::WriteEffectToFile,
-  /*** IDirectInputDevice8W methods ***/
-  &BIDirectInputDevice8W::BuildActionMap,
-  &BIDirectInputDevice8W::SetActionMap,
-  &BIDirectInputDevice8W::GetImageInfo
-};
 
 
 /* WIDirectInput7A */
