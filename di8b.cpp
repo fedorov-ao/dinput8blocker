@@ -77,6 +77,14 @@ public:
   virtual ~Flag() =default;
 };
 
+
+class ListenFlag : public Flag
+{
+public:
+  virtual void on_change(Flag* pFlag, bool o, bool n) =0;
+};
+
+
 class Tick
 {
 public:
@@ -286,7 +294,15 @@ public:
     return true;
   }
 
-  KeysTick() : data_() {}
+  KeysTick() : data_()
+  {
+    log_debug("KeysTick::KeysTick(%p)", this);
+  }
+
+  ~KeysTick()
+  {
+    log_debug("KeysTick::~KeysTick(%p)", this);
+  }
 
 private:
   typedef std::recursive_mutex mutex_t;
@@ -414,16 +430,107 @@ private:
   std::function<bool(bool,bool)> combine_;
 };
 
+
+class CompositeListenFlag : public ListenFlag
+{
+public:
+  virtual bool get() const
+  {
+    return v_;
+  }
+
+  virtual void on_change(Flag* pFlag, bool o, bool n)
+  {
+    auto old = v_;
+    update_();
+    if (v_ == old)
+      return;
+    if (pParent_)
+      pParent_->on_change(this, old, v_);
+  }
+
+  void add(std::shared_ptr<Flag> const & spFlag)
+  {
+    if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
+    flags_.push_back(spFlag);
+    update_();
+  }
+
+  CompositeListenFlag(std::function<bool(bool,bool)> const & combine, ListenFlag* pParent = nullptr)
+    : flags_(), combine_(combine), v_(false), pParent_(pParent)
+  {}
+
+  CompositeListenFlag(std::vector<std::shared_ptr<Flag> > const & flags, std::function<bool(bool,bool)> const & combine, ListenFlag* pParent = nullptr)
+    : flags_(flags), combine_(combine), v_(false), pParent_(pParent)
+  {
+    for (auto const & spFlag : flags)
+      if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
+    update_();
+  }
+
+private:
+  virtual void update_()
+  {
+    auto first = true;
+    auto result = false;
+    for (auto const & spFlag : flags_)
+      result = first ? first = false, spFlag->get() : combine_(result, spFlag->get());
+    log_debug("CompositeFlag::get(%p): result: %d", this, result);
+    v_ = result;
+  }
+
+  std::vector<std::shared_ptr<Flag> > flags_;
+  std::function<bool(bool,bool)> combine_;
+  bool v_;
+  ListenFlag* pParent_;
+};
+
+
+class CallbackListenFlag : public ListenFlag
+{
+public:
+  typedef std::function<void()> callback_t;
+
+  virtual bool get() const
+  {
+    return spNext_ ? spNext_->get() : false;
+  }
+
+  virtual void on_change(Flag* pFlag, bool o, bool n)
+  {
+    if (pFlag != spNext_.get())
+      throw std::runtime_error("Flags mismatch.");
+    if (cb_)
+      cb_();
+  }
+
+  CallbackListenFlag(callback_t const & cb, std::shared_ptr<Flag> const & spNext) : cb_(cb), spNext_(spNext) {}
+
+private:
+  callback_t cb_;
+  std::shared_ptr<Flag> spNext_;
+};
+
+
 class ConstantFlag : public Flag
 {
 public:
   virtual bool get() const { return v_; }
-  void set(bool b) { v_ = b; }
+  void set(bool b)
+  {
+    if (v_ == b)
+      return;
+    auto o = v_;
+    v_ = b;
+    if (pParent_)
+      pParent_->on_change(this, o, b);
+  }
 
-  ConstantFlag(bool v) : v_(v) {}
+  ConstantFlag(bool v, ListenFlag* pParent = nullptr) : v_(v), pParent_(pParent) {}
 
 private:
   bool v_;
+  ListenFlag* pParent_;
 };
 
 
@@ -705,18 +812,18 @@ std::shared_ptr<Flag> make_flag2(REFGUID rguid)
   if ((itToggleBinding == bindings.end()) && (itUnblockBinding == bindings.end()))
     return nullptr;
 
-  auto spFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
+  auto spFlag = std::make_shared<CompositeListenFlag>(std::logical_or<bool>());
   if (itToggleBinding != bindings.end())
   {
     auto toggleKey = name2key(itToggleBinding->second.data());
-    auto spToggleFlag = std::make_shared<ConstantFlag>(true);
+    auto spToggleFlag = std::make_shared<ConstantFlag>(true, spFlag.get());
     g_spKeysTick->add(toggleKey, KeyEventType::released, [spToggleFlag]() { spToggleFlag->set(!spToggleFlag->get()); });
     spFlag->add(spToggleFlag);
   }
   if (itUnblockBinding != bindings.end())
   {
     auto unblockKey = name2key(itUnblockBinding->second.data());
-    auto spUnblockFlag = std::make_shared<ConstantFlag>(false);
+    auto spUnblockFlag = std::make_shared<ConstantFlag>(false, spFlag.get());
     g_spKeysTick->add(unblockKey, KeyEventType::pressed, [spUnblockFlag]() { spUnblockFlag->set(true); });
     g_spKeysTick->add(unblockKey, KeyEventType::released, [spUnblockFlag]() { spUnblockFlag->set(false); });
     spFlag->add(spUnblockFlag);
@@ -975,6 +1082,7 @@ public:
 
       std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime_));
     }
+    log_debug("Loop::operator()(%p): exiting", this);
   }
 
   bool add_tick(std::shared_ptr<Tick> const & spTick)
@@ -1009,6 +1117,8 @@ public:
 
   void exit()
   {
+    lock_t l (mutex_);
+    log_debug("Loop::exit(%p): exiting", this);
     exiting_ = true;
   }
 
@@ -1017,8 +1127,16 @@ public:
     return mutex_;
   }
 
-  Loop(unsigned int sleepTime) : ticks_(), sleepTime_(sleepTime) {}
+  Loop(unsigned int sleepTime)
+    : ticks_(), sleepTime_(sleepTime)
+  {
+    log_debug("Loop::Loop(%p)", this);
+  }
 
+  ~Loop()
+  {
+    log_debug("Loop::~Loop(%p)", this);
+  }
 private:
   void cleanup()
   {
@@ -1026,8 +1144,8 @@ private:
   }
 
   std::vector<std::shared_ptr<Tick> > ticks_;
-  bool exiting_ = false;
-  bool dirty_ = false;
+  volatile bool exiting_ = false;
+  volatile bool dirty_ = false;
   unsigned int sleepTime_;
 
   mutex_t mutex_;
@@ -1038,7 +1156,7 @@ Loop * g_pLoop;
 
 void start_loop()
 {
-  g_pLoop = new Loop (10);
+  g_pLoop = new Loop (100);
   g_spKeysTick = std::make_shared<KeysTick>();
   g_pLoop->add_tick(g_spKeysTick);
 
@@ -1049,6 +1167,8 @@ void start_loop()
 void stop_loop()
 {
   g_pLoop->exit();
+  delete g_pLoop;
+  g_spKeysTick = nullptr;
 }
 
 HMODULE get_next_handle(LPCSTR dllName)
