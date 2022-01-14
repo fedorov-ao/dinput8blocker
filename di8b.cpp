@@ -235,12 +235,43 @@ private:
 };
 
 
+class Binding
+{
+public:
+  Binding()
+  {
+    log_debug("Binding::Binding(%p)", this);
+  }
+
+  virtual ~Binding()
+  {
+    log_debug("Binding::~Binding(%p)", this);
+  }
+};
+
 class KeysTick : public Tick
 {
 public:
   typedef UINT key_t;
-  typedef struct { key_t key; KeyEventType ket; unsigned int handle; } callback_handle_t;
   typedef std::function<void()> callback_t;
+  typedef unsigned int handle_t;
+  class KTBinding : public Binding
+  {
+  public:
+    KTBinding(KeysTick * pKeysTick,key_t key, KeyEventType ket, handle_t handle)
+      : pKeysTick_(pKeysTick), key_(key), ket_(ket), handle_(handle)
+    {}
+    ~KTBinding()
+    {
+      pKeysTick_->remove(this);
+    }
+  private:
+    friend class KeysTick;
+    KeysTick * pKeysTick_;
+    key_t key_;
+    KeyEventType ket_;
+    handle_t handle_;
+  };
 
   virtual void tick()
   {
@@ -261,7 +292,7 @@ public:
     }
   }
 
-  callback_handle_t add(key_t key, KeyEventType ket, callback_t const & cb)
+  std::shared_ptr<KTBinding> add(key_t key, KeyEventType ket, callback_t const & cb)
   {
     lock_t lock (mutex_);
 
@@ -271,23 +302,23 @@ public:
       data_[key] = Data();
     data_[key].callbacks[static_cast<int>(ket)][handle] = cb;
     ++handle_;
-    callback_handle_t cht = { key, ket, handle };
-    return cht;
+    auto spBinding = std::make_shared<KTBinding>(this, key, ket, handle);
+    return spBinding;
   }
 
-  bool remove(callback_handle_t const & ch)
+  bool remove(KTBinding* pBinding)
   {
     lock_t lock (mutex_);
 
-    auto it = data_.find(ch.key);
+    auto it = data_.find(pBinding->key_);
     if (it == data_.end())
       return false;
     auto & callbacks = it->second.callbacks;
-    auto it2 = it->second.callbacks.find(static_cast<int>(ch.ket));
+    auto it2 = it->second.callbacks.find(static_cast<int>(pBinding->ket_));
     if (it2 == callbacks.end())
       return false;
     auto & t = it2->second;
-    auto it3 = t.find(ch.handle);
+    auto it3 = t.find(pBinding->handle_);
     if (it3 == t.end())
       return false;
     t.erase(it3);
@@ -456,6 +487,11 @@ public:
     update_();
   }
 
+  void set_parent(ListenFlag* pParent)
+  {
+    pParent_ = pParent;
+  }
+
   CompositeListenFlag(std::function<bool(bool,bool)> const & combine, ListenFlag* pParent = nullptr)
     : flags_(), combine_(combine), v_(false), pParent_(pParent)
   {}
@@ -475,7 +511,7 @@ private:
     auto result = false;
     for (auto const & spFlag : flags_)
       result = first ? first = false, spFlag->get() : combine_(result, spFlag->get());
-    log_debug("CompositeFlag::get(%p): result: %d", this, result);
+    log_debug("CompositeListenFlag::get(%p): result: %d", this, result);
     v_ = result;
   }
 
@@ -489,7 +525,7 @@ private:
 class CallbackListenFlag : public ListenFlag
 {
 public:
-  typedef std::function<void()> callback_t;
+  typedef std::function<void(bool,bool)> callback_t;
 
   virtual bool get() const
   {
@@ -501,10 +537,28 @@ public:
     if (pFlag != spNext_.get())
       throw std::runtime_error("Flags mismatch.");
     if (cb_)
-      cb_();
+      cb_(o, n);
   }
 
-  CallbackListenFlag(callback_t const & cb, std::shared_ptr<Flag> const & spNext) : cb_(cb), spNext_(spNext) {}
+  void set_callback(callback_t const & cb)
+  {
+    cb_ = cb;
+  }
+
+  CallbackListenFlag(callback_t const & cb, std::shared_ptr<Flag> const & spNext)
+    : cb_(cb), spNext_(spNext)
+  {
+    log_debug("CallbackListenFlag::CallbackListenFlag(%p)", this); 
+  }
+  CallbackListenFlag(std::shared_ptr<Flag> const & spNext)
+    : cb_(), spNext_(spNext)
+  {
+    log_debug("CallbackListenFlag::CallbackListenFlag(%p)", this); 
+  }
+  ~CallbackListenFlag()
+  {
+    log_debug("CallbackListenFlag::~CallbackListenFlag(%p)", this); 
+  }
 
 private:
   callback_t cb_;
@@ -534,6 +588,30 @@ private:
 };
 
 
+class BoundConstantFlag : public ConstantFlag
+{
+public:
+  void add_binding(std::shared_ptr<Binding> const & spBinding)
+  {
+    bindings_.push_back(spBinding);
+  }
+
+  BoundConstantFlag(bool v, ListenFlag* pParent = nullptr)
+    : ConstantFlag(v, pParent), bindings_()
+  {
+    log_debug("BoundConstantFlag::BoundConstantFlag(%p)", this);
+  }
+  
+  ~BoundConstantFlag()
+  {
+    log_debug("BoundConstantFlag::~BoundConstantFlag(%p)", this);
+  }
+
+private:
+  std::vector<std::shared_ptr<Binding> > bindings_;
+};
+
+
 /* Template-based implementations. */
 template <class B>
 class BlockingWIDirectInputDevice : public B
@@ -544,13 +622,13 @@ public:
 
   static HRESULT WINAPI GetDeviceState(this_type* This, DWORD cbData, LPVOID lpvData)
   {
-    log_debug("BlockingWIDirectInputDevice:GetDeviceState(%p)", This);
+    log_debug("BlockingWIDirectInputDevice::GetDeviceState(%p)", This);
     auto hr = base_type::GetDeviceState(This, cbData, lpvData);
     auto flag = This->spFlag_->get();
     if ((hr == DI_OK) && !flag)
     {
       /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
-      log_debug("BlockingWIDirectInputDevice:GetDeviceState(%p): erasing state", This);
+      log_debug("BlockingWIDirectInputDevice::GetDeviceState(%p): erasing state", This);
       std::memset(lpvData, 0, cbData);
     }
     return hr;
@@ -563,7 +641,7 @@ public:
     auto flag = This->spFlag_->get();
     if ((hr == DI_OK) && !flag)
     {
-      log_debug("BlockingWIDirectInputDevice:GetDeviceData(%p): erasing data", This);
+      log_debug("BlockingWIDirectInputDevice::GetDeviceData(%p): erasing data", This);
       *pdwInOut = 0;
     }
     return hr;
@@ -587,6 +665,69 @@ private:
 
 typedef WIDirectInputDevice8A<BlockingWIDirectInputDevice<BIDirectInputDevice8A> > BlockingWIDirectInputDevice8A;
 typedef WIDirectInputDevice8W<BlockingWIDirectInputDevice<BIDirectInputDevice8W> > BlockingWIDirectInputDevice8W;
+
+
+template <class B>
+class StateBlockingWIDirectInputDevice : public B
+{
+public:
+  typedef StateBlockingWIDirectInputDevice<B> this_type;
+  typedef B base_type;
+
+  static HRESULT WINAPI GetDeviceState(this_type* This, DWORD cbData, LPVOID lpvData)
+  {
+    log_debug("StateBlockingWIDirectInputDevice::GetDeviceState(%p)", This);
+    auto hr = base_type::GetDeviceState(This, cbData, lpvData);
+    if ((hr == DI_OK) && !This->state_)
+    {
+      /* TODO Account for relative and absolute devices: zero-out for relative and return saved date for absolute. */
+      log_debug("StateBlockingWIDirectInputDevice::GetDeviceState(%p): erasing state", This);
+      std::memset(lpvData, 0, cbData);
+    }
+    return hr;
+  }
+
+  static HRESULT WINAPI GetDeviceData(this_type* This, DWORD cbObjectData, LPDIDEVICEOBJECTDATA rgdod, LPDWORD pdwInOut, DWORD dwFlags)
+  {
+    log_debug("StateBlockingWIDirectInputDevice::GetDeviceData(%p)", This);
+    auto hr = base_type::GetDeviceData(This, cbObjectData, rgdod, pdwInOut, dwFlags);
+    if ((hr == DI_OK) && !This->state_)
+    {
+      log_debug("StateBlockingWIDirectInputDevice::GetDeviceData(%p): erasing data", This);
+      *pdwInOut = 0;
+    }
+    return hr;
+  }
+
+  void set_state(bool state)
+  {
+    state_ = state;
+  }
+
+  void add_flag(std::shared_ptr<Flag> const & spFlag)
+  {
+    flags_.push_back(spFlag);
+  }
+
+  template <class T>
+  StateBlockingWIDirectInputDevice(T const & t)
+    : base_type(t), state_(true)
+  {
+    log_debug("StateBlockingWIDirectInputDevice::StateBlockingWIDirectInputDevice(%p)", this);
+  }
+
+  ~StateBlockingWIDirectInputDevice()
+  {
+    log_debug("StateBlockingWIDirectInputDevice::~StateBlockingWIDirectInputDevice(%p)", this);
+  }
+
+private:
+  bool state_;
+  std::vector<std::shared_ptr<Flag> > flags_;
+};
+
+typedef WIDirectInputDevice8A<StateBlockingWIDirectInputDevice<BIDirectInputDevice8A> > StateBlockingWIDirectInputDevice8A;
+typedef WIDirectInputDevice8W<StateBlockingWIDirectInputDevice<BIDirectInputDevice8W> > StateBlockingWIDirectInputDevice8W;
 
 
 /** Makes device using external factory method */
@@ -757,43 +898,9 @@ void print_ididxw_info(LPVOID lpDevice, int msg)
 
 config_t g_config;
 
-std::shared_ptr<Flag> make_flag(REFGUID rguid)
-{
-  auto strGuid = guid2str(rguid);
-  auto itSection = g_config.find(strGuid);
-  if (itSection == g_config.end())
-  {
-    auto strPreset = preset_guid2str(rguid);
-    if (strPreset != "")
-      itSection = g_config.find(strPreset);
-  }
-  if (itSection == g_config.end())
-    return nullptr;
-
-  auto const & bindings = itSection->second;
-  auto itToggleBinding = bindings.find("toggleKey");
-  auto itUnblockBinding = bindings.find("unblockKey");
-  if ((itToggleBinding == bindings.end()) && (itUnblockBinding == bindings.end()))
-    return nullptr;
-
-  auto spFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
-  if (itToggleBinding != bindings.end())
-  {
-    auto toggleKey = name2key(itToggleBinding->second.data());
-    spFlag->add(std::make_shared<ToggleTickFlag>(toggleKey, true, true));
-  }
-  if (itUnblockBinding != bindings.end())
-  {
-    auto unblockKey = name2key(itUnblockBinding->second.data());
-    auto spUnblockFlag = std::make_shared<PressTickFlag>(unblockKey, true);
-    spFlag->add(spUnblockFlag);
-  }
-  return spFlag;
-}
-
 std::shared_ptr<KeysTick> g_spKeysTick;
 
-std::shared_ptr<Flag> make_flag2(REFGUID rguid)
+std::shared_ptr<CompositeListenFlag> make_flag(REFGUID rguid)
 {
   auto strGuid = guid2str(rguid);
   auto itSection = g_config.find(strGuid);
@@ -831,11 +938,12 @@ std::shared_ptr<Flag> make_flag2(REFGUID rguid)
   return spFlag;
 }
 
+
 template <class DeviceWrapper, class IDID>
 IDID* make_device_wrapper(REFGUID rguid, IDID* pDID)
 {
   log_debug("make_device_wrapper(%s, %p)", guid2str(rguid).data(), pDID);
-  auto spFlag = make_flag2(rguid);
+  auto spFlag = make_flag(rguid);
   if (!spFlag)
     return nullptr;
   struct T
@@ -848,6 +956,65 @@ IDID* make_device_wrapper(REFGUID rguid, IDID* pDID)
   return pWrapper;
 }
 
+template <class DeviceWrapper, class IDID>
+IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
+{
+  log_debug("make_state_device_wrapper(%s, %p)", guid2str(rguid).data(), pDID);
+  auto strGuid = guid2str(rguid);
+  auto itSection = g_config.find(strGuid);
+  if (itSection == g_config.end())
+  {
+    auto strPreset = preset_guid2str(rguid);
+    if (strPreset != "")
+      itSection = g_config.find(strPreset);
+  }
+  if (itSection == g_config.end())
+    return nullptr;
+
+  auto const & keys = itSection->second;
+  auto itToggleKey = keys.find("toggleKey");
+  auto itUnblockKey = keys.find("unblockKey");
+  if ((itToggleKey == keys.end()) && (itUnblockKey == keys.end()))
+    return nullptr;
+
+  auto spFlag = std::make_shared<CompositeListenFlag>(std::logical_or<bool>());
+  if (itToggleKey != keys.end())
+  {
+    auto toggleKey = name2key(itToggleKey->second.data());
+    auto spToggleFlag = std::make_shared<BoundConstantFlag>(true, spFlag.get());
+    auto pToggleFlag = spToggleFlag.get();
+    auto spBinding = g_spKeysTick->add(toggleKey, KeyEventType::released, [pToggleFlag]() { pToggleFlag->set(!pToggleFlag->get()); });
+    spToggleFlag->add_binding(spBinding);
+    spFlag->add(spToggleFlag);
+  }
+  if (itUnblockKey != keys.end())
+  {
+    auto unblockKey = name2key(itUnblockKey->second.data());
+    auto spUnblockFlag = std::make_shared<BoundConstantFlag>(false, spFlag.get());
+    auto pUnblockFlag = spUnblockFlag.get();
+    auto spBinding = g_spKeysTick->add(unblockKey, KeyEventType::pressed, [pUnblockFlag]() { pUnblockFlag->set(true); });
+    spUnblockFlag->add_binding(spBinding);
+    spBinding = g_spKeysTick->add(unblockKey, KeyEventType::released, [pUnblockFlag]() { pUnblockFlag->set(false); });
+    spUnblockFlag->add_binding(spBinding);
+    spFlag->add(spUnblockFlag);
+  }
+  auto spCBLFlag = std::make_shared<CallbackListenFlag>(spFlag);
+  if (!spCBLFlag)
+    return nullptr;
+  spFlag->set_parent(spCBLFlag.get());
+  struct T
+  {
+    LPVOID pNative;
+  } t = { pDID };
+  auto upWrapper = std::unique_ptr<DeviceWrapper>(new DeviceWrapper(t));
+  auto pWrapper = upWrapper.get();
+  spCBLFlag->set_callback([pWrapper](bool o, bool n) { pWrapper->set_state(n); });
+  pWrapper->add_flag(spCBLFlag);
+  log_debug("make_state_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
+  return reinterpret_cast<IDID*>(upWrapper.release());
+}
+
+#if(0)
 LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 {
   LPVOID pWrapper = nullptr;
@@ -923,6 +1090,83 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 
   return pWrapper;
 }
+#else
+LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
+{
+  LPVOID pWrapper = nullptr;
+
+  GUID guidsa[] = { IID_IDirectInputA, IID_IDirectInput2A, IID_IDirectInput7A };
+  for (auto const & guid : guidsa)
+  {
+    if (IsEqualGUID(riidltf, guid))
+    {
+      typedef WIDirectInput7A<
+        FactoryWIDirectInput<BIDirectInput7A, IDirectInput7A, IDirectInputDeviceA>
+      > dinput_wrapper_t;
+      struct T
+      {
+        LPVOID pNative;
+        dinput_wrapper_t::device_factory_t deviceFactory;
+        dinput_wrapper_t::reporter_t reporter;
+      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDeviceA>, print_ididxa_info };
+      pWrapper = new dinput_wrapper_t(t);
+    }
+  }
+
+  if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8A))
+  {
+    typedef WIDirectInput8A<
+      FactoryWIDirectInput<BIDirectInput8A, IDirectInput8A, IDirectInputDevice8A>
+    > dinput_wrapper_t;
+    struct T
+    {
+      LPVOID pNative;
+      dinput_wrapper_t::device_factory_t deviceFactory;
+      dinput_wrapper_t::reporter_t reporter;
+    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDevice8A>, print_ididxa_info };
+    pWrapper = new dinput_wrapper_t(t);
+  }
+
+  GUID guidsw[] = { IID_IDirectInputW, IID_IDirectInput2W, IID_IDirectInput7W };
+  for (auto const & guid : guidsw)
+  {
+    if (IsEqualGUID(riidltf, guid))
+    {
+      typedef WIDirectInput7W<
+        FactoryWIDirectInput<BIDirectInput7W, IDirectInput7W, IDirectInputDeviceW>
+      > dinput_wrapper_t;
+      struct T
+      {
+        LPVOID pNative;
+        dinput_wrapper_t::device_factory_t deviceFactory;
+        dinput_wrapper_t::reporter_t reporter;
+      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDeviceW>, print_ididxw_info };
+      pWrapper = new dinput_wrapper_t(t);
+   }
+  }
+
+  if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8W))
+  {
+    typedef WIDirectInput8W<
+      FactoryWIDirectInput<BIDirectInput8W, IDirectInput8W, IDirectInputDevice8W>
+    > dinput_wrapper_t;
+    struct T
+    {
+      LPVOID pNative;
+      dinput_wrapper_t::device_factory_t deviceFactory;
+      dinput_wrapper_t::reporter_t reporter;
+    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDevice8W>, print_ididxw_info };
+    pWrapper = new dinput_wrapper_t(t);
+  }
+
+  if (pWrapper)
+    log_debug("make_dinputxx_wrapper(): created wrapper: %p", pWrapper);
+  else
+    log_debug("make_dinputxx_wrapper(): could not create wrapper for: %p", lpNative);
+
+  return pWrapper;
+}
+#endif
 
 
 /* config */
