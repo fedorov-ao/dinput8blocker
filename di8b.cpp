@@ -227,6 +227,92 @@ private:
 };
 
 
+class KeysTick : public Tick
+{
+public:
+  typedef UINT key_t;
+  typedef struct { key_t key; KeyEventType ket; unsigned int handle; } callback_handle_t;
+  typedef std::function<void()> callback_t;
+
+  virtual void tick()
+  {
+    lock_t lock (mutex_);
+
+    for (auto & p : data_)
+    {
+      auto const & key = p.first;
+      bool currentState = GetKeyState(key) & 0x8000;
+      auto & prevState = p.second.state;
+      if (currentState != prevState)
+      {
+        auto const ket = (currentState && !prevState) ? KeyEventType::pressed : KeyEventType::released;
+        for (auto & cb : p.second.callbacks[static_cast<int>(ket)])
+          cb.second();
+        prevState = currentState;
+      }
+    }
+  }
+
+  callback_handle_t add(key_t key, KeyEventType ket, callback_t const & cb)
+  {
+    lock_t lock (mutex_);
+
+    auto handle = ++handle_;
+    auto it = data_.find(key);
+    if (it == data_.end())
+      data_[key] = Data();
+    data_[key].callbacks[static_cast<int>(ket)][handle] = cb;
+    ++handle_;
+    callback_handle_t cht = { key, ket, handle };
+    return cht;
+  }
+
+  bool remove(callback_handle_t const & ch)
+  {
+    lock_t lock (mutex_);
+
+    auto it = data_.find(ch.key);
+    if (it == data_.end())
+      return false;
+    auto & callbacks = it->second.callbacks;
+    auto it2 = it->second.callbacks.find(static_cast<int>(ch.ket));
+    if (it2 == callbacks.end())
+      return false;
+    auto & t = it2->second;
+    auto it3 = t.find(ch.handle);
+    if (it3 == t.end())
+      return false;
+    t.erase(it3);
+    return true;
+  }
+
+  KeysTick() : data_() {}
+
+private:
+  typedef std::recursive_mutex mutex_t;
+  typedef std::unique_lock<mutex_t> lock_t;
+
+  struct Data
+  {
+    typedef std::map<int, std::map<unsigned int, callback_t> > callbacks_t;
+
+    callbacks_t callbacks;
+    bool state;
+
+    Data() : callbacks(), state(false)
+    {
+      KeyEventType kets[] = { KeyEventType::pressed, KeyEventType::released };
+      for (auto ket : kets)
+        callbacks[static_cast<int>(ket)] = std::map<unsigned int, callback_t>();
+    }
+  };
+
+  std::map<key_t, Data> data_;
+  unsigned int handle_ = 0;
+  mutex_t mutex_;
+};
+
+
 class ToggleTickFlag : public Tick, public Flag
 {
 public:
@@ -598,11 +684,51 @@ std::shared_ptr<Flag> make_flag(REFGUID rguid)
   return spFlag;
 }
 
+std::shared_ptr<KeysTick> g_spKeysTick;
+
+std::shared_ptr<Flag> make_flag2(REFGUID rguid)
+{
+  auto strGuid = guid2str(rguid);
+  auto itSection = g_config.find(strGuid);
+  if (itSection == g_config.end())
+  {
+    auto strPreset = preset_guid2str(rguid);
+    if (strPreset != "")
+      itSection = g_config.find(strPreset);
+  }
+  if (itSection == g_config.end())
+    return nullptr;
+
+  auto const & bindings = itSection->second;
+  auto itToggleBinding = bindings.find("toggleKey");
+  auto itUnblockBinding = bindings.find("unblockKey");
+  if ((itToggleBinding == bindings.end()) && (itUnblockBinding == bindings.end()))
+    return nullptr;
+
+  auto spFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
+  if (itToggleBinding != bindings.end())
+  {
+    auto toggleKey = name2key(itToggleBinding->second.data());
+    auto spToggleFlag = std::make_shared<ConstantFlag>(true);
+    g_spKeysTick->add(toggleKey, KeyEventType::released, [spToggleFlag]() { spToggleFlag->set(!spToggleFlag->get()); });
+    spFlag->add(spToggleFlag);
+  }
+  if (itUnblockBinding != bindings.end())
+  {
+    auto unblockKey = name2key(itUnblockBinding->second.data());
+    auto spUnblockFlag = std::make_shared<ConstantFlag>(false);
+    g_spKeysTick->add(unblockKey, KeyEventType::pressed, [spUnblockFlag]() { spUnblockFlag->set(true); });
+    g_spKeysTick->add(unblockKey, KeyEventType::released, [spUnblockFlag]() { spUnblockFlag->set(false); });
+    spFlag->add(spUnblockFlag);
+  }
+  return spFlag;
+}
+
 template <class DeviceWrapper, class IDID>
 IDID* make_device_wrapper(REFGUID rguid, IDID* pDID)
 {
   log_debug("make_device_wrapper(%s, %p)", guid2str(rguid).data(), pDID);
-  auto spFlag = make_flag(rguid);
+  auto spFlag = make_flag2(rguid);
   if (!spFlag)
     return nullptr;
   struct T
@@ -907,60 +1033,14 @@ private:
   mutex_t mutex_;
 };
 
+
 Loop * g_pLoop;
 
 void start_loop()
 {
   g_pLoop = new Loop (10);
-
-#if(0)
-  g_device_callback_factory = [](std::map<std::string,std::string> const & bindings)
-  {
-    auto spCompositeFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
-    auto spCompositeTick = std::make_shared<CompositeTick>();
-    auto pCompositeTick = spCompositeTick.get();
-
-    auto onDestroy = [pCompositeTick]()
-    {
-      Loop::lock_t l (g_pLoop->get_mutex());
-      g_pLoop->remove_tick(pCompositeTick);
-    };
-
-    std::unique_ptr<BoundBlockingCIDirectInputDevice8> upDevice (new BoundBlockingCIDirectInputDevice8 (true, false, onDestroy));
-
-    {
-      /* TODO Error checking.*/
-      auto const & keyName = bindings.at("toggleKey");
-      auto key = name2key(keyName.data());
-      auto spFlag = std::make_shared<ConstantFlag>(true);
-      auto spKeyTick = std::make_shared<KeyListenerTick>(key);
-      spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(!spFlag->get()); });
-      spCompositeFlag->add(spFlag);
-      spCompositeTick->add(spKeyTick);
-    }
-    {
-      /* TODO Error checking.*/
-      auto const & keyName = bindings.at("unblockKey");
-      auto key = name2key(keyName.data());
-      auto spFlag = std::make_shared<ConstantFlag>(false);
-      auto spKeyTick = std::make_shared<KeyListenerTick>(key);
-      spKeyTick->add(KeyEventType::pressed, [spFlag](){ spFlag->set(true); });
-      spKeyTick->add(KeyEventType::released, [spFlag](){ spFlag->set(false); });
-      spCompositeFlag->add(spFlag);
-      spCompositeTick->add(spKeyTick);
-    }
-    {
-      auto pDevice = upDevice.get();
-      /* TODO Guard set_state() with mutex or make state_ atomic. */
-      auto spTick = std::make_shared<CallbackTick>([pDevice](bool b){ pDevice->set_state(b); }, spCompositeFlag);
-      spCompositeTick->add(spTick);
-    }
-
-    Loop::lock_t l (g_pLoop->get_mutex());
-    g_pLoop->add_tick(spCompositeTick);
-    return upDevice;
-  };
-#endif
+  g_spKeysTick = std::make_shared<KeysTick>();
+  g_pLoop->add_tick(g_spKeysTick);
 
   std::thread t (&Loop::operator(), g_pLoop);
   t.detach();
