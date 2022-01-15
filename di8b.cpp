@@ -456,6 +456,36 @@ typedef WIDirectInputDevice8W<BlockingWIDirectInputDevice<BIDirectInputDevice8W>
 
 
 template <class B>
+class OnDestroyCallbackHolder : public B
+{
+public:
+  typedef std::function<void()> on_destroy_callback_type;
+
+  void add_on_destroy_callback(on_destroy_callback_type const & cb)
+  {
+    onDestroyCallbacks_.push_back(cb);
+  }
+
+  template <class T>
+  OnDestroyCallbackHolder(T const & t)
+    : B(t)
+  {
+    log_debug("OnDestroyCallbackHolder::OnDestroyCallbackHolder(%p)", this);
+  }
+
+  ~OnDestroyCallbackHolder()
+  {
+    log_debug("OnDestroyCallbackHolder::~OnDestroyCallbackHolder(%p)", this);
+    for (auto const & cb : onDestroyCallbacks_)
+      cb();
+  }
+
+private:
+  std::vector<on_destroy_callback_type> onDestroyCallbacks_;
+};
+
+
+template <class B>
 class StateBlockingWIDirectInputDevice : public B
 {
 public:
@@ -492,11 +522,6 @@ public:
     state_ = state;
   }
 
-  void add_flag(std::shared_ptr<Flag> const & spFlag)
-  {
-    flags_.push_back(spFlag);
-  }
-
   template <class T>
   StateBlockingWIDirectInputDevice(T const & t)
     : base_type(t), state_(true)
@@ -511,11 +536,10 @@ public:
 
 private:
   bool state_;
-  std::vector<std::shared_ptr<Flag> > flags_;
 };
 
-typedef WIDirectInputDevice8A<StateBlockingWIDirectInputDevice<BIDirectInputDevice8A> > StateBlockingWIDirectInputDevice8A;
-typedef WIDirectInputDevice8W<StateBlockingWIDirectInputDevice<BIDirectInputDevice8W> > StateBlockingWIDirectInputDevice8W;
+typedef WIDirectInputDevice8A<OnDestroyCallbackHolder<StateBlockingWIDirectInputDevice<BIDirectInputDevice8A> > > StateBlockingWIDirectInputDevice8A;
+typedef WIDirectInputDevice8W<OnDestroyCallbackHolder<StateBlockingWIDirectInputDevice<BIDirectInputDevice8W> > > StateBlockingWIDirectInputDevice8W;
 
 
 /** Makes device using external factory method */
@@ -728,7 +752,7 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   }
   if (!spFlag)
     return nullptr;
-  auto spCBLFlag = std::make_shared<CallbackFlag>(spFlag);
+  std::shared_ptr<CallbackFlag> spCBLFlag = std::make_shared<CallbackFlag>(spFlag);
   struct T
   {
     LPVOID pNative;
@@ -736,7 +760,7 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   auto upWrapper = std::unique_ptr<DeviceWrapper>(new DeviceWrapper(t));
   auto pWrapper = upWrapper.get();
   spCBLFlag->set_callback([pWrapper](bool o, bool n) { pWrapper->set_state(n); });
-  pWrapper->add_flag(spCBLFlag);
+  pWrapper->add_on_destroy_callback([spCBLFlag]() { const_cast<std::shared_ptr<CallbackFlag>&>(spCBLFlag).reset(); });
   log_debug("make_state_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
   return reinterpret_cast<IDID*>(upWrapper.release());
 }
