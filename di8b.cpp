@@ -73,15 +73,16 @@ class Flag
 {
 public:
   virtual bool get() const =0;
-
-  virtual ~Flag() =default;
-};
-
-
-class ListenFlag : public Flag
-{
-public:
   virtual void on_change(Flag* pFlag, bool o, bool n) =0;
+
+  virtual void set_parent(Flag* pParent) { pParent_ = pParent; }
+  virtual Flag* get_parent() const { return pParent_; }
+
+  Flag(Flag* pParent = nullptr) : pParent_(pParent) {}
+  virtual ~Flag() =default;
+
+private:
+  Flag* pParent_;
 };
 
 
@@ -248,6 +249,29 @@ public:
     log_debug("Binding::~Binding(%p)", this);
   }
 };
+
+class BindingHolder
+{
+public:
+  void add_binding(std::shared_ptr<Binding> const & spBinding)
+  {
+    bindings_.push_back(spBinding);
+  }
+
+  BindingHolder() : bindings_()
+  {
+    log_debug("BindingHolder::BindingHolder(%p)", this);
+  }
+  
+  ~BindingHolder()
+  {
+    log_debug("BindingHolder::~BindingHolder(%p)", this);
+  }
+
+private:
+  std::vector<std::shared_ptr<Binding> > bindings_;
+};
+
 
 class KeysTick : public Tick
 {
@@ -426,43 +450,8 @@ private:
   std::shared_ptr<Flag> spNext_;
 };
 
+
 class CompositeFlag : public Flag
-{
-public:
-  virtual bool get() const
-  {
-    auto first = true;
-    auto result = false;
-    for (auto const & spFlag : flags_)
-      result = first ? first = false, spFlag->get() : combine_(result, spFlag->get());
-    log_debug("CompositeFlag::get(%p): result: %d", this, result);
-    return result;
-  }
-
-  void add(std::shared_ptr<Flag> const & spFlag)
-  {
-    if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
-    flags_.push_back(spFlag);
-  }
-
-  CompositeFlag(std::function<bool(bool,bool)> const & combine)
-    : flags_(), combine_(combine)
-  {}
-
-  CompositeFlag(std::vector<std::shared_ptr<Flag> > const & flags, std::function<bool(bool,bool)> const & combine)
-    : flags_(flags), combine_(combine)
-  {
-    for (auto const & spFlag : flags)
-      if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
-  }
-
-private:
-  std::vector<std::shared_ptr<Flag> > flags_;
-  std::function<bool(bool,bool)> combine_;
-};
-
-
-class CompositeListenFlag : public ListenFlag
 {
 public:
   virtual bool get() const
@@ -476,28 +465,24 @@ public:
     update_();
     if (v_ == old)
       return;
-    if (pParent_)
-      pParent_->on_change(this, old, v_);
+    if (get_parent())
+      get_parent()->on_change(this, old, v_);
   }
 
   void add(std::shared_ptr<Flag> const & spFlag)
   {
     if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
     flags_.push_back(spFlag);
+    spFlag->set_parent(this);
     update_();
   }
 
-  void set_parent(ListenFlag* pParent)
-  {
-    pParent_ = pParent;
-  }
-
-  CompositeListenFlag(std::function<bool(bool,bool)> const & combine, ListenFlag* pParent = nullptr)
-    : flags_(), combine_(combine), v_(false), pParent_(pParent)
+  CompositeFlag(std::function<bool(bool,bool)> const & combine, Flag* pParent = nullptr)
+    : Flag(pParent), flags_(), combine_(combine), v_(false)
   {}
 
-  CompositeListenFlag(std::vector<std::shared_ptr<Flag> > const & flags, std::function<bool(bool,bool)> const & combine, ListenFlag* pParent = nullptr)
-    : flags_(flags), combine_(combine), v_(false), pParent_(pParent)
+  CompositeFlag(std::vector<std::shared_ptr<Flag> > const & flags, std::function<bool(bool,bool)> const & combine, Flag* pParent = nullptr)
+    : Flag(pParent), flags_(flags), combine_(combine), v_(false)
   {
     for (auto const & spFlag : flags)
       if (!spFlag) throw std::runtime_error("Flag pointer is NULL");
@@ -511,18 +496,17 @@ private:
     auto result = false;
     for (auto const & spFlag : flags_)
       result = first ? first = false, spFlag->get() : combine_(result, spFlag->get());
-    log_debug("CompositeListenFlag::get(%p): result: %d", this, result);
+    log_debug("CompositeFlag::get(%p): result: %d", this, result);
     v_ = result;
   }
 
   std::vector<std::shared_ptr<Flag> > flags_;
   std::function<bool(bool,bool)> combine_;
   bool v_;
-  ListenFlag* pParent_;
 };
 
 
-class CallbackListenFlag : public ListenFlag
+class CallbackFlag : public Flag
 {
 public:
   typedef std::function<void(bool,bool)> callback_t;
@@ -545,19 +529,23 @@ public:
     cb_ = cb;
   }
 
-  CallbackListenFlag(callback_t const & cb, std::shared_ptr<Flag> const & spNext)
+  CallbackFlag(callback_t const & cb, std::shared_ptr<Flag> const & spNext)
     : cb_(cb), spNext_(spNext)
   {
-    log_debug("CallbackListenFlag::CallbackListenFlag(%p)", this); 
+    log_debug("CallbackFlag::CallbackFlag(%p)", this); 
+    spNext->set_parent(this);
   }
-  CallbackListenFlag(std::shared_ptr<Flag> const & spNext)
+
+  CallbackFlag(std::shared_ptr<Flag> const & spNext)
     : cb_(), spNext_(spNext)
   {
-    log_debug("CallbackListenFlag::CallbackListenFlag(%p)", this); 
+    log_debug("CallbackFlag::CallbackFlag(%p)", this); 
+    spNext->set_parent(this);
   }
-  ~CallbackListenFlag()
+
+  ~CallbackFlag()
   {
-    log_debug("CallbackListenFlag::~CallbackListenFlag(%p)", this); 
+    log_debug("CallbackFlag::~CallbackFlag(%p)", this); 
   }
 
 private:
@@ -570,34 +558,34 @@ class ConstantFlag : public Flag
 {
 public:
   virtual bool get() const { return v_; }
+
   void set(bool b)
   {
     if (v_ == b)
       return;
     auto o = v_;
     v_ = b;
-    if (pParent_)
-      pParent_->on_change(this, o, b);
+    if (get_parent())
+      get_parent()->on_change(this, o, b);
   }
 
-  ConstantFlag(bool v, ListenFlag* pParent = nullptr) : v_(v), pParent_(pParent) {}
+  virtual void on_change(Flag* pFlag, bool o, bool n)
+  {
+    throw std::runtime_error("ConstantFlag::on_change() should not be called.");
+  }
+
+  ConstantFlag(bool v, Flag* pParent = nullptr) : Flag(pParent), v_(v) {}
 
 private:
   bool v_;
-  ListenFlag* pParent_;
 };
 
 
-class BoundConstantFlag : public ConstantFlag
+class BoundConstantFlag : public ConstantFlag, public BindingHolder
 {
 public:
-  void add_binding(std::shared_ptr<Binding> const & spBinding)
-  {
-    bindings_.push_back(spBinding);
-  }
-
-  BoundConstantFlag(bool v, ListenFlag* pParent = nullptr)
-    : ConstantFlag(v, pParent), bindings_()
+  BoundConstantFlag(bool v, Flag* pParent = nullptr)
+    : ConstantFlag(v, pParent)
   {
     log_debug("BoundConstantFlag::BoundConstantFlag(%p)", this);
   }
@@ -606,9 +594,6 @@ public:
   {
     log_debug("BoundConstantFlag::~BoundConstantFlag(%p)", this);
   }
-
-private:
-  std::vector<std::shared_ptr<Binding> > bindings_;
 };
 
 
@@ -900,7 +885,8 @@ config_t g_config;
 
 std::shared_ptr<KeysTick> g_spKeysTick;
 
-std::shared_ptr<CompositeListenFlag> make_flag(REFGUID rguid)
+#if(0)
+std::shared_ptr<CompositeFlag> make_flag(REFGUID rguid)
 {
   auto strGuid = guid2str(rguid);
   auto itSection = g_config.find(strGuid);
@@ -937,8 +923,10 @@ std::shared_ptr<CompositeListenFlag> make_flag(REFGUID rguid)
   }
   return spFlag;
 }
+#endif
 
 
+#if(0)
 template <class DeviceWrapper, class IDID>
 IDID* make_device_wrapper(REFGUID rguid, IDID* pDID)
 {
@@ -955,6 +943,7 @@ IDID* make_device_wrapper(REFGUID rguid, IDID* pDID)
   log_debug("make_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
   return pWrapper;
 }
+#endif
 
 template <class DeviceWrapper, class IDID>
 IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
@@ -977,11 +966,11 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   if ((itToggleKey == keys.end()) && (itUnblockKey == keys.end()))
     return nullptr;
 
-  auto spFlag = std::make_shared<CompositeListenFlag>(std::logical_or<bool>());
+  auto spFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
   if (itToggleKey != keys.end())
   {
     auto toggleKey = name2key(itToggleKey->second.data());
-    auto spToggleFlag = std::make_shared<BoundConstantFlag>(true, spFlag.get());
+    auto spToggleFlag = std::make_shared<BoundConstantFlag>(true);
     auto pToggleFlag = spToggleFlag.get();
     auto spBinding = g_spKeysTick->add(toggleKey, KeyEventType::released, [pToggleFlag]() { pToggleFlag->set(!pToggleFlag->get()); });
     spToggleFlag->add_binding(spBinding);
@@ -990,7 +979,7 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   if (itUnblockKey != keys.end())
   {
     auto unblockKey = name2key(itUnblockKey->second.data());
-    auto spUnblockFlag = std::make_shared<BoundConstantFlag>(false, spFlag.get());
+    auto spUnblockFlag = std::make_shared<BoundConstantFlag>(false);
     auto pUnblockFlag = spUnblockFlag.get();
     auto spBinding = g_spKeysTick->add(unblockKey, KeyEventType::pressed, [pUnblockFlag]() { pUnblockFlag->set(true); });
     spUnblockFlag->add_binding(spBinding);
@@ -998,10 +987,9 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
     spUnblockFlag->add_binding(spBinding);
     spFlag->add(spUnblockFlag);
   }
-  auto spCBLFlag = std::make_shared<CallbackListenFlag>(spFlag);
-  if (!spCBLFlag)
+  if (!spFlag)
     return nullptr;
-  spFlag->set_parent(spCBLFlag.get());
+  auto spCBLFlag = std::make_shared<CallbackFlag>(spFlag);
   struct T
   {
     LPVOID pNative;
