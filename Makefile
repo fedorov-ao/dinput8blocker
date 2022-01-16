@@ -1,13 +1,13 @@
 CC = i686-w64-mingw32-g++-win32
-TARGET_DI = dinput.dll
-TARGET_DI8 = dinput8.dll
+DI_TARGET = dinput.dll
+DI8_TARGET = dinput8.dll
 HEADERS = di8b_common.hpp di8b_wrappers.hpp di8b.hpp 
 SOURCES = di8b_common.cpp di8b_wrappers.cpp di8b.cpp
-SOURCES_DI = $(SOURCES) di8b_dinput.cpp
-SOURCES_DI8 = $(SOURCES) di8b_dinput8.cpp
+DI_SOURCES = $(SOURCES) di8b_dinput.cpp
+DI8_SOURCES = $(SOURCES) di8b_dinput8.cpp
 OBJECTS = $(SOURCES:%.cpp=%.o)
-OBJECTS_DI = $(SOURCES_DI:%.cpp=%.o)
-OBJECTS_DI8 = $(SOURCES_DI8:%.cpp=%.o)
+DI_OBJECTS = $(DI_SOURCES:%.cpp=%.o)
+DI8_OBJECTS = $(DI8_SOURCES:%.cpp=%.o)
 #If compiled with -On, dll can not be loaded
 #CFLAGS = -std=c++11 -I. -D_WIN32_WINNT=0x0501
 CFLAGS = -std=c++11 -I. -D_WIN32_WINNT=0x0501 -DNDEBUG -Os -ffunction-sections -fdata-sections
@@ -18,19 +18,19 @@ INSTALL_PATH = ~/.wine/drive_c/1946
 %.o: %.cpp $(HEADERS)
 	$(CC) $(CFLAGS) -c $*.cpp
 
-debug_all: debug_di debug_di8
+all_debug: di_debug di8_debug
 
-debug_di: $(OBJECTS_DI)
-	$(CC) $(CFLAGS) -o $(TARGET_DI) $(OBJECTS_DI) $(LDFLAGS)
+di_debug: $(DI_OBJECTS)
+	$(CC) $(CFLAGS) -o $(DI_TARGET) $(DI_OBJECTS) $(LDFLAGS)
 
-debug_di8: $(OBJECTS_DI8)
-	$(CC) $(CFLAGS) -o $(TARGET_DI8) $(OBJECTS_DI8) $(LDFLAGS)
+di8_debug8: $(DI8_OBJECTS)
+	$(CC) $(CFLAGS) -o $(DI8_TARGET) $(DI8_OBJECTS) $(LDFLAGS)
 
-install_di8:
-	cp $(TARGET_DI8) $(INSTALL_PATH)
+di8_install:
+	cp $(DI8_TARGET) $(INSTALL_PATH)
 
-uninstall_di8:
-	rm $(INSTALL_PATH)/$(TARGET_DI8) 
+di8_uninstall:
+	rm $(INSTALL_PATH)/$(DI8_TARGET) 
 
 clean:
 	rm  *.o *.def *.lib *.dll 2>1
