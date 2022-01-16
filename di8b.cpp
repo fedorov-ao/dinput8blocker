@@ -2,12 +2,13 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <string>
 #include <ctime>
+#include <chrono>
 #include <mingw.thread.h>
 #include <mingw.mutex.h>
-#include <chrono>
 #include <cstdio>
-#include <string>
+#include <cstdlib>
 #include <cassert>
 
 namespace di8b
@@ -942,7 +943,9 @@ void open_and_parse_config()
 {
   log_debug("Parsing config");
 
-  auto configFileName = "dinput8_blocker.ini";
+  char const * configFileName = std::getenv("DINPUT8_BLOCKER_CONFIG");
+  if (configFileName == nullptr)
+    configFileName = "dinput8_blocker.ini";
   auto configFileStream = std::ifstream(configFileName);
   if (!configFileStream.is_open())
   {
