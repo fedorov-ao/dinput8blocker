@@ -23,7 +23,7 @@ all_debug: di_debug di8_debug
 di_debug: $(DI_OBJECTS)
 	$(CC) $(CFLAGS) -o $(DI_TARGET) $(DI_OBJECTS) $(LDFLAGS)
 
-di8_debug8: $(DI8_OBJECTS)
+di8_debug: $(DI8_OBJECTS)
 	$(CC) $(CFLAGS) -o $(DI8_TARGET) $(DI8_OBJECTS) $(LDFLAGS)
 
 di8_install:
