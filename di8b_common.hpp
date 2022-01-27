@@ -2,6 +2,7 @@
 #define DI8B_COMMON_HPP
 
 #include <cstdarg>
+#include <sstream>
 
 namespace di8b
 {
@@ -20,13 +21,27 @@ void log_debug(char const * fmt, ...);
 void log_info(char const * fmt, ...);
 void log_error(char const * fmt, ...);
 
-template <class M>
-typename M::value_type& get_or(M& m, typename M::key_type& key, typename M::value_type& dfault)
+template <class M, class K, class V>
+typename M::value_type& get_or(M & m, K const & key, V & dfault)
 {
   auto it = m.find(key);
   return it == m.end() ? dfault : it->second;
 }
 
+template <class T, class M, class K>
+T mget_or(M & m, K const & key, T dfault)
+{
+  auto it = m.find(key);
+  if (it == m.end())
+   return dfault;
+  else
+  {
+    std::stringstream ss (it->second);
+    T result;
+    ss >> result;
+    return result;
+  }
+}
 
 } //di8b
 

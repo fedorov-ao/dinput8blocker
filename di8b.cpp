@@ -734,7 +734,8 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   if (itToggleKey != keys.end())
   {
     auto toggleKey = name2key(itToggleKey->second.data());
-    auto spToggleFlag = std::make_shared<BoundConstantFlag>(true);
+    auto initialState = mget_or<bool>(keys, "initialState", true);
+    auto spToggleFlag = std::make_shared<BoundConstantFlag>(initialState);
     auto pToggleFlag = spToggleFlag.get();
     auto spBinding = g_spKeysTick->add(toggleKey, KeyEventType::released, [pToggleFlag]() { pToggleFlag->set(!pToggleFlag->get()); });
     spToggleFlag->add_binding(spBinding);
