@@ -768,6 +768,240 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
 }
 
 
+template <class B, class IDID>
+class HideWIDirectInputA : public B
+{
+public:
+  typedef HideWIDirectInputA<B, IDID> this_type;
+  typedef B base_type;
+  typedef std::vector<std::string> hidden_t;
+
+  bool is_hidden(REFGUID guidInstance)
+  {
+    auto strGuidInstance = guid2str(guidInstance);
+    return std::find_if(
+      hidden_.begin(),
+      hidden_.end(),
+      [&strGuidInstance](std::string const & strGuid) { return strGuidInstance == strGuid; }
+    ) != hidden_.end();
+  }
+
+  struct DIEnumDevicesCallbackData
+  {
+    LPDIENUMDEVICESCALLBACKA lpCallback;
+    LPVOID pvRef;
+    this_type * This;
+  };
+
+  static BOOL CALLBACK DIEnumDevicesCallback(LPCDIDEVICEINSTANCEA lpddi, LPVOID pvRef)
+  {
+    log_debug("HideWIDirectInputA<B, IDID>::DIEnumDevicesCallback(%p, %p)", lpddi, pvRef);
+    auto pData = reinterpret_cast<DIEnumDevicesCallbackData*>(pvRef);
+    auto strGuid = guid2str(lpddi->guidInstance);
+    if (pData->This->is_hidden(lpddi->guidInstance))
+    {
+      log_info("Hiding device %s", strGuid.data());
+      return DIENUM_CONTINUE;
+    }
+    else
+    {
+      log_debug("Not hiding device %s", strGuid.data());
+      return pData->lpCallback(lpddi, pData->pvRef);
+    }
+  }
+
+  static HRESULT WINAPI EnumDevices(this_type* This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
+  {
+    log_debug("HideWIDirectInputA<B, IDID>::EnumDevices(%p)", This);
+    DIEnumDevicesCallbackData data = { lpCallback, pvRef, This };
+    return base_type::EnumDevices(This, dwDevType, DIEnumDevicesCallback, &data, dwFlags);  
+  }
+
+
+  struct DIEnumDevicesBySemanticsCallbackData
+  {
+    LPDIENUMDEVICESBYSEMANTICSCBA lpCallback;
+    LPVOID pvRef;
+    this_type * This;
+  };
+
+  static BOOL CALLBACK DIEnumDevicesBySemanticsCallback(LPCDIDEVICEINSTANCEA lpddi, LPDIRECTINPUTDEVICE8A lpdid, DWORD dwFlags, DWORD dwRemaining, LPVOID pvRef)
+  {
+    auto pData = reinterpret_cast<DIEnumDevicesBySemanticsCallbackData*>(pvRef);
+    auto strGuid = guid2str(lpddi->guidInstance);
+    if (pData->This->is_hidden(lpddi->guidInstance))
+    {
+      log_info("Hiding device %s", strGuid.data());
+      return FALSE;
+    }
+    else
+    {
+      log_debug("Not hiding device %s", strGuid.data());
+      return pData->lpCallback(lpddi, lpdid, dwFlags, dwRemaining, pData->pvRef);
+    }
+  }
+
+  static HRESULT WINAPI EnumDevicesBySemantics(this_type* This, LPCSTR ptszUserName, LPDIACTIONFORMATA lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBA lpCallback, LPVOID pvRef, DWORD dwFlags)
+  {
+    log_debug("HideWIDirectInputA<B, IDID>::EnumDevicesBySemantics(%p)", This);
+    DIEnumDevicesBySemanticsCallbackData data = { lpCallback, pvRef, This };
+    return base_type::EnumDevicesBySemantics(This, ptszUserName, lpdiActionFormat, DIEnumDevicesBySemanticsCallback, &data, dwFlags);  
+  }
+
+
+  static HRESULT WINAPI CreateDevice(this_type* This, REFGUID rguid, IDID** lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+  {
+    if (This->is_hidden(rguid))
+      return DIERR_DEVICENOTREG;
+    else
+      return base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
+  }
+
+  static HRESULT WINAPI CreateDeviceEx(this_type* This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter)
+  {
+    if (This->is_hidden(rguid))
+      return DIERR_DEVICENOTREG;
+    else
+      return base_type::CreateDeviceEx(This, rguid, riid, pvOut, lpUnknownOuter);
+  }
+
+
+  template <class T>
+  HideWIDirectInputA(T const & t)
+    : base_type(t), hidden_(t.hidden)
+  {}
+
+private:
+  hidden_t hidden_;
+};
+
+
+template <class B, class IDID>
+class HideWIDirectInputW : public B
+{
+public:
+  typedef HideWIDirectInputW<B, IDID> this_type;
+  typedef B base_type;
+  typedef std::vector<std::string> hidden_t;
+
+  bool is_hidden(REFGUID guidInstance)
+  {
+    auto strGuidInstance = guid2str(guidInstance);
+    return std::find_if(
+      hidden_.begin(),
+      hidden_.end(),
+      [&strGuidInstance](std::string const & strGuid) { return strGuidInstance == strGuid; }
+    ) != hidden_.end();
+  }
+
+  struct DIEnumDevicesCallbackData
+  {
+    LPDIENUMDEVICESCALLBACKW lpCallback;
+    LPVOID pvRef;
+    this_type * This;
+  };
+
+  static BOOL CALLBACK DIEnumDevicesCallback(LPCDIDEVICEINSTANCEW lpddi, LPVOID pvRef)
+  {
+    log_debug("HideWIDirectInputW<B, IDID>::DIEnumDevicesCallback(%p, %p)", lpddi, pvRef);
+    auto pData = reinterpret_cast<DIEnumDevicesCallbackData*>(pvRef);
+    auto strGuid = guid2str(lpddi->guidInstance);
+    if (pData->This->is_hidden(lpddi->guidInstance))
+    {
+      log_info("Hiding device %s", strGuid.data());
+      return DIENUM_CONTINUE;
+    }
+    else
+    {
+      log_debug("Not hiding device %s", strGuid.data());
+      return pData->lpCallback(lpddi, pData->pvRef);
+    }
+  }
+
+  static HRESULT WINAPI EnumDevices(this_type* This, DWORD dwDevType, LPDIENUMDEVICESCALLBACKW lpCallback, LPVOID pvRef, DWORD dwFlags)
+  {
+    DIEnumDevicesCallbackData data = { lpCallback, pvRef, This };
+    return base_type::EnumDevices(This, dwDevType, DIEnumDevicesCallback, &data, dwFlags);  
+  }
+
+
+  struct DIEnumDevicesBySemanticsCallbackData
+  {
+    LPDIENUMDEVICESBYSEMANTICSCBW lpCallback;
+    LPVOID pvRef;
+    this_type * This;
+  };
+
+  static BOOL CALLBACK DIEnumDevicesBySemanticsCallback(LPCDIDEVICEINSTANCEW lpddi, LPDIRECTINPUTDEVICE8W lpdid, DWORD dwFlags, DWORD dwRemaining, LPVOID pvRef)
+  {
+    auto pData = reinterpret_cast<DIEnumDevicesBySemanticsCallbackData*>(pvRef);
+    auto strGuid = guid2str(lpddi->guidInstance);
+    if (pData->This->is_hidden(lpddi->guidInstance))
+    {
+      log_info("Hiding device %s", strGuid.data());
+      return FALSE;
+    }
+    else
+    {
+      log_debug("Not hiding device %s", strGuid.data());
+      return pData->lpCallback(lpddi, lpdid, dwFlags, dwRemaining, pData->pvRef);
+    }
+  }
+
+  static HRESULT WINAPI EnumDevicesBySemantics(this_type* This, LPCWSTR ptszUserName, LPDIACTIONFORMATW lpdiActionFormat, LPDIENUMDEVICESBYSEMANTICSCBW lpCallback, LPVOID pvRef, DWORD dwFlags)
+  {
+    DIEnumDevicesBySemanticsCallbackData data = { lpCallback, pvRef, This };
+    return base_type::EnumDevicesBySemantics(This, ptszUserName, lpdiActionFormat, DIEnumDevicesBySemanticsCallback, &data, dwFlags);  
+  }
+
+
+  static HRESULT WINAPI CreateDevice(this_type* This, REFGUID rguid, IDID** lplpDirectInputDevice, LPUNKNOWN pUnkOuter)
+  {
+    if (This->is_hidden(rguid))
+      return DIERR_DEVICENOTREG;
+    else
+      return base_type::CreateDevice(This, rguid, lplpDirectInputDevice, pUnkOuter);
+  }
+
+  static HRESULT WINAPI CreateDeviceEx(this_type* This, REFGUID rguid, REFIID riid, LPVOID *pvOut, LPUNKNOWN lpUnknownOuter)
+  {
+    if (This->is_hidden(rguid))
+      return DIERR_DEVICENOTREG;
+    else
+      return base_type::CreateDeviceEx(This, rguid, riid, pvOut, lpUnknownOuter);
+  }
+
+
+  template <class T>
+  HideWIDirectInputW(T const & t)
+    : base_type(t), hidden_(t.hidden)
+  {}
+
+private:
+  hidden_t hidden_;
+};
+
+
+typedef std::vector<std::string> hidden_t;
+hidden_t g_hidden;
+
+hidden_t fill_hidden(config_t const & config)
+{
+  hidden_t hidden;
+  for (auto const & sd : config)
+  {
+    if (sd.first == "")
+      continue;
+    if (get_or(sd.second, "type", "") == "hidden")
+    {
+      log_debug("Adding device to hidden devices: %s", sd.first.data());
+      hidden.push_back(sd.first);
+    }
+  } 
+  return hidden;
+}
+
+
 LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 {
   LPVOID pWrapper = nullptr;
@@ -778,14 +1012,17 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
     if (IsEqualGUID(riidltf, guid))
     {
       typedef WIDirectInput7A<
-        FactoryWIDirectInput<BIDirectInput7A, IDirectInput7A, IDirectInputDeviceA>
+        HideWIDirectInputA<
+          FactoryWIDirectInput<BIDirectInput7A, IDirectInput7A, IDirectInputDeviceA>, IDirectInputDeviceA
+        >
       > dinput_wrapper_t;
       struct T
       {
         LPVOID pNative;
         dinput_wrapper_t::device_factory_t deviceFactory;
         dinput_wrapper_t::reporter_t reporter;
-      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDeviceA>, print_ididxa_info };
+        dinput_wrapper_t::hidden_t hidden;
+      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDeviceA>, print_ididxa_info, g_hidden };
       pWrapper = new dinput_wrapper_t(t);
     }
   }
@@ -793,14 +1030,17 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8A))
   {
     typedef WIDirectInput8A<
-      FactoryWIDirectInput<BIDirectInput8A, IDirectInput8A, IDirectInputDevice8A>
+      HideWIDirectInputA<
+        FactoryWIDirectInput<BIDirectInput8A, IDirectInput8A, IDirectInputDevice8A>, IDirectInputDevice8A
+      >
     > dinput_wrapper_t;
     struct T
     {
       LPVOID pNative;
       dinput_wrapper_t::device_factory_t deviceFactory;
       dinput_wrapper_t::reporter_t reporter;
-    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDevice8A>, print_ididxa_info };
+      dinput_wrapper_t::hidden_t hidden;
+    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDevice8A>, print_ididxa_info, g_hidden };
     pWrapper = new dinput_wrapper_t(t);
   }
 
@@ -810,14 +1050,17 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
     if (IsEqualGUID(riidltf, guid))
     {
       typedef WIDirectInput7W<
-        FactoryWIDirectInput<BIDirectInput7W, IDirectInput7W, IDirectInputDeviceW>
+        HideWIDirectInputW<
+          FactoryWIDirectInput<BIDirectInput7W, IDirectInput7W, IDirectInputDeviceW>, IDirectInputDeviceW
+        >
       > dinput_wrapper_t;
       struct T
       {
         LPVOID pNative;
         dinput_wrapper_t::device_factory_t deviceFactory;
         dinput_wrapper_t::reporter_t reporter;
-      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDeviceW>, print_ididxw_info };
+        dinput_wrapper_t::hidden_t hidden;
+      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDeviceW>, print_ididxw_info, g_hidden };
       pWrapper = new dinput_wrapper_t(t);
    }
   }
@@ -825,14 +1068,17 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
   if (pWrapper == nullptr && IsEqualGUID(riidltf, IID_IDirectInput8W))
   {
     typedef WIDirectInput8W<
-      FactoryWIDirectInput<BIDirectInput8W, IDirectInput8W, IDirectInputDevice8W>
+      HideWIDirectInputW<
+        FactoryWIDirectInput<BIDirectInput8W, IDirectInput8W, IDirectInputDevice8W>, IDirectInputDevice8W
+      >
     > dinput_wrapper_t;
     struct T
     {
       LPVOID pNative;
       dinput_wrapper_t::device_factory_t deviceFactory;
       dinput_wrapper_t::reporter_t reporter;
-    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDevice8W>, print_ididxw_info };
+      dinput_wrapper_t::hidden_t hidden;
+    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDevice8W>, print_ididxw_info, g_hidden };
     pWrapper = new dinput_wrapper_t(t);
   }
 
@@ -964,6 +1210,7 @@ void open_and_parse_config()
   }
 
   g_config = parse_config(configFileStream, configFileName);
+  g_hidden = fill_hidden(g_config);
   log_debug("Parsed config");
 }
 

@@ -22,7 +22,7 @@ void log_info(char const * fmt, ...);
 void log_error(char const * fmt, ...);
 
 template <class M, class K, class V>
-typename M::value_type& get_or(M & m, K const & key, V & dfault)
+typename M::mapped_type get_or(M & m, K const & key, V dfault)
 {
   auto it = m.find(key);
   return it == m.end() ? dfault : it->second;
