@@ -52,13 +52,13 @@ std::string guid2str(REFGUID rguid)
 }
 
 
-std::string preset_guid2str(REFGUID rguid)
+char const * preset_guid2cstr(REFGUID rguid)
 {
   static struct { REFGUID rguid; char const * name; } names[] =
   {
-    { GUID_SysKeyboard, "keyboard" },
-    { GUID_SysMouse, "mouse" },
-    { GUID_Joystick, "joystick" }
+    { GUID_SysKeyboard, "SysKeyboard" },
+    { GUID_SysMouse, "SysMouse" },
+    { GUID_Joystick, "Joystick" }
   };
 
   for (auto const & p : names)
@@ -67,6 +67,56 @@ std::string preset_guid2str(REFGUID rguid)
       return p.name;
   }
   return "";
+}
+
+
+GUID cstr2guid(char const * cstr)
+{
+  char const * fmt = "%08lX-%04hX-%04hX-%02hhX%02hhX-%02hhX%02hhX%02hhX%02hhX%02hhX%02hhX"; 
+  GUID guid;
+  sscanf(cstr, fmt,
+    &guid.Data1, &guid.Data2, &guid.Data3, 
+    &guid.Data4[0], &guid.Data4[1], &guid.Data4[2], &guid.Data4[3],
+    &guid.Data4[4], &guid.Data4[5], &guid.Data4[6], &guid.Data4[7]);
+  return guid;
+}
+
+
+GUID str2guid(std::string const & str)
+{
+  return cstr2guid(str.data());
+}
+
+
+GUID preset_cstr2guid(char const * cstr)
+{
+  static struct { GUID guid; char const * name; } names[] =
+  {
+    { GUID_SysKeyboard, "SysKeyboard" },
+    { GUID_SysMouse, "SysMouse" },
+    { GUID_Joystick, "Joystick" }
+  };
+
+  for (auto const & p : names)
+  {
+    if (strcmp(p.name, cstr) == 0)
+      return p.guid;
+  }
+  return GUID();
+}
+
+
+GUID cstr2guidex(char const * cstr)
+{
+  GUID guid = preset_cstr2guid(cstr);
+  if (guid == GUID())
+    return cstr2guid(cstr);
+}
+
+
+GUID str2guidex(std::string const & str)
+{
+  return cstr2guidex(str.data());
 }
 
 
@@ -717,9 +767,9 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   auto itSection = g_config.find(strGuid);
   if (itSection == g_config.end())
   {
-    auto strPreset = preset_guid2str(rguid);
-    if (strPreset != "")
-      itSection = g_config.find(strPreset);
+    auto cstrPreset = preset_guid2cstr(rguid);
+    if (strcmp(cstrPreset, "") != 0)
+      itSection = g_config.find(cstrPreset);
   }
   if (itSection == g_config.end())
     return nullptr;
@@ -774,15 +824,14 @@ class HideWIDirectInputA : public B
 public:
   typedef HideWIDirectInputA<B, IDID> this_type;
   typedef B base_type;
-  typedef std::vector<std::string> hidden_t;
+  typedef std::vector<GUID> hidden_t;
 
   bool is_hidden(REFGUID guidInstance)
   {
-    auto strGuidInstance = guid2str(guidInstance);
     return std::find_if(
       hidden_.begin(),
       hidden_.end(),
-      [&strGuidInstance](std::string const & strGuid) { return strGuidInstance == strGuid; }
+      [guidInstance](GUID const & guid) { return IsEqualGUID(guidInstance, guid); }
     ) != hidden_.end();
   }
 
@@ -882,15 +931,14 @@ class HideWIDirectInputW : public B
 public:
   typedef HideWIDirectInputW<B, IDID> this_type;
   typedef B base_type;
-  typedef std::vector<std::string> hidden_t;
+  typedef std::vector<GUID> hidden_t;
 
   bool is_hidden(REFGUID guidInstance)
   {
-    auto strGuidInstance = guid2str(guidInstance);
     return std::find_if(
       hidden_.begin(),
       hidden_.end(),
-      [&strGuidInstance](std::string const & strGuid) { return strGuidInstance == strGuid; }
+      [guidInstance](GUID const & guid) { return IsEqualGUID(guidInstance, guid); }
     ) != hidden_.end();
   }
 
@@ -982,8 +1030,7 @@ private:
 };
 
 
-typedef std::vector<std::string> hidden_t;
-hidden_t g_hidden;
+typedef std::vector<GUID> hidden_t;
 
 hidden_t fill_hidden(config_t const & config)
 {
@@ -995,7 +1042,7 @@ hidden_t fill_hidden(config_t const & config)
     if (get_or(sd.second, "type", "") == "hidden")
     {
       log_debug("Adding device to hidden devices: %s", sd.first.data());
-      hidden.push_back(sd.first);
+      hidden.push_back(str2guidex(sd.first));
     }
   } 
   return hidden;
@@ -1004,6 +1051,7 @@ hidden_t fill_hidden(config_t const & config)
 
 LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
 {
+  auto hidden = fill_hidden(g_config);
   LPVOID pWrapper = nullptr;
 
   GUID guidsa[] = { IID_IDirectInputA, IID_IDirectInput2A, IID_IDirectInput7A };
@@ -1022,7 +1070,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
         dinput_wrapper_t::device_factory_t deviceFactory;
         dinput_wrapper_t::reporter_t reporter;
         dinput_wrapper_t::hidden_t hidden;
-      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDeviceA>, print_ididxa_info, g_hidden };
+      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDeviceA>, print_ididxa_info, hidden };
       pWrapper = new dinput_wrapper_t(t);
     }
   }
@@ -1040,7 +1088,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
       dinput_wrapper_t::device_factory_t deviceFactory;
       dinput_wrapper_t::reporter_t reporter;
       dinput_wrapper_t::hidden_t hidden;
-    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDevice8A>, print_ididxa_info, g_hidden };
+    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8A, IDirectInputDevice8A>, print_ididxa_info, hidden };
     pWrapper = new dinput_wrapper_t(t);
   }
 
@@ -1060,7 +1108,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
         dinput_wrapper_t::device_factory_t deviceFactory;
         dinput_wrapper_t::reporter_t reporter;
         dinput_wrapper_t::hidden_t hidden;
-      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDeviceW>, print_ididxw_info, g_hidden };
+      } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDeviceW>, print_ididxw_info, hidden };
       pWrapper = new dinput_wrapper_t(t);
    }
   }
@@ -1078,7 +1126,7 @@ LPVOID make_dinputxx_wrapper(REFIID riidltf, LPVOID lpNative)
       dinput_wrapper_t::device_factory_t deviceFactory;
       dinput_wrapper_t::reporter_t reporter;
       dinput_wrapper_t::hidden_t hidden;
-    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDevice8W>, print_ididxw_info, g_hidden };
+    } t = { lpNative, make_state_device_wrapper<StateBlockingWIDirectInputDevice8W, IDirectInputDevice8W>, print_ididxw_info, hidden };
     pWrapper = new dinput_wrapper_t(t);
   }
 
@@ -1210,7 +1258,6 @@ void open_and_parse_config()
   }
 
   g_config = parse_config(configFileStream, configFileName);
-  g_hidden = fill_hidden(g_config);
   log_debug("Parsed config");
 }
 
