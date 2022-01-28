@@ -1039,7 +1039,7 @@ hidden_t fill_hidden(config_t const & config)
   {
     if (sd.first == "")
       continue;
-    if (get_or(sd.second, "type", "") == "hidden")
+    if (mget_or<bool>(sd.second, "hidden", false) == true)
     {
       log_debug("Adding device to hidden devices: %s", sd.first.data());
       hidden.push_back(str2guidex(sd.first));
@@ -1217,12 +1217,16 @@ void write_sample_config(std::ofstream& sampleConfigFileStream)
   sampleConfigFileStream 
     << "#Sample configuration file for DirectInput/DirectInput8 blocker\n"
     << "#Comments start with \"#\"\n"
-    << "#Log level (available levels: NOTSET, TRACE, DEBUG, INFO, WARNING, ERROR).\n"
+    << "#Log level (available levels: NOTSET, TRACE, DEBUG, INFO, WARNING, ERROR). Defaults to INFO.\n"
     << "#logLevel=level\n"
     << "#Path to next dll. If not specified, will try to load dll from system directory.\n"
     << "#next=pathToNextDll\n"
-    << "#Section with key bindings for a device is an instance guid (i.e. 6F1D2B60-D5A0-11CF-BFC7-444553540000). Instance guids of created devices are included in device info written to log as INFO-level messages\n"
+    << "#Section with key bindings for a device is an instance guid (i.e. 6F1D2B60-D5A0-11CF-BFC7-444553540000). Instance guids of created devices are included in device info written to log as INFO-level messages. Can be SysMouse, SysKeyboard or Joystick for predefined GUIDs.\n"
     << "#[device instance guid]\n"
+    << "#Is the device completely hidden from application or not. If not specified, defaults to false.\n"
+    << "#hidden=true|false\n"
+    << "#Is the device unblocked (if true) or blocked (if false) after initialization. If not specified, defaults to unblocked.\n"
+    << "#initialState=true|false\n"
     << "#Key to toggle device blocking.\n"
     << "#toggleKey=keyName\n"
     << "#Key to press to unblock a blocked device.\n"
