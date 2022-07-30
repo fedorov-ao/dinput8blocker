@@ -775,12 +775,12 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
     return nullptr;
 
   auto const & keys = itSection->second;
-  auto itToggleKey = keys.find("toggleKey");
-  auto itUnblockKey = keys.find("unblockKey");
-  if ((itToggleKey == keys.end()) && (itUnblockKey == keys.end()))
-    return nullptr;
 
-  auto spFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
+  auto spAndFlag = std::make_shared<CompositeFlag>(std::logical_and<bool>());
+  auto spOrFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
+  spAndFlag->add(spOrFlag);
+
+  auto itToggleKey = keys.find("toggleKey");
   if (itToggleKey != keys.end())
   {
     auto toggleKey = name2key(itToggleKey->second.data());
@@ -789,8 +789,9 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
     auto pToggleFlag = spToggleFlag.get();
     auto spBinding = g_spKeysTick->add(toggleKey, KeyEventType::released, [pToggleFlag]() { pToggleFlag->set(!pToggleFlag->get()); });
     spToggleFlag->add_binding(spBinding);
-    spFlag->add(spToggleFlag);
+    spOrFlag->add(spToggleFlag);
   }
+  auto itUnblockKey = keys.find("unblockKey");
   if (itUnblockKey != keys.end())
   {
     auto unblockKey = name2key(itUnblockKey->second.data());
@@ -800,11 +801,23 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
     spUnblockFlag->add_binding(spBinding);
     spBinding = g_spKeysTick->add(unblockKey, KeyEventType::released, [pUnblockFlag]() { pUnblockFlag->set(false); });
     spUnblockFlag->add_binding(spBinding);
-    spFlag->add(spUnblockFlag);
+    spOrFlag->add(spUnblockFlag);
   }
-  if (!spFlag)
-    return nullptr;
-  std::shared_ptr<CallbackFlag> spCBLFlag = std::make_shared<CallbackFlag>(spFlag);
+  auto itBlockKey = keys.find("blockKey");
+  if (itBlockKey != keys.end())
+  {
+    auto blockKey = name2key(itBlockKey->second.data());
+    auto spBlockFlag = std::make_shared<BoundConstantFlag>(true);
+    auto pBlockFlag = spBlockFlag.get();
+    auto spBinding = g_spKeysTick->add(blockKey, KeyEventType::pressed, [pBlockFlag]() { pBlockFlag->set(false); });
+    spBlockFlag->add_binding(spBinding);
+    spBinding = g_spKeysTick->add(blockKey, KeyEventType::released, [pBlockFlag]() { pBlockFlag->set(true); });
+    spBlockFlag->add_binding(spBinding);
+    spAndFlag->add(spBlockFlag);
+  }
+
+  std::shared_ptr<CallbackFlag> spCBLFlag = std::make_shared<CallbackFlag>(spAndFlag);
+
   struct T
   {
     LPVOID pNative;
@@ -1233,6 +1246,8 @@ void write_sample_config(std::ofstream& sampleConfigFileStream)
     << "#toggleKey=keyName\n"
     << "#Key to press to unblock a blocked device.\n"
     << "#unblockKey=keyName\n"
+    << "#Key to press to block an unblocked device.\n"
+    << "#blockKey=keyName\n"
     << "#available keys are: ";
     bool first = true;
     for (auto const & p : g_keyNames)
