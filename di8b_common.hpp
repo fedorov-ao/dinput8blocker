@@ -3,6 +3,7 @@
 
 #include <cstdarg>
 #include <sstream>
+#include <iomanip>
 
 namespace di8b
 {
@@ -38,7 +39,7 @@ T mget_or(M & m, K const & key, T dfault)
   {
     std::stringstream ss (it->second);
     T result;
-    ss >> result;
+    ss >> std::boolalpha >> result;
     return result;
   }
 }

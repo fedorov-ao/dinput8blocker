@@ -1044,6 +1044,8 @@ hidden_t fill_hidden(config_t const & config)
       log_debug("Adding device to hidden devices: %s", sd.first.data());
       hidden.push_back(str2guidex(sd.first));
     }
+    else
+      log_debug("Not adding device to hidden devices: %s", sd.first.data());
   } 
   return hidden;
 }
