@@ -780,16 +780,17 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   auto spOrFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
   spAndFlag->add(spOrFlag);
 
+  auto initialState = mget_or<bool>(keys, "initialState", true);
+  auto spStateFlag = std::make_shared<BoundConstantFlag>(initialState);
+  spOrFlag->add(spStateFlag);
+
   auto itToggleKey = keys.find("toggleKey");
   if (itToggleKey != keys.end())
   {
     auto toggleKey = name2key(itToggleKey->second.data());
-    auto initialState = mget_or<bool>(keys, "initialState", true);
-    auto spToggleFlag = std::make_shared<BoundConstantFlag>(initialState);
-    auto pToggleFlag = spToggleFlag.get();
-    auto spBinding = g_spKeysTick->add(toggleKey, KeyEventType::released, [pToggleFlag]() { pToggleFlag->set(!pToggleFlag->get()); });
-    spToggleFlag->add_binding(spBinding);
-    spOrFlag->add(spToggleFlag);
+    auto pStateFlag = spStateFlag.get();
+    auto spBinding = g_spKeysTick->add(toggleKey, KeyEventType::released, [pStateFlag]() { pStateFlag->set(!pStateFlag->get()); });
+    spStateFlag->add_binding(spBinding);
   }
   auto itUnblockKey = keys.find("unblockKey");
   if (itUnblockKey != keys.end())
