@@ -153,29 +153,6 @@ public:
 };
 
 
-class BindingHolder
-{
-public:
-  void add_binding(std::shared_ptr<Binding> const & spBinding)
-  {
-    bindings_.push_back(spBinding);
-  }
-
-  BindingHolder() : bindings_()
-  {
-    log_debug("BindingHolder::BindingHolder(%p)", this);
-  }
-  
-  ~BindingHolder()
-  {
-    log_debug("BindingHolder::~BindingHolder(%p)", this);
-  }
-
-private:
-  std::vector<std::shared_ptr<Binding> > bindings_;
-};
-
-
 class KeysTick : public Tick
 {
 public:
@@ -432,22 +409,6 @@ public:
 
 private:
   bool v_;
-};
-
-
-class BoundConstantFlag : public ConstantFlag, public BindingHolder
-{
-public:
-  BoundConstantFlag(bool v, Flag* pParent = nullptr)
-    : ConstantFlag(v, pParent)
-  {
-    log_debug("BoundConstantFlag::BoundConstantFlag(%p)", this);
-  }
-  
-  ~BoundConstantFlag()
-  {
-    log_debug("BoundConstantFlag::~BoundConstantFlag(%p)", this);
-  }
 };
 
 
@@ -776,12 +737,14 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
 
   auto const & keys = itSection->second;
 
+  std::vector<std::shared_ptr<Binding> > bindings;
+
   auto spAndFlag = std::make_shared<CompositeFlag>(std::logical_and<bool>());
   auto spOrFlag = std::make_shared<CompositeFlag>(std::logical_or<bool>());
   spAndFlag->add(spOrFlag);
 
   auto initialState = mget_or<bool>(keys, "initialState", true);
-  auto spStateFlag = std::make_shared<BoundConstantFlag>(initialState);
+  auto spStateFlag = std::make_shared<ConstantFlag>(initialState);
   spOrFlag->add(spStateFlag);
 
   auto itToggleKey = keys.find("toggleKey");
@@ -790,30 +753,30 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
     auto toggleKey = name2key(itToggleKey->second.data());
     auto pStateFlag = spStateFlag.get();
     auto spBinding = g_spKeysTick->add(toggleKey, KeyEventType::released, [pStateFlag]() { pStateFlag->set(!pStateFlag->get()); });
-    spStateFlag->add_binding(spBinding);
+    bindings.push_back(spBinding);
   }
   auto itUnblockKey = keys.find("unblockKey");
   if (itUnblockKey != keys.end())
   {
     auto unblockKey = name2key(itUnblockKey->second.data());
-    auto spUnblockFlag = std::make_shared<BoundConstantFlag>(false);
+    auto spUnblockFlag = std::make_shared<ConstantFlag>(false);
     auto pUnblockFlag = spUnblockFlag.get();
     auto spBinding = g_spKeysTick->add(unblockKey, KeyEventType::pressed, [pUnblockFlag]() { pUnblockFlag->set(true); });
-    spUnblockFlag->add_binding(spBinding);
+    bindings.push_back(spBinding);
     spBinding = g_spKeysTick->add(unblockKey, KeyEventType::released, [pUnblockFlag]() { pUnblockFlag->set(false); });
-    spUnblockFlag->add_binding(spBinding);
+    bindings.push_back(spBinding);
     spOrFlag->add(spUnblockFlag);
   }
   auto itBlockKey = keys.find("blockKey");
   if (itBlockKey != keys.end())
   {
     auto blockKey = name2key(itBlockKey->second.data());
-    auto spBlockFlag = std::make_shared<BoundConstantFlag>(true);
+    auto spBlockFlag = std::make_shared<ConstantFlag>(true);
     auto pBlockFlag = spBlockFlag.get();
     auto spBinding = g_spKeysTick->add(blockKey, KeyEventType::pressed, [pBlockFlag]() { pBlockFlag->set(false); });
-    spBlockFlag->add_binding(spBinding);
+    bindings.push_back(spBinding);
     spBinding = g_spKeysTick->add(blockKey, KeyEventType::released, [pBlockFlag]() { pBlockFlag->set(true); });
-    spBlockFlag->add_binding(spBinding);
+    bindings.push_back(spBinding);
     spAndFlag->add(spBlockFlag);
   }
 
@@ -825,9 +788,18 @@ IDID* make_state_device_wrapper(REFGUID rguid, IDID* pDID)
   } t = { pDID };
   auto upWrapper = std::unique_ptr<DeviceWrapper>(new DeviceWrapper(t));
   auto pWrapper = upWrapper.get();
+
   spCBLFlag->set_callback([pWrapper](bool o, bool n) { pWrapper->set_state(n); });
-  pWrapper->add_on_destroy_callback([spCBLFlag]() { const_cast<std::shared_ptr<CallbackFlag>&>(spCBLFlag).reset(); });
+
+  pWrapper->add_on_destroy_callback(
+    [spCBLFlag, bindings]() mutable {
+      spCBLFlag.reset();
+      bindings.clear();
+    }
+  );
+
   log_debug("make_state_device_wrapper(%s, %p): created wrapper: %p", guid2str(rguid).data(), pDID, pWrapper);
+
   return reinterpret_cast<IDID*>(upWrapper.release());
 }
 
